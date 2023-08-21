@@ -1,0 +1,127 @@
+{
+    "include": [
+        "./build/CMakePresets.json"
+    ],
+    "version": 6,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 4,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "Release",
+            "displayName": "Release preset for project.",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_POLICY_DEFAULT_CMP0091": "NEW"
+            }
+        },
+        {
+            "inherits": "conan-debug",
+            "name": "Debug",
+            "displayName": "Debug preset for project.",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_POLICY_DEFAULT_CMP0091": "NEW"
+            }
+        },
+        {
+            "inherits": "conan-debug",
+            "name": "RelWithDebInfo",
+            "displayName": "RelWithDebInfo preset for project.",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+                "CMAKE_POLICY_DEFAULT_CMP0091": "NEW"
+            }
+        },
+        {
+            "inherits": "conan-debug",
+            "name": "MinSizeRel",
+            "displayName": "MinSizeRel preset for project.",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "MinSizeRel",
+                "CMAKE_POLICY_DEFAULT_CMP0091": "NEW"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "Build"
+        },
+        {
+            "name": "CleanBuild",
+            "cleanFirst": true
+        },        
+        {
+            "name": "BuildDefault",
+            "inherits":"Build",
+            "displayName": "Build",
+            "configurePreset":"default",
+            "configuration":"Debug"
+        },
+        {
+            "name": "CleanBuildDefault",
+            "inherits":"CleanBuild",
+            "displayName": "Clean ReBuild",
+            "configurePreset":"default",
+            "configuration":"Debug"
+        },
+        {
+            "name": "BuildRelease",
+            "inherits":"Build",
+            "displayName": "Build",
+            "configurePreset":"Release",
+            "configuration":"Release"
+        },
+        {
+            "name": "CleanBuildRelease",
+            "inherits":"CleanBuild",
+            "displayName": "Clean ReBuild",
+            "configurePreset":"Release",
+            "configuration":"Release"
+        },
+        {
+            "name": "BuildDebug",
+            "inherits":"Build",
+            "displayName": "Build",
+            "configurePreset":"Debug",
+            "configuration":"Debug"
+        },
+        {
+            "name": "CleanBuildDebug",
+            "inherits":"CleanBuild",
+            "displayName": "Clean ReBuild",
+            "configurePreset":"Debug",
+            "configuration":"Debug"
+        },
+        {
+            "name": "BuildRelWithDebInfo",
+            "inherits":"Build",
+            "displayName": "Build",
+            "configurePreset":"RelWithDebInfo",
+            "configuration":"Debug"
+        },
+        {
+            "name": "CleanBuildRelWithDebInfo",
+            "inherits":"CleanBuild",
+            "displayName": "Clean ReBuild",
+            "configurePreset":"RelWithDebInfo",
+            "configuration":"Release"
+        },
+        {
+            "name": "BuildMinSizeRel",
+            "inherits":"Build",
+            "displayName": "Build",
+            "configurePreset":"MinSizeRel",
+            "configuration":"Release"
+        },
+        {
+            "name": "CleanBuildMinSizeRel",
+            "inherits":"CleanBuild",
+            "displayName": "Clean ReBuild",
+            "configurePreset":"MinSizeRel",
+            "configuration":"Release"
+        }
+    ]
+}
