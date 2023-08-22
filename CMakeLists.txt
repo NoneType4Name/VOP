@@ -7,14 +7,20 @@ project("quest"
         VERSION 0.0.0.1
         )
 
-find_package(Vulkan REQUIRED)
-find_package(glfw3 REQUIRED)
-find_package(spdlog REQUIRED)
-find_package(glm)
-find_package(tinyobjloader)
-find_package(stb)
+find_package(Vulkan)
+find_package(glfw3 PATHS "${CMAKE_SOURCE_DIR}/conan_build")
+find_package(spdlog PATHS "${CMAKE_SOURCE_DIR}/conan_build")
+find_package(glm PATHS "${CMAKE_SOURCE_DIR}/conan_build")
+find_package(tinyobjloader PATHS "${CMAKE_SOURCE_DIR}/conan_build")
+find_package(stb PATHS "${CMAKE_SOURCE_DIR}/conan_build")
 
 set(EXECUTABLE_NAME "app")
+
 add_subdirectory(src/assets/models)
+add_subdirectory(src/render)
+
+
 add_executable(${EXECUTABLE_NAME} "src/main.cxx")
 add_dependencies(${EXECUTABLE_NAME} shaders)
+
+target_link_libraries(${EXECUTABLE_NAME} PRIVATE render::render)

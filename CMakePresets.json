@@ -1,11 +1,11 @@
 {
     "include": [
-        "./build/CMakePresets.json"
+        "./bin/conan_build/CMakePresets.json"
     ],
     "version": 6,
     "cmakeMinimumRequired": {
         "major": 3,
-        "minor": 4,
+        "minor": 5,
         "patch": 0
     },
     "configurePresets": [
@@ -15,7 +15,8 @@
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
                 "CMAKE_POLICY_DEFAULT_CMP0091": "NEW"
-            }
+            },
+            "binaryDir": "bin/build"
         },
         {
             "inherits": "conan-debug",
@@ -24,7 +25,8 @@
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
                 "CMAKE_POLICY_DEFAULT_CMP0091": "NEW"
-            }
+            },
+            "binaryDir": "bin/build"
         },
         {
             "inherits": "conan-debug",
@@ -33,7 +35,8 @@
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "RelWithDebInfo",
                 "CMAKE_POLICY_DEFAULT_CMP0091": "NEW"
-            }
+            },
+            "binaryDir": "bin/build"
         },
         {
             "inherits": "conan-debug",
@@ -42,7 +45,8 @@
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "MinSizeRel",
                 "CMAKE_POLICY_DEFAULT_CMP0091": "NEW"
-            }
+            },
+            "binaryDir": "bin/build"
         }
     ],
     "buildPresets": [
