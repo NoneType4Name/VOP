@@ -1,6 +1,6 @@
 build/
 CMakeUserPresets.json
 .clang-format
-bin/shaders
+*spv
 .vscode/settings.json
 .cache
