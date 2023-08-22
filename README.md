@@ -15,14 +15,17 @@
 # Prebuild
 
 - Install all requerement libraries for project. Just do:
-  1. `cd path/to/project/folder`
-  2. `conan install . -of=build -b=missing -pr=std20 -s build_type=Debug -s compiler.cppstd=20 -s compiler=clang -s compiler.version=16 --conf tools.cmake.cmaketoolchain:generator=Ninja`
+
+1. `cd path/to/project/folder`
+2. `conan install . -of=build -b=missing -pr=std20 -s build_type=Debug -s compiler.cppstd=20 -s compiler=clang -s compiler.version=16 --conf tools.cmake.cmaketoolchain:generator=Ninja`
+
 - start configure with: `cmake build --preset <preset>`
  as `<preset>` you can set:
-  1. Debug
-  2. Release
-  3. RelWithDebInfo
-  4. MinSizeRel
+
+1. Debug
+2. Release
+3. RelWithDebInfo
+4. MinSizeRel
 
 # Build
 
