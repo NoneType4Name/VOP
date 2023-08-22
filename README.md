@@ -16,9 +16,9 @@
 
 - Install all requerement libraries for project. Just do:
   1. `cd path/to/project/folder`
-  2. `conan install . -of=build -b=missing -pr=std20 -s build_type=Debug -s compiler.cppstd=20 -s compiler=clang -s compiler.version=16 --conf tools.cmake.cmaketoolchain:generator=Ninja`
+  2. `conan install . -of=bin/conan_build -b=missing -pr=std20 -s build_type=Debug -s compiler.cppstd=20 -s compiler=clang -s compiler.version=16 --conf tools.cmake.cmaketoolchain:generator=Ninja`
 
-- start configure with: `cmake build --preset <preset>`
+- start configure with: `cmake bin/build --preset <preset>`
  as `<preset>` you can set:
   - Debug
   - Release
@@ -27,7 +27,7 @@
 
 # Build
 
- for build use: `cmake --build build --preset <preset> --target all`
+ for build use: `cmake --build bin/build --preset <preset> --target all`
  as `<preset>` you can set:
 
 1. Build
