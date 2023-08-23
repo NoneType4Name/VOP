@@ -6,6 +6,5 @@ CMakeUserPresets.json
 *.spv
 
 # dev ext
-.clang-format
 .vscode/settings.json
 .cache
