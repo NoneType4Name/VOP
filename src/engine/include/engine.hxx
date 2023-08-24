@@ -42,6 +42,8 @@
 
 namespace Engine
 {
+    typedef void ( *KeyEventCallBack )( int key, int scancode, int action, int mods );
+
     struct ENGINE_EXPORT QueueFamilyIndices
     {
         std::optional<uint32_t> graphic;
@@ -123,7 +125,9 @@ namespace Engine
     void ENGINE_EXPORT CentralizeWindow();
     void ENGINE_EXPORT SetWindowTitle( const char *new_title );
     void ENGINE_EXPORT SetWindowTitle( std::string &new_title );
-    void ENGINE_EXPORT GetEvents();
+    KeyEventCallBack ENGINE_EXPORT SetKeyEventsCallback( KeyEventCallBack Callback );
+    bool ENGINE_EXPORT WindowShouldClose();
+    void ENGINE_EXPORT UpdateEvents();
 
 } // namespace Engine
 

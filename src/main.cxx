@@ -18,10 +18,13 @@ namespace
                 exit( EXIT_FAILURE );
             }
             Engine::WindowInit( 0, 0, "Quest App." );
+            Engine::SetKeyEventsCallback( []( int key, int scancode, int action, int mods )
+                                          { SPDLOG_DEBUG( "key pressed code: {}", std::to_string( key ) ); } );
         }
         ~_()
         {
             Engine::WindowDestroy();
+            SPDLOG_DEBUG( "--- Logging end ---" );
             spdlog::shutdown();
         }
     } _;
@@ -29,8 +32,9 @@ namespace
 
 int main()
 {
-    while( 1 )
+    while( !Engine::WindowShouldClose() )
     {
+        Engine::UpdateEvents();
     }
     return 0;
 }
