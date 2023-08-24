@@ -1,16 +1,22 @@
 #include <render.hxx>
+
 namespace
 {
     struct _
     {
         _()
         {
-            spdlog::set_level( DEBUG ? spdlog::level::trace : spdlog::level::critical );
-            spdlog::set_pattern( "[%H:%M:%S.%e] [%^%l%$] %v" );
             if( glfwInit() )
             {
+                SPDLOG_DEBUG( "GLFW{} inititialized.", glfwGetVersionString() );
                 glfwSetErrorCallback( []( int code, const char *data )
                                       { SPDLOG_ERROR( "GLFW ERROR {}: {}", code, data ); } );
+            }
+            else
+            {
+                SPDLOG_CRITICAL( "GLFW not initialized." );
+                SPDLOG_INFO( "Exit with code {}.", EXIT_FAILURE );
+                exit( EXIT_FAILURE );
             }
         }
         ~_()

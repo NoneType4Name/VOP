@@ -13,10 +13,14 @@
 #    define VK_USE_PLATFORM_X11_KHR
 #    define GLFW_EXPOSE_NATIVE_X11
 #endif
-#ifdef _DEBUG
-#    define DEBUG 1ui8
-#else
-#    define DEBUG 0ui8
+#ifndef DEBUG
+#    ifdef _DEBUG
+#        define DEBUG               true
+#        define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
+#    else
+#        define DEBUG               false
+#        define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_CRITICAL
+#    endif
 #endif
 
 #include <spdlog/spdlog.h>
