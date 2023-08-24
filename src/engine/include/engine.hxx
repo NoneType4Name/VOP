@@ -38,11 +38,11 @@
 #include <format>
 #include <set>
 #include <iostream>
-#include "render_export.hxx"
+#include "engine_export.hxx"
 
-namespace render
+namespace Engine
 {
-    struct RENDER_EXPORT QueueFamilyIndices
+    struct ENGINE_EXPORT QueueFamilyIndices
     {
         std::optional<uint32_t> graphic;
         std::optional<uint32_t> present;
@@ -54,7 +54,7 @@ namespace render
         }
     };
 
-    struct RENDER_EXPORT SwapChain
+    struct ENGINE_EXPORT SwapChain
     {
         VkSwapchainKHR Swapchain;
         VkSurfaceCapabilitiesKHR Capabilitie;
@@ -64,7 +64,7 @@ namespace render
         std::vector<VkPresentModeKHR> AviliablePresentModes;
     };
 
-    struct RENDER_EXPORT Vertex
+    struct ENGINE_EXPORT Vertex
     {
         glm::vec3 coordinate;
         glm::vec4 color;
@@ -103,7 +103,7 @@ namespace render
         }
     };
 
-    struct RENDER_EXPORT Model
+    struct ENGINE_EXPORT Model
     {
         std::vector<Vertex> ModelVertecies;
         std::vector<uint32_t> ModelVerteciesIndices;
@@ -111,17 +111,20 @@ namespace render
         uint32_t IndeciesOffset{};
     };
 
-    struct RENDER_EXPORT DemensionsUniformrObject
+    struct ENGINE_EXPORT DemensionsUniformrObject
     {
         alignas( 16 ) glm::mat4 model;
         alignas( 16 ) glm::mat4 view;
         alignas( 16 ) glm::mat4 proj;
     };
-    void RENDER_EXPORT init( uint16_t width, uint16_t height, const char *title );
-    void RENDER_EXPORT SetWindowResolution( uint16_t width, uint16_t height );
-    void RENDER_EXPORT SetWindowTitle( const char *new_title );
-    void RENDER_EXPORT SetWindowTitle( std::string &new_title );
+    void ENGINE_EXPORT WindowInit( uint16_t width, uint16_t height, const char *title );
+    void ENGINE_EXPORT WindowDestroy();
+    void ENGINE_EXPORT SetWindowResolution( uint16_t width, uint16_t height );
+    void ENGINE_EXPORT CentralizeWindow();
+    void ENGINE_EXPORT SetWindowTitle( const char *new_title );
+    void ENGINE_EXPORT SetWindowTitle( std::string &new_title );
+    void ENGINE_EXPORT GetEvents();
 
-} // namespace render
+} // namespace Engine
 
 #endif

@@ -17,10 +17,10 @@ find_package(stb PATHS "${CMAKE_SOURCE_DIR}/conan_build")
 set(EXECUTABLE_NAME "app")
 
 add_subdirectory(src/assets/models)
-add_subdirectory(src/render)
+add_subdirectory(src/engine)
 
 
 add_executable(${EXECUTABLE_NAME} "src/main.cxx")
 add_dependencies(${EXECUTABLE_NAME} shaders)
 
-target_link_libraries(${EXECUTABLE_NAME} PRIVATE render::render)
+target_link_libraries(${EXECUTABLE_NAME} PRIVATE engine::engine)

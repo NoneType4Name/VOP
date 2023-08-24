@@ -1,4 +1,5 @@
-#include <render.hxx>
+#include <GLFW/glfw3.h>
+#include <engine.hxx>
 
 namespace
 {
@@ -21,16 +22,17 @@ namespace
         }
         ~_()
         {
+            glfwTerminate();
         }
     } _;
 } // namespace
 
-namespace render
+namespace Engine
 {
     namespace
     {
-        uint16_t width{ 800ui16 };
-        uint16_t height{ 600ui16 };
+        uint16_t _width{ 800ui16 };
+        uint16_t _height{ 600ui16 };
         uint16_t DisplayWidth;
         uint16_t DisplayHeight;
         std::string title;
@@ -47,12 +49,31 @@ namespace render
             width     = mode->width;
             height    = mode->height;
         }
+        void FramebufferResizeCallback( GLFWwindow *window, int w, int h )
+        {
+            SetWindowResolution( w, h );
+            // TO DO: update frame buffer size (recreate swapchain).
+        }
+
+        inline void WindwoResizeCallback( GLFWwindow *window, int w, int h )
+        {
+            FramebufferResizeCallback( window, w, h );
+        }
 
     } // namespace
 
-    void RENDER_EXPORT init( uint16_t width, uint16_t height, const char *title )
+    void WindowInit( uint16_t width, uint16_t height, const char *title )
     {
-        window = glfwCreateWindow( width, height, title, nullptr, nullptr );
+        glfwWindowHint( GLFW_CLIENT_API, GLFW_NO_API );
+        window = glfwCreateWindow( width ? width : _width, height ? height : _height, title, nullptr, nullptr );
+        SetWindowResolution( width, height );
+        glfwSetFramebufferSizeCallback( window, FramebufferResizeCallback );
+        glfwSetWindowSizeCallback( window, WindwoResizeCallback );
+    }
+
+    void WindowDestroy()
+    {
+        glfwDestroyWindow( window );
     }
 
     void SetWindowResolution( uint16_t width, uint16_t height )
@@ -75,6 +96,12 @@ namespace render
 
         glfwSetWindowSize( window, static_cast<int>( width ), static_cast<int>( height ) );
     }
+
+    void CentralizeWindow()
+    {
+        glfwSetWindowPos( window, ( DisplayWidth / 2 ) - ( _width / 2 ), ( DisplayHeight / 2 ) - ( _height / 2 ) );
+    }
+
     void SetWindowTitle( const char *new_title )
     {
         title = new_title;
@@ -84,4 +111,9 @@ namespace render
     {
         SetWindowTitle( new_title.c_str() );
     }
-} // namespace render
+
+    void GetEvents()
+    {
+        glfwPollEvents();
+    }
+} // namespace Engine
