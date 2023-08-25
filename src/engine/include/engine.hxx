@@ -1,5 +1,5 @@
-#ifndef RENDER_HXX
-#define RENDER_HXX
+#ifndef ENGINE_HXX
+#define ENGINE_HXX
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #define GLM_FORCE_RADIANS
@@ -9,9 +9,9 @@
 #if defined( _WIN32 )
 #    define VK_USE_PLATFORM_WIN32_KHR
 #    define GLFW_EXPOSE_NATIVE_WIN32
-#elif defined( __LINUX__ )
-#    define VK_USE_PLATFORM_X11_KHR
-#    define GLFW_EXPOSE_NATIVE_X11
+// #elif defined( __LINUX__ )
+// #    define VK_USE_PLATFORM_X11_KHR
+// #    define GLFW_EXPOSE_NATIVE_X11
 #endif
 #ifndef DEBUG
 #    ifdef _DEBUG
@@ -39,6 +39,10 @@
 #include <set>
 #include <iostream>
 #include "engine_export.hxx"
+
+#ifndef ENGINE_VERSION
+#    define ENGINE_VERSION VK_MAKE_VERSION( 0, 0, 1 )
+#endif
 
 namespace Engine
 {
