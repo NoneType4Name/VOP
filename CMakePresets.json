@@ -10,43 +10,46 @@
     },
     "configurePresets": [
         {
+            "inherits": "conan-debug",
+            "name": "conan",
+            "binaryDir": "bin/build",
+            "hidden": true
+        },
+        {
+            "inherits": "conan",
             "name": "Release",
             "displayName": "Release preset for project.",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
                 "CMAKE_POLICY_DEFAULT_CMP0091": "NEW"
-            },
-            "binaryDir": "bin/build"
+            }
         },
         {
-            "inherits": "conan-debug",
+            "inherits": "conan",
             "name": "Debug",
             "displayName": "Debug preset for project.",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
                 "CMAKE_POLICY_DEFAULT_CMP0091": "NEW"
-            },
-            "binaryDir": "bin/build"
+            }
         },
         {
-            "inherits": "conan-debug",
+            "inherits": "conan",
             "name": "RelWithDebInfo",
             "displayName": "RelWithDebInfo preset for project.",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "RelWithDebInfo",
                 "CMAKE_POLICY_DEFAULT_CMP0091": "NEW"
-            },
-            "binaryDir": "bin/build"
+            }
         },
         {
-            "inherits": "conan-debug",
+            "inherits": "conan",
             "name": "MinSizeRel",
             "displayName": "MinSizeRel preset for project.",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "MinSizeRel",
                 "CMAKE_POLICY_DEFAULT_CMP0091": "NEW"
-            },
-            "binaryDir": "bin/build"
+            }
         }
     ],
     "buildPresets": [
