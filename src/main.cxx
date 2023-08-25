@@ -1,4 +1,6 @@
 #include <engine.hxx>
+#include <spdlog/spdlog.h>
+#include <iostream>
 
 namespace
 {
@@ -35,6 +37,7 @@ int main()
     while( !Engine::WindowShouldClose() )
     {
         Engine::UpdateEvents();
+        auto d = Engine::GrapchicPhysicalDevice{};
     }
     return 0;
 }

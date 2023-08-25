@@ -1,9 +1,114 @@
 #include <engine.hxx>
+#include <spdlog/spdlog.h>
+#include <stb_image.h>
+#include <glm/glm.hpp>
+#include <GLFW/glfw3.h>
+#include <GLFW/glfw3native.h>
+#include <glm/gtx/hash.hpp>
+#include <tiny_obj_loader.h>
+#include <glm/gtc/matrix_transform.hpp>
+#include <vulkan/vk_enum_string_helper.h>
+#include <array>
+#include <vector>
+#include <format>
+#include <set>
+#include <iostream>
+#include <vulkan/vulkan_core.h>
+#ifndef ENGINE_VERSION
+#    define ENGINE_VERSION VK_MAKE_VERSION( 0, 0, 1 )
+#endif
 
 namespace Engine
 {
+
     namespace
     {
+        struct Vertex
+        {
+            glm::vec3 coordinate;
+            glm::vec4 color;
+            glm::vec2 texture;
+            static VkVertexInputBindingDescription InputBindingDescription()
+            {
+                VkVertexInputBindingDescription VertexInputBindingDescription{};
+                VertexInputBindingDescription.binding   = 0;
+                VertexInputBindingDescription.stride    = sizeof( Vertex );
+                VertexInputBindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+                return VertexInputBindingDescription;
+            }
+
+            static std::array<VkVertexInputAttributeDescription, 3> InputAttributeDescription()
+            {
+                std::array<VkVertexInputAttributeDescription, 3> VertexInputAttributeDescription{};
+                VertexInputAttributeDescription[ 0 ].binding  = 0;
+                VertexInputAttributeDescription[ 0 ].location = 0;
+                VertexInputAttributeDescription[ 0 ].format   = VK_FORMAT_R32G32B32_SFLOAT;
+                VertexInputAttributeDescription[ 0 ].offset   = offsetof( Vertex, coordinate );
+
+                VertexInputAttributeDescription[ 1 ].binding  = 0;
+                VertexInputAttributeDescription[ 1 ].location = 1;
+                VertexInputAttributeDescription[ 1 ].format   = VK_FORMAT_R32G32B32A32_SFLOAT;
+                VertexInputAttributeDescription[ 1 ].offset   = offsetof( Vertex, color );
+
+                VertexInputAttributeDescription[ 2 ].binding  = 0;
+                VertexInputAttributeDescription[ 2 ].location = 2;
+                VertexInputAttributeDescription[ 2 ].format   = VK_FORMAT_R32G32_SFLOAT;
+                VertexInputAttributeDescription[ 2 ].offset   = offsetof( Vertex, texture );
+                return VertexInputAttributeDescription;
+            }
+            bool operator==( const Vertex &other ) const
+            {
+                return coordinate == other.coordinate && color == other.color && texture == other.texture;
+            }
+        };
+
+        struct Model
+        {
+            std::vector<Vertex> ModelVertecies;
+            std::vector<uint32_t> ModelVerteciesIndices;
+            uint32_t VerteciesOffset{};
+            uint32_t IndeciesOffset{};
+        };
+
+        struct DemensionsUniformrObject
+        {
+            alignas( 16 ) glm::mat4 model;
+            alignas( 16 ) glm::mat4 view;
+            alignas( 16 ) glm::mat4 proj;
+        };
+
+        struct QueueFamilyIndices
+        {
+            std::optional<uint32_t> graphic;
+            std::optional<uint32_t> present;
+            std::optional<uint32_t> transfer;
+
+            bool isComplete()
+            {
+                return graphic.has_value() && present.has_value() && transfer.has_value();
+            }
+        };
+
+        struct SwapChain
+        {
+            VkSwapchainKHR Swapchain;
+            VkFormat Format;
+            VkPresentModeKHR PresentMode;
+            VkSurfaceCapabilitiesKHR Capabilities;
+            std::vector<VkSurfaceFormatKHR> AviliableFormats;
+            std::vector<VkPresentModeKHR> AviliablePresentModes;
+        };
+
+        struct _physicalDevice
+        {
+            VkPhysicalDevice device;
+            VkPhysicalDeviceProperties properties;
+            VkPhysicalDeviceFeatures features;
+            SwapChain swapchain;
+            QueueFamilyIndices Indecies;
+            uint32_t mark{ 0 };
+        };
+
         uint16_t _width{ 800ui16 };
         uint16_t _height{ 600ui16 };
         uint16_t DisplayWidth;
@@ -13,6 +118,8 @@ namespace Engine
         GLFWmonitor *_monitor{ nullptr };
         VkInstance _instance;
         VkSurfaceKHR _surface;
+        _physicalDevice _selectedPhysicalDevice;
+        std::vector<_physicalDevice> _avilablePhysicalDevices;
         KeyEventCallBack _KeyEventCallBack{ nullptr };
         const char *ValidationLayers[ 1 ]{ "VK_LAYER_KHRONOS_validation" };
 
@@ -213,6 +320,37 @@ namespace Engine
         {
             SPDLOG_CRITICAL( "Failed to Create surface, error" );
         }
+        vkEnumeratePhysicalDevices( _instance, &_c, nullptr );
+        std::vector<VkPhysicalDevice> _avilableDevices( _c );
+        _avilablePhysicalDevices.resize( _c );
+        vkEnumeratePhysicalDevices( _instance, &_c, _avilableDevices.data() );
+        for( auto device : _avilableDevices )
+        {
+            SwapChain swpchnprprts;
+            VkPhysicalDeviceProperties PhysicalDeviceProperties{};
+            VkPhysicalDeviceFeatures PhysicalDeviceFeatures{};
+            vkGetPhysicalDeviceProperties( device, &PhysicalDeviceProperties );
+            vkGetPhysicalDeviceFeatures( device, &PhysicalDeviceFeatures );
+            vkGetPhysicalDeviceSurfaceCapabilitiesKHR( device, _surface, &swpchnprprts.Capabilities );
+            uint32_t formatsCount{ 0 };
+            vkGetPhysicalDeviceSurfaceFormatsKHR( device, _surface, &formatsCount, nullptr );
+            swpchnprprts.AviliableFormats.resize( formatsCount );
+            vkGetPhysicalDeviceSurfaceFormatsKHR( device, _surface, &formatsCount, swpchnprprts.AviliableFormats.data() );
+            uint32_t PresentModesCount{ 0 };
+            vkGetPhysicalDeviceSurfacePresentModesKHR( device, _surface, &PresentModesCount, nullptr );
+            swpchnprprts.AviliablePresentModes.resize( PresentModesCount );
+            vkGetPhysicalDeviceSurfacePresentModesKHR( device, _surface, &PresentModesCount, swpchnprprts.AviliablePresentModes.data() );
+            _avilablePhysicalDevices.push_back( { device,
+                                                  PhysicalDeviceProperties,
+                                                  PhysicalDeviceFeatures,
+                                                  swpchnprprts } );
+            SPDLOG_CRITICAL( _avilablePhysicalDevices.back().properties.deviceID );
+        }
+    }
+
+    GrapchicPhysicalDevice *SetGraphicDevice( GrapchicPhysicalDevice device )
+    {
+        return nullptr;
     }
 
     void WindowDestroy()
