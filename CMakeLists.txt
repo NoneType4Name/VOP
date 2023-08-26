@@ -16,9 +16,9 @@ if(NOT EXISTS "${CMAKE_SOURCE_DIR}/bin/conan_build/CMakePresets.json")
                 if(NOT EXISTS ${pip_bin})
                         message(FATAL_ERROR "Failed to install conan.\nFailed to find python pip.")  
                 execute_process(COMMAND ${pip_bin} install conan)
-                execute_process(COMMAND )
                 endif()
         endif()
+        execute_process(COMMAND ${conan_bin} profile detect)
         execute_process(COMMAND ${conan_bin} install . -of=bin/conan_build -b=missing -s build_type=Debug -s compiler.cppstd=20 -s compiler=clang -s compiler.version=16 --conf tools.cmake.cmaketoolchain:generator=Ninja
                         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
                         RESULT_VARIABLE RESULT)
