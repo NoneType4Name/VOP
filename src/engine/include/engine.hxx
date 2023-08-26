@@ -38,16 +38,21 @@ namespace Engine
         CPU
     };
 
+    struct ENGINE_EXPORT GrapchicPhysicalDeviceSettings
+    {
+        uint8_t samples{ 0 };
+    };
+
     struct ENGINE_EXPORT GrapchicPhysicalDevice
     {
         const char *name;
         GrapchiDeviceType type;
-        uint16_t rating{ 0 };
         uint32_t deviceID;
     };
 
     ENGINE_EXPORT void WindowInit( uint16_t width, uint16_t height, const char *title );
-    ENGINE_EXPORT GrapchicPhysicalDevice *SetGraphicDevice( GrapchicPhysicalDevice device );
+    ENGINE_EXPORT void SetGraphicDevice( GrapchicPhysicalDevice device );
+    ENGINE_EXPORT GrapchicPhysicalDevice GetActiveGrapchiDevice();
     ENGINE_EXPORT void WindowDestroy();
     ENGINE_EXPORT void SetWindowResolution( uint16_t width, uint16_t height );
     ENGINE_EXPORT void CentralizeWindow();

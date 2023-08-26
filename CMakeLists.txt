@@ -45,7 +45,7 @@ find_package(stb PATHS "${CMAKE_SOURCE_DIR}/conan_build")
 
 set(EXECUTABLE_NAME "app")
 
-add_subdirectory(src/assets/models)
+add_subdirectory(src/assets/shaders)
 add_subdirectory(src/engine)
 
 

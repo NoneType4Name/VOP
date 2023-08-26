@@ -13,7 +13,6 @@
 #include <format>
 #include <set>
 #include <iostream>
-#include <vulkan/vulkan_core.h>
 #ifndef ENGINE_VERSION
 #    define ENGINE_VERSION VK_MAKE_VERSION( 0, 0, 1 )
 #endif
@@ -106,7 +105,6 @@ namespace Engine
             VkPhysicalDeviceFeatures features;
             SwapChain swapchain;
             QueueFamilyIndices Indecies;
-            uint32_t mark{ 0 };
         };
 
         uint16_t _width{ 800ui16 };
@@ -118,7 +116,7 @@ namespace Engine
         GLFWmonitor *_monitor{ nullptr };
         VkInstance _instance;
         VkSurfaceKHR _surface;
-        _physicalDevice _selectedPhysicalDevice;
+        _physicalDevice *_selectedPhysicalDevice{ nullptr };
         std::vector<_physicalDevice> _avilablePhysicalDevices;
         KeyEventCallBack _KeyEventCallBack{ nullptr };
         const char *ValidationLayers[ 1 ]{ "VK_LAYER_KHRONOS_validation" };
@@ -326,11 +324,16 @@ namespace Engine
         vkEnumeratePhysicalDevices( _instance, &_c, _avilableDevices.data() );
         for( auto device : _avilableDevices )
         {
+            uint16_t mark{ 0 };
             SwapChain swpchnprprts;
             VkPhysicalDeviceProperties PhysicalDeviceProperties{};
             VkPhysicalDeviceFeatures PhysicalDeviceFeatures{};
             vkGetPhysicalDeviceProperties( device, &PhysicalDeviceProperties );
             vkGetPhysicalDeviceFeatures( device, &PhysicalDeviceFeatures );
+
+            // if( PhysicalDeviceProperties.deviceType )
+            //     mark = 5 - PhysicalDeviceProperties.deviceType;
+
             vkGetPhysicalDeviceSurfaceCapabilitiesKHR( device, _surface, &swpchnprprts.Capabilities );
             uint32_t formatsCount{ 0 };
             vkGetPhysicalDeviceSurfaceFormatsKHR( device, _surface, &formatsCount, nullptr );
@@ -340,17 +343,48 @@ namespace Engine
             vkGetPhysicalDeviceSurfacePresentModesKHR( device, _surface, &PresentModesCount, nullptr );
             swpchnprprts.AviliablePresentModes.resize( PresentModesCount );
             vkGetPhysicalDeviceSurfacePresentModesKHR( device, _surface, &PresentModesCount, swpchnprprts.AviliablePresentModes.data() );
-            _avilablePhysicalDevices.push_back( { device,
-                                                  PhysicalDeviceProperties,
-                                                  PhysicalDeviceFeatures,
-                                                  swpchnprprts } );
-            SPDLOG_CRITICAL( _avilablePhysicalDevices.back().properties.deviceID );
+
+            QueueFamilyIndices indices;
+            uint32_t queueCount{ 0 };
+            vkGetPhysicalDeviceQueueFamilyProperties( device, &queueCount, nullptr );
+            std::vector<VkQueueFamilyProperties> QueueFamilies( queueCount );
+            vkGetPhysicalDeviceQueueFamilyProperties( device, &queueCount, QueueFamilies.data() );
+            uint32_t index{ 0 };
+            for( const auto &queueF : QueueFamilies )
+            {
+                if( queueF.queueFlags & VK_QUEUE_GRAPHICS_BIT ) indices.graphic = index;
+                if( queueF.queueFlags & VK_QUEUE_TRANSFER_BIT ) indices.transfer = index;
+                VkBool32 presentSupport{ false };
+                vkGetPhysicalDeviceSurfaceSupportKHR( device, index, _surface, &presentSupport );
+                if( presentSupport ) indices.present = index;
+                index++;
+            }
+
+            _avilablePhysicalDevices.push_back( {
+                device,
+                PhysicalDeviceProperties,
+                PhysicalDeviceFeatures,
+                swpchnprprts,
+                indices,
+            } );
         }
     }
 
-    GrapchicPhysicalDevice *SetGraphicDevice( GrapchicPhysicalDevice device )
+    void SetGraphicDevice( GrapchicPhysicalDevice device )
     {
-        return nullptr;
+        for( auto dev : _avilablePhysicalDevices )
+        {
+            if( dev.properties.deviceID == device.deviceID )
+            {
+                _selectedPhysicalDevice = &dev;
+                return;
+            }
+        }
+    }
+
+    inline GrapchicPhysicalDevice GetActiveGrapchiDevice()
+    {
+        return { _selectedPhysicalDevice->properties.deviceName, GrapchiDeviceType( _selectedPhysicalDevice->properties.deviceType ), _selectedPhysicalDevice->properties.deviceID };
     }
 
     void WindowDestroy()
