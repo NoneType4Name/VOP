@@ -6,5 +6,4 @@ CMakeUserPresets.json
 *.spv
 
 # dev ext
-.vscode/settings.json
 .cache

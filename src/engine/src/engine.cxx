@@ -8,20 +8,18 @@
 #include <tiny_obj_loader.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <vulkan/vk_enum_string_helper.h>
-#include <array>
-#include <vector>
 #include <format>
-#include <set>
 #include <iostream>
-#ifndef ENGINE_VERSION
-#    define ENGINE_VERSION VK_MAKE_VERSION( 0, 0, 1 )
-#endif
+#define ENGINE_VERSION VK_MAKE_VERSION( 0, 0, 1 )
 
 namespace Engine
 {
 
     namespace
     {
+        const std::vector<const char *> ValidationLayers{ "VK_LAYER_KHRONOS_validation" };
+        const std::vector<const char *> RequeredDeviceExts{ VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME };
+
         struct Vertex
         {
             glm::vec3 coordinate;
@@ -81,10 +79,11 @@ namespace Engine
             std::optional<uint32_t> graphic;
             std::optional<uint32_t> present;
             std::optional<uint32_t> transfer;
+            // std::optional<uint32_t> compute;
 
             bool isComplete()
             {
-                return graphic.has_value() && present.has_value() && transfer.has_value();
+                return graphic.has_value() && present.has_value() && transfer.has_value(); // && compute.has_value()
             }
         };
 
@@ -107,6 +106,61 @@ namespace Engine
             QueueFamilyIndices Indecies;
         };
 
+        struct _logicalDevice
+        {
+            _physicalDevice *physicalDevice;
+            VkDevice device;
+            VkPhysicalDeviceFeatures enabledFeatures{};
+            VkQueue graphicQueue;
+            VkQueue presentQueue;
+            VkQueue transferQueue;
+            // VkQueue computeQueue;
+            _logicalDevice( _physicalDevice &pDevice )
+            {
+                physicalDevice = &pDevice;
+                std::vector<VkDeviceQueueCreateInfo> QueuesCreateInfo{};
+                std::unordered_map<uint32_t, float> QueueFamiliesPriority{
+                    { physicalDevice->Indecies.graphic.value(), 1.0f },
+                    { physicalDevice->Indecies.present.value(), 1.0f },
+                    { physicalDevice->Indecies.transfer.value(), 1.0f },
+                    // { _selectedPhysicalDevice->Indecies.compute.value(), 1.0f },
+                };
+                for( auto &QueueFamily : QueueFamiliesPriority )
+                {
+                    VkDeviceQueueCreateInfo QueueCreateInfo{};
+                    QueueCreateInfo.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+                    QueueCreateInfo.queueFamilyIndex = QueueFamily.first;
+                    QueueCreateInfo.queueCount       = 1;
+                    QueueCreateInfo.pQueuePriorities = &QueueFamily.second;
+                    QueuesCreateInfo.push_back( QueueCreateInfo );
+                }
+                enabledFeatures.samplerAnisotropy = VK_TRUE;
+                enabledFeatures.sampleRateShading = VK_TRUE;
+                VkDeviceCreateInfo createInfo{};
+                createInfo.sType                = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+                createInfo.queueCreateInfoCount = static_cast<uint32_t>( QueuesCreateInfo.size() );
+                createInfo.pQueueCreateInfos    = QueuesCreateInfo.data();
+                createInfo.pEnabledFeatures     = &enabledFeatures;
+                // createInfo.pEnabledFeatures        = &PhysicalDeviceFeatures;
+                createInfo.enabledExtensionCount   = static_cast<uint32_t>( RequeredDeviceExts.size() );
+                createInfo.ppEnabledExtensionNames = RequeredDeviceExts.data();
+#ifdef ENGINE_DEBUG // to do
+                createInfo.enabledLayerCount   = static_cast<uint32_t>( ValidationLayers.size() );
+                createInfo.ppEnabledLayerNames = ValidationLayers.data();
+#else
+                createInfo.enabledLayerCount = 0;
+#endif
+                VkResult Result = vkCreateDevice( physicalDevice->device, &createInfo, nullptr, &device );
+                if( Result != VK_SUCCESS )
+                    SPDLOG_CRITICAL( "Failed to Create logical Device, error: {}", string_VkResult( Result ) );
+            }
+
+            ~_logicalDevice()
+            {
+                vkDestroyDevice( device, nullptr );
+            }
+        };
+
         uint16_t _width{ 800ui16 };
         uint16_t _height{ 600ui16 };
         uint16_t DisplayWidth;
@@ -116,10 +170,9 @@ namespace Engine
         GLFWmonitor *_monitor{ nullptr };
         VkInstance _instance;
         VkSurfaceKHR _surface;
-        _physicalDevice *_selectedPhysicalDevice{ nullptr };
+        _logicalDevice *_selectedLogicalDevice;
         std::vector<_physicalDevice> _avilablePhysicalDevices;
         KeyEventCallBack _KeyEventCallBack{ nullptr };
-        const char *ValidationLayers[ 1 ]{ "VK_LAYER_KHRONOS_validation" };
 
         struct _
         {
@@ -158,6 +211,40 @@ namespace Engine
             width     = mode->width;
             height    = mode->height;
         }
+
+        inline GrapchicPhysicalDevice _getPhysicalDeviceStruct( _physicalDevice *_device )
+        {
+            return { _device->properties.deviceName, GrapchiDeviceType( _device->properties.deviceType ), _device->properties.deviceID };
+        };
+
+        QueueFamilyIndices _physicalDeviceGetIndecies( VkPhysicalDevice _dev )
+        {
+            QueueFamilyIndices _indices;
+            uint32_t _c{ 0 };
+            vkGetPhysicalDeviceQueueFamilyProperties( _dev, &_c, nullptr );
+            std::vector<VkQueueFamilyProperties> QueueFamilies( _c );
+            vkGetPhysicalDeviceQueueFamilyProperties( _dev, &_c, QueueFamilies.data() );
+            _c = 0;
+            for( const auto &queueF : QueueFamilies )
+            {
+                VkBool32 presentSupport{ false };
+                vkGetPhysicalDeviceSurfaceSupportKHR( _dev, _c, _surface, &presentSupport );
+                if( !_indices.graphic.has_value() && queueF.queueFlags & VK_QUEUE_GRAPHICS_BIT )
+                {
+                    _indices.graphic = _c;
+                }
+                if( !_indices.present.has_value() && presentSupport ) _indices.present = _c;
+                else if( !_indices.transfer.has_value() && queueF.queueFlags & VK_QUEUE_TRANSFER_BIT )
+                    _indices.transfer = _c;
+                // else if( !_indices.compute.has_value() && queueF.queueFlags & VK_QUEUE_COMPUTE_BIT )
+                //     _indices.compute = index;
+                else
+                    break;
+                _c++;
+            }
+            return _indices;
+        }
+
         void FramebufferResizeCallback( GLFWwindow *window, int w, int h )
         {
             SetWindowResolution( w, h );
@@ -239,11 +326,11 @@ namespace Engine
 #ifdef _DEBUG
         uint32_t _c;
         vkEnumerateInstanceLayerProperties( &_c, nullptr );
-        VkLayerProperties *AviableLayers = new VkLayerProperties[ _c ];
-        vkEnumerateInstanceLayerProperties( &_c, AviableLayers );
-        size_t c{ sizeof( ValidationLayers ) / sizeof( ValidationLayers[ 0 ] ) };
-        std::vector<const char *> NotAvilableLayers{ c };
-        memcpy( &NotAvilableLayers[ 0 ], ValidationLayers, sizeof( ValidationLayers ) );
+        // VkLayerProperties *AviableLayers = new VkLayerProperties[ _c ];
+        std::vector<VkLayerProperties> AviableLayers{ _c };
+        vkEnumerateInstanceLayerProperties( &_c, AviableLayers.data() );
+        size_t c{ ValidationLayers.size() };
+        std::vector<const char *> NotAvilableLayers{ ValidationLayers.begin(), ValidationLayers.end() };
         for( size_t i{ 0 }; i < c; i++ )
         {
             for( uint32_t _i{ 0 }; _i < _c; _i++ )
@@ -267,9 +354,11 @@ namespace Engine
 
         VkValidationFeatureEnableEXT enabled[]{ VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT };
         VkValidationFeaturesEXT ValidationFeatures{};
-        ValidationFeatures.sType                         = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
-        ValidationFeatures.enabledValidationFeatureCount = sizeof( enabled ) / sizeof( enabled[ 0 ] );
-        ValidationFeatures.pEnabledValidationFeatures    = enabled;
+        ValidationFeatures.sType                          = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
+        ValidationFeatures.enabledValidationFeatureCount  = sizeof( enabled ) / sizeof( enabled[ 0 ] );
+        ValidationFeatures.pEnabledValidationFeatures     = enabled;
+        ValidationFeatures.disabledValidationFeatureCount = 0;
+        ValidationFeatures.pDisabledValidationFeatures    = nullptr;
 
         VkDebugUtilsMessengerCreateInfoEXT DebugUtilsMessengerCreateInfoEXT{};
         InstanceCreateInfo.pNext                         = &DebugUtilsMessengerCreateInfoEXT;
@@ -280,19 +369,20 @@ namespace Engine
         DebugUtilsMessengerCreateInfoEXT.pfnUserCallback = DebugCallback;
         // DebugUtilsMessengerCreateInfoEXT.pUserData       = this; // No used.
         glfwExtensionsVector.push_back( VK_EXT_DEBUG_UTILS_EXTENSION_NAME );
-        InstanceCreateInfo.enabledLayerCount   = sizeof( ValidationLayers ) / sizeof( ValidationLayers[ 0 ] );
-        InstanceCreateInfo.ppEnabledLayerNames = ValidationLayers;
+        InstanceCreateInfo.enabledLayerCount   = ValidationLayers.size();
+        InstanceCreateInfo.ppEnabledLayerNames = ValidationLayers.data();
 
 #endif
-        InstanceCreateInfo.enabledExtensionCount   = static_cast<uint32_t>( glfwExtensionsVector.size() );
+        InstanceCreateInfo.enabledExtensionCount   = glfwExtensionsVector.size();
         InstanceCreateInfo.ppEnabledExtensionNames = glfwExtensionsVector.data();
         VkApplicationInfo ApplicationInfo{};
         InstanceCreateInfo.pApplicationInfo = &ApplicationInfo;
         ApplicationInfo.sType               = VK_STRUCTURE_TYPE_APPLICATION_INFO;
         ApplicationInfo.engineVersion       = 0;
         ApplicationInfo.apiVersion          = VK_API_VERSION_1_0;
-        ApplicationInfo.pApplicationName    = ( "Grapchic engine of " + _title ).c_str();
-        ApplicationInfo.applicationVersion  = ENGINE_VERSION;
+        auto app_name{ "Grapchic engine of " + _title };
+        ApplicationInfo.pApplicationName   = app_name.c_str();
+        ApplicationInfo.applicationVersion = ENGINE_VERSION;
         VkResult Result{ vkCreateInstance( &InstanceCreateInfo, nullptr, &_instance ) };
 
 #if defined( _WIN32 )
@@ -320,7 +410,8 @@ namespace Engine
         }
         vkEnumeratePhysicalDevices( _instance, &_c, nullptr );
         std::vector<VkPhysicalDevice> _avilableDevices( _c );
-        _avilablePhysicalDevices.resize( _c );
+        _avilablePhysicalDevices.reserve( _c );
+        _avilablePhysicalDevices.clear();
         vkEnumeratePhysicalDevices( _instance, &_c, _avilableDevices.data() );
         for( auto device : _avilableDevices )
         {
@@ -344,30 +435,16 @@ namespace Engine
             swpchnprprts.AviliablePresentModes.resize( PresentModesCount );
             vkGetPhysicalDeviceSurfacePresentModesKHR( device, _surface, &PresentModesCount, swpchnprprts.AviliablePresentModes.data() );
 
-            QueueFamilyIndices indices;
-            uint32_t queueCount{ 0 };
-            vkGetPhysicalDeviceQueueFamilyProperties( device, &queueCount, nullptr );
-            std::vector<VkQueueFamilyProperties> QueueFamilies( queueCount );
-            vkGetPhysicalDeviceQueueFamilyProperties( device, &queueCount, QueueFamilies.data() );
-            uint32_t index{ 0 };
-            for( const auto &queueF : QueueFamilies )
-            {
-                if( queueF.queueFlags & VK_QUEUE_GRAPHICS_BIT ) indices.graphic = index;
-                if( queueF.queueFlags & VK_QUEUE_TRANSFER_BIT ) indices.transfer = index;
-                VkBool32 presentSupport{ false };
-                vkGetPhysicalDeviceSurfaceSupportKHR( device, index, _surface, &presentSupport );
-                if( presentSupport ) indices.present = index;
-                index++;
-            }
-
             _avilablePhysicalDevices.push_back( {
                 device,
                 PhysicalDeviceProperties,
                 PhysicalDeviceFeatures,
                 swpchnprprts,
-                indices,
+                _physicalDeviceGetIndecies( device ),
             } );
         }
+        std::cout << _avilablePhysicalDevices[ 0 ].properties.deviceName << std::endl;
+        _selectedLogicalDevice = new _logicalDevice( _avilablePhysicalDevices[ 0 ] );
     }
 
     void SetGraphicDevice( GrapchicPhysicalDevice device )
@@ -376,7 +453,8 @@ namespace Engine
         {
             if( dev.properties.deviceID == device.deviceID )
             {
-                _selectedPhysicalDevice = &dev;
+                delete _selectedLogicalDevice;
+                _selectedLogicalDevice = new _logicalDevice( dev );
                 return;
             }
         }
@@ -384,7 +462,20 @@ namespace Engine
 
     inline GrapchicPhysicalDevice GetActiveGrapchiDevice()
     {
-        return { _selectedPhysicalDevice->properties.deviceName, GrapchiDeviceType( _selectedPhysicalDevice->properties.deviceType ), _selectedPhysicalDevice->properties.deviceID };
+        return { _selectedLogicalDevice->physicalDevice->properties.deviceName, GrapchiDeviceType( _selectedLogicalDevice->physicalDevice->properties.deviceType ), _selectedLogicalDevice->physicalDevice->properties.deviceID };
+    }
+
+    std::vector<GrapchicPhysicalDevice> GetGraphicDevices()
+    {
+        std::vector<GrapchicPhysicalDevice> _devices;
+        for( const auto &_dev : _avilablePhysicalDevices )
+        {
+            _devices.push_back( { _dev.properties.deviceName,
+                                  GrapchiDeviceType( _dev.properties.deviceType ),
+                                  _dev.properties.deviceID,
+                                  { _dev.properties.limits.framebufferDepthSampleCounts } } );
+        }
+        return _devices;
     }
 
     void WindowDestroy()

@@ -1,5 +1,6 @@
 #ifndef ENGINE_HXX
 #define ENGINE_HXX
+#define ENGINE_DEBUG
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #define GLM_FORCE_RADIANS
@@ -22,7 +23,10 @@
 #        define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_CRITICAL
 #    endif
 #endif
+#include <set>
+#include <array>
 #include <string>
+#include <vector>
 #include <stdint.h>
 #include "engine_export.hxx"
 
@@ -40,7 +44,7 @@ namespace Engine
 
     struct ENGINE_EXPORT GrapchicPhysicalDeviceSettings
     {
-        uint8_t samples{ 0 };
+        uint32_t SampleCout{ 0 };
     };
 
     struct ENGINE_EXPORT GrapchicPhysicalDevice
@@ -48,11 +52,13 @@ namespace Engine
         const char *name;
         GrapchiDeviceType type;
         uint32_t deviceID;
+        GrapchicPhysicalDeviceSettings MaxSettings{};
     };
 
     ENGINE_EXPORT void WindowInit( uint16_t width, uint16_t height, const char *title );
     ENGINE_EXPORT void SetGraphicDevice( GrapchicPhysicalDevice device );
     ENGINE_EXPORT GrapchicPhysicalDevice GetActiveGrapchiDevice();
+    ENGINE_EXPORT std::vector<GrapchicPhysicalDevice> GetGraphicDevices();
     ENGINE_EXPORT void WindowDestroy();
     ENGINE_EXPORT void SetWindowResolution( uint16_t width, uint16_t height );
     ENGINE_EXPORT void CentralizeWindow();
