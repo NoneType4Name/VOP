@@ -17,6 +17,7 @@
 - Install all requerement libraries for project. Just do:
   1. `cd path/to/project/folder`
   2. `conan install . -of=bin/conan_build -b=missing -s build_type=Debug -s compiler.cppstd=20 -s compiler=clang -s compiler.version=16 --conf tools.cmake.cmaketoolchain:generator=Ninja`
+  **Remark: in conan profile you need to remove compiler.runtime***.
 
 - start configure with: `cmake bin/build --preset <preset>`
  as `<preset>` you can set:
