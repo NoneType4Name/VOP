@@ -14,11 +14,20 @@
 
 namespace Engine
 {
-
     namespace
     {
         const std::vector<const char *> ValidationLayers{ "VK_LAYER_KHRONOS_validation" };
         const std::vector<const char *> RequeredDeviceExts{ VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME };
+        uint16_t _width{ 800ui16 };
+        uint16_t _height{ 600ui16 };
+        uint16_t DisplayWidth;
+        uint16_t DisplayHeight;
+        std::string _title;
+        GLFWwindow *_window{ nullptr };
+        GLFWmonitor *_monitor{ nullptr };
+        VkInstance _instance;
+        VkSurfaceKHR _surface;
+        Settings *_settings;
 
         struct Vertex
         {
@@ -90,7 +99,8 @@ namespace Engine
         struct SwapChain
         {
             VkSwapchainKHR Swapchain;
-            VkFormat Format;
+            bool SwapchainInit{ false };
+            VkSurfaceFormatKHR Format{ VK_FORMAT_UNDEFINED };
             VkPresentModeKHR PresentMode;
             VkSurfaceCapabilitiesKHR Capabilities;
             std::vector<VkSurfaceFormatKHR> AviliableFormats;
@@ -100,6 +110,7 @@ namespace Engine
         struct _physicalDevice
         {
             VkPhysicalDevice device;
+            VkPhysicalDeviceMemoryProperties memoryProperties;
             VkPhysicalDeviceProperties properties;
             VkPhysicalDeviceFeatures features;
             SwapChain swapchain;
@@ -110,7 +121,21 @@ namespace Engine
         {
             _physicalDevice *physicalDevice;
             VkDevice device;
+            std::pair<VkRenderPass, bool> renderpass{ nullptr, false };
+            std::vector<VkImage> Images;
+            std::vector<VkImageView> ImagesViews;
+            std::vector<VkFramebuffer> ImageFrameBuffers;
             VkPhysicalDeviceFeatures enabledFeatures{};
+            VkImage DepthImage;
+            VkImageView DepthImageView;
+            VkDeviceMemory DepthImageMemory;
+
+            VkImage TextureImage;
+            VkDeviceMemory TextureImageMemory;
+            VkImageView TextureImageView;
+            VkSampler TextureSampler;
+
+            VkFormat DepthImageFormat;
             VkQueue graphicQueue;
             VkQueue presentQueue;
             VkQueue transferQueue;
@@ -153,50 +178,176 @@ namespace Engine
                 VkResult Result = vkCreateDevice( physicalDevice->device, &createInfo, nullptr, &device );
                 if( Result != VK_SUCCESS )
                     SPDLOG_CRITICAL( "Failed to Create logical Device, error: {}", string_VkResult( Result ) );
+                CreateSwapChain();
+                CreateRenderPass();
+            }
+
+            void CreateSwapChain()
+            {
+                if( physicalDevice->swapchain.Format.format == VK_FORMAT_UNDEFINED )
+                {
+                    VkSurfaceFormatKHR SurfaceFormat{ physicalDevice->swapchain.AviliableFormats[ 0 ] };
+                    for( const auto &format : physicalDevice->swapchain.AviliableFormats )
+                    {
+                        if( format.format == VK_FORMAT_B8G8R8A8_SRGB && format.colorSpace == VK_COLORSPACE_SRGB_NONLINEAR_KHR ) SurfaceFormat = format;
+                        break;
+                    }
+                    physicalDevice->swapchain.Format = SurfaceFormat;
+
+                    VkPresentModeKHR SurfacePresentMode{ VK_PRESENT_MODE_FIFO_KHR };
+                    for( const auto &mode : physicalDevice->swapchain.AviliablePresentModes )
+                    {
+                        if( mode == VK_PRESENT_MODE_MAILBOX_KHR ) SurfacePresentMode = mode;
+                        break;
+                    }
+                    physicalDevice->swapchain.PresentMode = SurfacePresentMode;
+
+                    for( auto format : std::vector<VkFormat>{ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT } )
+                    {
+                        VkFormatProperties FormatProperties{};
+                        vkGetPhysicalDeviceFormatProperties( physicalDevice->device, format, &FormatProperties );
+                        if( ( FormatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT ) == VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT )
+                        {
+                            DepthImageFormat = format;
+                            break;
+                        }
+                    }
+                }
+
+                VkSwapchainCreateInfoKHR SwapchainCreateInfo{};
+                SwapchainCreateInfo.sType            = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+                SwapchainCreateInfo.surface          = _surface;
+                SwapchainCreateInfo.minImageCount    = physicalDevice->swapchain.Capabilities.minImageCount;
+                SwapchainCreateInfo.imageFormat      = physicalDevice->swapchain.Format.format;
+                SwapchainCreateInfo.imageColorSpace  = physicalDevice->swapchain.Format.colorSpace;
+                SwapchainCreateInfo.presentMode      = physicalDevice->swapchain.PresentMode;
+                SwapchainCreateInfo.imageExtent      = physicalDevice->swapchain.Capabilities.currentExtent;
+                SwapchainCreateInfo.imageArrayLayers = 1;
+                SwapchainCreateInfo.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+                uint32_t physicalDeviceIndicesValue[]{ physicalDevice->Indecies.graphic.value(), physicalDevice->Indecies.present.value() };
+                if( physicalDevice->Indecies.graphic != physicalDevice->Indecies.present )
+                {
+                    SwapchainCreateInfo.imageSharingMode      = VK_SHARING_MODE_CONCURRENT;
+                    SwapchainCreateInfo.queueFamilyIndexCount = 2;
+                    SwapchainCreateInfo.pQueueFamilyIndices   = physicalDeviceIndicesValue;
+                }
+                else
+                {
+                    SwapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+                }
+                SwapchainCreateInfo.preTransform   = physicalDevice->swapchain.Capabilities.currentTransform;
+                SwapchainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+                SwapchainCreateInfo.clipped        = VK_TRUE;
+                if( physicalDevice->swapchain.SwapchainInit )
+                    SwapchainCreateInfo.oldSwapchain = physicalDevice->swapchain.Swapchain;
+                else
+                {
+                    SwapchainCreateInfo.oldSwapchain        = VK_NULL_HANDLE;
+                    physicalDevice->swapchain.SwapchainInit = true;
+                }
+
+                VkResult Result = vkCreateSwapchainKHR( device, &SwapchainCreateInfo, nullptr, &physicalDevice->swapchain.Swapchain );
+                std::cout << physicalDevice->swapchain.Swapchain;
+                // if( SwapchainCreateInfo.oldSwapchain )
+                vkDestroySwapchainKHR( device, SwapchainCreateInfo.oldSwapchain, nullptr );
+                uint32_t c;
+                vkGetSwapchainImagesKHR( device, physicalDevice->swapchain.Swapchain, &c, nullptr );
+                Images.resize( c );
+                vkGetSwapchainImagesKHR( device, physicalDevice->swapchain.Swapchain, &c, Images.data() );
+            }
+
+            void CreateRenderPass()
+            {
+                VkAttachmentDescription ColorAttachment{};
+                ColorAttachment.format         = physicalDevice->swapchain.Format.format;
+                ColorAttachment.samples        = static_cast<VkSampleCountFlagBits>( _settings->MultiSamplingCount );
+                ColorAttachment.loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
+                ColorAttachment.storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
+                ColorAttachment.stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+                ColorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+                ColorAttachment.initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
+                ColorAttachment.finalLayout    = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+                VkAttachmentDescription ColorAttachmentResolve{};
+                ColorAttachmentResolve.format         = physicalDevice->swapchain.Format.format;
+                ColorAttachmentResolve.samples        = VK_SAMPLE_COUNT_1_BIT;
+                ColorAttachmentResolve.loadOp         = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+                ColorAttachmentResolve.storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
+                ColorAttachmentResolve.stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+                ColorAttachmentResolve.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+                ColorAttachmentResolve.initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
+                ColorAttachmentResolve.finalLayout    = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+                VkAttachmentDescription DepthAttachment{};
+                DepthAttachment.format         = DepthImageFormat;
+                DepthAttachment.samples        = static_cast<VkSampleCountFlagBits>( _settings->MultiSamplingCount );
+                DepthAttachment.loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
+                DepthAttachment.storeOp        = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+                DepthAttachment.stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+                DepthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+                DepthAttachment.initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
+                DepthAttachment.finalLayout    = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+                VkAttachmentReference ColorAttachmentRef{};
+                ColorAttachmentRef.attachment = 0;
+                ColorAttachmentRef.layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+                VkAttachmentReference DepthAttachmentRef{};
+                DepthAttachmentRef.attachment = 1;
+                DepthAttachmentRef.layout     = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+                VkAttachmentReference ColorAttachmentResolveRef{};
+                ColorAttachmentResolveRef.attachment = 2;
+                ColorAttachmentResolveRef.layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+                VkSubpassDescription subpass{};
+                subpass.pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
+                subpass.colorAttachmentCount    = 1;
+                subpass.pColorAttachments       = &ColorAttachmentRef;
+                subpass.pResolveAttachments     = &ColorAttachmentResolveRef;
+                subpass.pDepthStencilAttachment = &DepthAttachmentRef;
+
+                VkSubpassDependency dependency{};
+                dependency.srcSubpass    = VK_SUBPASS_EXTERNAL;
+                dependency.dstSubpass    = 0;
+                dependency.srcStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+                dependency.srcAccessMask = 0;
+                dependency.dstStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+                dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+                VkAttachmentDescription Attachments[]{ ColorAttachment, DepthAttachment, ColorAttachmentResolve };
+
+                VkRenderPassCreateInfo renderPassInfo{};
+                renderPassInfo.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+                renderPassInfo.attachmentCount = sizeof( Attachments ) / sizeof( Attachments[ 0 ] );
+                renderPassInfo.pAttachments    = Attachments;
+                renderPassInfo.subpassCount    = 1;
+                renderPassInfo.pSubpasses      = &subpass;
+                renderPassInfo.dependencyCount = 1;
+                renderPassInfo.pDependencies   = &dependency;
+                VkResult Result{ vkCreateRenderPass( device, &renderPassInfo, nullptr, &renderpass.first ) };
             }
 
             ~_logicalDevice()
             {
+                vkDestroyRenderPass( device, renderpass.first, nullptr );
+                vkDestroySwapchainKHR( device, physicalDevice->swapchain.Swapchain, nullptr );
                 vkDestroyDevice( device, nullptr );
             }
         };
 
-        uint16_t _width{ 800ui16 };
-        uint16_t _height{ 600ui16 };
-        uint16_t DisplayWidth;
-        uint16_t DisplayHeight;
-        std::string _title;
-        GLFWwindow *_window{ nullptr };
-        GLFWmonitor *_monitor{ nullptr };
-        VkInstance _instance;
-        VkSurfaceKHR _surface;
         _logicalDevice *_selectedLogicalDevice;
         std::vector<_physicalDevice> _avilablePhysicalDevices;
         KeyEventCallBack _KeyEventCallBack{ nullptr };
+        SettingCallBack _uSettingsCallBack{ nullptr };
 
         struct _
         {
             _()
             {
-                spdlog::set_level( DEBUG ? spdlog::level::trace : spdlog::level::critical );
-                spdlog::set_pattern( "[%H:%M:%S.%e] [%^%l%$] %v" );
-                if( glfwInit() )
-                {
-                    SPDLOG_DEBUG( "GLFW{} inititialized.", glfwGetVersionString() );
-                    glfwSetErrorCallback( []( int code, const char *data )
-                                          { SPDLOG_ERROR( "GLFW ERROR {}: {}", code, data ); } );
-                }
-                else
-                {
-                    SPDLOG_CRITICAL( "GLFW not initialized." );
-                    SPDLOG_INFO( "Exit with code {}.", EXIT_FAILURE );
-                    exit( EXIT_FAILURE );
-                }
             }
             ~_()
             {
-                vkDestroySurfaceKHR( _instance, _surface, nullptr );
-                glfwTerminate();
             }
         } _;
 
@@ -306,8 +457,23 @@ namespace Engine
 
     } // namespace
 
-    void WindowInit( uint16_t width, uint16_t height, const char *title )
+    void init( uint16_t width, uint16_t height, const char *title, Settings *settings )
     {
+        _settings = settings;
+        spdlog::set_level( DEBUG ? spdlog::level::trace : spdlog::level::critical );
+        spdlog::set_pattern( "[%H:%M:%S.%e] [%^%l%$] %v" );
+        if( glfwInit() )
+        {
+            SPDLOG_DEBUG( "GLFW{} inititialized.", glfwGetVersionString() );
+            glfwSetErrorCallback( []( int code, const char *data )
+                                  { SPDLOG_ERROR( "GLFW ERROR {}: {}", code, data ); } );
+        }
+        else
+        {
+            SPDLOG_CRITICAL( "GLFW not initialized." );
+            SPDLOG_INFO( "Exit with code {}.", EXIT_FAILURE );
+            exit( EXIT_FAILURE );
+        }
         glfwWindowHint( GLFW_CLIENT_API, GLFW_NO_API );
         glfwWindowHint( GLFW_RESIZABLE, GLFW_TRUE );
         _window = glfwCreateWindow( width ? width : _width, height ? height : _height, title, nullptr, nullptr );
@@ -326,7 +492,6 @@ namespace Engine
 #ifdef _DEBUG
         uint32_t _c;
         vkEnumerateInstanceLayerProperties( &_c, nullptr );
-        // VkLayerProperties *AviableLayers = new VkLayerProperties[ _c ];
         std::vector<VkLayerProperties> AviableLayers{ _c };
         vkEnumerateInstanceLayerProperties( &_c, AviableLayers.data() );
         size_t c{ ValidationLayers.size() };
@@ -417,10 +582,12 @@ namespace Engine
         {
             uint16_t mark{ 0 };
             SwapChain swpchnprprts;
+            VkPhysicalDeviceMemoryProperties PhysicalDeviceMemoryProperties{};
             VkPhysicalDeviceProperties PhysicalDeviceProperties{};
             VkPhysicalDeviceFeatures PhysicalDeviceFeatures{};
             vkGetPhysicalDeviceProperties( device, &PhysicalDeviceProperties );
             vkGetPhysicalDeviceFeatures( device, &PhysicalDeviceFeatures );
+            vkGetPhysicalDeviceMemoryProperties( device, &PhysicalDeviceMemoryProperties );
 
             // if( PhysicalDeviceProperties.deviceType )
             //     mark = 5 - PhysicalDeviceProperties.deviceType;
@@ -437,13 +604,13 @@ namespace Engine
 
             _avilablePhysicalDevices.push_back( {
                 device,
+                PhysicalDeviceMemoryProperties,
                 PhysicalDeviceProperties,
                 PhysicalDeviceFeatures,
                 swpchnprprts,
                 _physicalDeviceGetIndecies( device ),
             } );
         }
-        std::cout << _avilablePhysicalDevices[ 0 ].properties.deviceName << std::endl;
         _selectedLogicalDevice = new _logicalDevice( _avilablePhysicalDevices[ 0 ] );
     }
 
@@ -478,9 +645,12 @@ namespace Engine
         return _devices;
     }
 
-    void WindowDestroy()
+    void shutdown()
     {
+        delete _selectedLogicalDevice;
+        vkDestroySurfaceKHR( _instance, _surface, nullptr );
         glfwDestroyWindow( _window );
+        glfwTerminate();
     }
 
     void SetWindowResolution( uint16_t width, uint16_t height )

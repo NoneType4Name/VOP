@@ -33,6 +33,8 @@
 namespace Engine
 {
     typedef void ( *KeyEventCallBack )( int key, int scancode, int action, int mods );
+    typedef void ( *SettingCallBack )( void *data );
+
     enum GrapchiDeviceType
     {
         OTHER = 0,
@@ -55,11 +57,16 @@ namespace Engine
         GrapchicPhysicalDeviceSettings MaxSettings{};
     };
 
-    ENGINE_EXPORT void WindowInit( uint16_t width, uint16_t height, const char *title );
+    struct ENGINE_EXPORT Settings
+    {
+        uint32_t MultiSamplingCount;
+    };
+
+    ENGINE_EXPORT void init( uint16_t width, uint16_t height, const char *title, Settings *settings );
     ENGINE_EXPORT void SetGraphicDevice( GrapchicPhysicalDevice device );
     ENGINE_EXPORT GrapchicPhysicalDevice GetActiveGrapchiDevice();
     ENGINE_EXPORT std::vector<GrapchicPhysicalDevice> GetGraphicDevices();
-    ENGINE_EXPORT void WindowDestroy();
+    ENGINE_EXPORT void shutdown();
     ENGINE_EXPORT void SetWindowResolution( uint16_t width, uint16_t height );
     ENGINE_EXPORT void CentralizeWindow();
     ENGINE_EXPORT void SetWindowTitle( const char *new_title );

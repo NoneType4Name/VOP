@@ -19,13 +19,10 @@ namespace
                 std::cerr << "Logger initialize error:\t" << logInitE.what() << "\n.";
                 exit( EXIT_FAILURE );
             }
-            Engine::WindowInit( 0, 0, "Quest App." );
-            Engine::SetKeyEventsCallback( []( int key, int scancode, int action, int mods )
-                                          { SPDLOG_DEBUG( "key pressed code: {}", std::to_string( key ) ); } );
         }
         ~_()
         {
-            Engine::WindowDestroy();
+            Engine::shutdown();
             SPDLOG_DEBUG( "--- Logging end ---" );
             spdlog::shutdown();
         }
@@ -34,6 +31,12 @@ namespace
 
 int main()
 {
+    auto settings               = Engine::Settings{};
+    settings.MultiSamplingCount = 2;
+
+    Engine::init( 0, 0, "Quest App.", &settings );
+    Engine::SetKeyEventsCallback( []( int key, int scancode, int action, int mods )
+                                  { SPDLOG_DEBUG( "key pressed code: {}", std::to_string( key ) ); } );
     while( !Engine::WindowShouldClose() )
     {
         Engine::UpdateEvents();
