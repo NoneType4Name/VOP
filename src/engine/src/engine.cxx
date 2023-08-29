@@ -126,6 +126,8 @@ namespace Engine
             std::vector<VkImageView> ImagesViews;
             std::vector<VkFramebuffer> ImageFrameBuffers;
             VkPhysicalDeviceFeatures enabledFeatures{};
+
+            VkDescriptorSetLayout DescriptorsSetLayout;
             VkImage DepthImage;
             VkImageView DepthImageView;
             VkDeviceMemory DepthImageMemory;
@@ -178,11 +180,29 @@ namespace Engine
                 VkResult Result = vkCreateDevice( physicalDevice->device, &createInfo, nullptr, &device );
                 if( Result != VK_SUCCESS )
                     SPDLOG_CRITICAL( "Failed to Create logical Device, error: {}", string_VkResult( Result ) );
-                CreateSwapChain();
-                CreateRenderPass();
+
+                VkDescriptorSetLayoutBinding DescriptorSetLayoutBindingUB{};
+                DescriptorSetLayoutBindingUB.binding         = 0;
+                DescriptorSetLayoutBindingUB.descriptorCount = 1;
+                DescriptorSetLayoutBindingUB.descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                DescriptorSetLayoutBindingUB.stageFlags      = VK_SHADER_STAGE_ALL_GRAPHICS;
+
+                VkDescriptorSetLayoutBinding DescriptorSetLayoutBindingSampler{};
+                DescriptorSetLayoutBindingSampler.binding         = 1;
+                DescriptorSetLayoutBindingSampler.descriptorCount = 1;
+                DescriptorSetLayoutBindingSampler.descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                DescriptorSetLayoutBindingSampler.stageFlags      = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+                VkDescriptorSetLayoutBinding Binds[]{ DescriptorSetLayoutBindingUB, DescriptorSetLayoutBindingSampler };
+                VkDescriptorSetLayoutCreateInfo DescriptorSetLayoutCreateInfo{};
+                DescriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+                DescriptorSetLayoutCreateInfo.bindingCount = sizeof( Binds ) / sizeof( Binds[ 0 ] );
+                DescriptorSetLayoutCreateInfo.pBindings    = Binds;
+                Result                                     = vkCreateDescriptorSetLayout( device, &DescriptorSetLayoutCreateInfo, nullptr, &DescriptorsSetLayout );
+                CreateRender();
             }
 
-            void CreateSwapChain()
+            void CreateRender()
             {
                 if( physicalDevice->swapchain.Format.format == VK_FORMAT_UNDEFINED )
                 {
@@ -214,50 +234,6 @@ namespace Engine
                     }
                 }
 
-                VkSwapchainCreateInfoKHR SwapchainCreateInfo{};
-                SwapchainCreateInfo.sType            = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-                SwapchainCreateInfo.surface          = _surface;
-                SwapchainCreateInfo.minImageCount    = physicalDevice->swapchain.Capabilities.minImageCount;
-                SwapchainCreateInfo.imageFormat      = physicalDevice->swapchain.Format.format;
-                SwapchainCreateInfo.imageColorSpace  = physicalDevice->swapchain.Format.colorSpace;
-                SwapchainCreateInfo.presentMode      = physicalDevice->swapchain.PresentMode;
-                SwapchainCreateInfo.imageExtent      = physicalDevice->swapchain.Capabilities.currentExtent;
-                SwapchainCreateInfo.imageArrayLayers = 1;
-                SwapchainCreateInfo.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-                uint32_t physicalDeviceIndicesValue[]{ physicalDevice->Indecies.graphic.value(), physicalDevice->Indecies.present.value() };
-                if( physicalDevice->Indecies.graphic != physicalDevice->Indecies.present )
-                {
-                    SwapchainCreateInfo.imageSharingMode      = VK_SHARING_MODE_CONCURRENT;
-                    SwapchainCreateInfo.queueFamilyIndexCount = 2;
-                    SwapchainCreateInfo.pQueueFamilyIndices   = physicalDeviceIndicesValue;
-                }
-                else
-                {
-                    SwapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-                }
-                SwapchainCreateInfo.preTransform   = physicalDevice->swapchain.Capabilities.currentTransform;
-                SwapchainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-                SwapchainCreateInfo.clipped        = VK_TRUE;
-                if( physicalDevice->swapchain.SwapchainInit )
-                    SwapchainCreateInfo.oldSwapchain = physicalDevice->swapchain.Swapchain;
-                else
-                {
-                    SwapchainCreateInfo.oldSwapchain        = VK_NULL_HANDLE;
-                    physicalDevice->swapchain.SwapchainInit = true;
-                }
-
-                VkResult Result = vkCreateSwapchainKHR( device, &SwapchainCreateInfo, nullptr, &physicalDevice->swapchain.Swapchain );
-                std::cout << physicalDevice->swapchain.Swapchain;
-                // if( SwapchainCreateInfo.oldSwapchain )
-                vkDestroySwapchainKHR( device, SwapchainCreateInfo.oldSwapchain, nullptr );
-                uint32_t c;
-                vkGetSwapchainImagesKHR( device, physicalDevice->swapchain.Swapchain, &c, nullptr );
-                Images.resize( c );
-                vkGetSwapchainImagesKHR( device, physicalDevice->swapchain.Swapchain, &c, Images.data() );
-            }
-
-            void CreateRenderPass()
-            {
                 VkAttachmentDescription ColorAttachment{};
                 ColorAttachment.format         = physicalDevice->swapchain.Format.format;
                 ColorAttachment.samples        = static_cast<VkSampleCountFlagBits>( _settings->MultiSamplingCount );
@@ -326,10 +302,53 @@ namespace Engine
                 renderPassInfo.dependencyCount = 1;
                 renderPassInfo.pDependencies   = &dependency;
                 VkResult Result{ vkCreateRenderPass( device, &renderPassInfo, nullptr, &renderpass.first ) };
+
+                // Renderpass
+                VkSwapchainCreateInfoKHR SwapchainCreateInfo{};
+                SwapchainCreateInfo.sType            = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+                SwapchainCreateInfo.surface          = _surface;
+                SwapchainCreateInfo.minImageCount    = physicalDevice->swapchain.Capabilities.minImageCount;
+                SwapchainCreateInfo.imageFormat      = physicalDevice->swapchain.Format.format;
+                SwapchainCreateInfo.imageColorSpace  = physicalDevice->swapchain.Format.colorSpace;
+                SwapchainCreateInfo.presentMode      = physicalDevice->swapchain.PresentMode;
+                SwapchainCreateInfo.imageExtent      = physicalDevice->swapchain.Capabilities.currentExtent;
+                SwapchainCreateInfo.imageArrayLayers = 1;
+                SwapchainCreateInfo.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+                uint32_t physicalDeviceIndicesValue[]{ physicalDevice->Indecies.graphic.value(), physicalDevice->Indecies.present.value() };
+                if( physicalDevice->Indecies.graphic != physicalDevice->Indecies.present )
+                {
+                    SwapchainCreateInfo.imageSharingMode      = VK_SHARING_MODE_CONCURRENT;
+                    SwapchainCreateInfo.queueFamilyIndexCount = 2;
+                    SwapchainCreateInfo.pQueueFamilyIndices   = physicalDeviceIndicesValue;
+                }
+                else
+                {
+                    SwapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+                }
+                SwapchainCreateInfo.preTransform   = physicalDevice->swapchain.Capabilities.currentTransform;
+                SwapchainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+                SwapchainCreateInfo.clipped        = VK_TRUE;
+                if( physicalDevice->swapchain.SwapchainInit )
+                    SwapchainCreateInfo.oldSwapchain = physicalDevice->swapchain.Swapchain;
+                else
+                {
+                    SwapchainCreateInfo.oldSwapchain        = VK_NULL_HANDLE;
+                    physicalDevice->swapchain.SwapchainInit = true;
+                }
+
+                Result = vkCreateSwapchainKHR( device, &SwapchainCreateInfo, nullptr, &physicalDevice->swapchain.Swapchain );
+                std::cout << physicalDevice->swapchain.Swapchain;
+                // if( SwapchainCreateInfo.oldSwapchain )
+                vkDestroySwapchainKHR( device, SwapchainCreateInfo.oldSwapchain, nullptr );
+                uint32_t c;
+                vkGetSwapchainImagesKHR( device, physicalDevice->swapchain.Swapchain, &c, nullptr );
+                Images.resize( c );
+                vkGetSwapchainImagesKHR( device, physicalDevice->swapchain.Swapchain, &c, Images.data() );
             }
 
             ~_logicalDevice()
             {
+                vkDestroyDescriptorSetLayout( device, DescriptorsSetLayout, nullptr );
                 vkDestroyRenderPass( device, renderpass.first, nullptr );
                 vkDestroySwapchainKHR( device, physicalDevice->swapchain.Swapchain, nullptr );
                 vkDestroyDevice( device, nullptr );
@@ -375,23 +394,35 @@ namespace Engine
             vkGetPhysicalDeviceQueueFamilyProperties( _dev, &_c, nullptr );
             std::vector<VkQueueFamilyProperties> QueueFamilies( _c );
             vkGetPhysicalDeviceQueueFamilyProperties( _dev, &_c, QueueFamilies.data() );
-            _c = 0;
-            for( const auto &queueF : QueueFamilies )
+            if( _c - 1 )
+            {
+                _c = 0;
+                for( const auto &queueF : QueueFamilies )
+                {
+                    VkBool32 presentSupport{ false };
+                    vkGetPhysicalDeviceSurfaceSupportKHR( _dev, _c, _surface, &presentSupport );
+                    if( !_indices.graphic.has_value() && queueF.queueFlags & VK_QUEUE_GRAPHICS_BIT )
+                    {
+                        _indices.graphic = _c;
+                    }
+                    if( !_indices.present.has_value() && presentSupport ) _indices.present = _c;
+                    else if( !_indices.transfer.has_value() && queueF.queueFlags & VK_QUEUE_TRANSFER_BIT )
+                        _indices.transfer = _c;
+                    // else if( !_indices.compute.has_value() && queueF.queueFlags & VK_QUEUE_COMPUTE_BIT )
+                    //     _indices.compute = index;
+                    else
+                        break;
+                    _c++;
+                }
+            }
+            else
             {
                 VkBool32 presentSupport{ false };
-                vkGetPhysicalDeviceSurfaceSupportKHR( _dev, _c, _surface, &presentSupport );
-                if( !_indices.graphic.has_value() && queueF.queueFlags & VK_QUEUE_GRAPHICS_BIT )
+                vkGetPhysicalDeviceSurfaceSupportKHR( _dev, 0, _surface, &presentSupport );
+                if( QueueFamilies[ 0 ].queueFlags & ( VK_QUEUE_TRANSFER_BIT | VK_QUEUE_GRAPHICS_BIT ) && presentSupport )
                 {
-                    _indices.graphic = _c;
+                    _indices = { 0, 0, 0 };
                 }
-                if( !_indices.present.has_value() && presentSupport ) _indices.present = _c;
-                else if( !_indices.transfer.has_value() && queueF.queueFlags & VK_QUEUE_TRANSFER_BIT )
-                    _indices.transfer = _c;
-                // else if( !_indices.compute.has_value() && queueF.queueFlags & VK_QUEUE_COMPUTE_BIT )
-                //     _indices.compute = index;
-                else
-                    break;
-                _c++;
             }
             return _indices;
         }
