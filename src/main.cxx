@@ -31,10 +31,15 @@ namespace
 
 int main()
 {
-    auto settings               = Engine::Settings{};
-    settings.MultiSamplingCount = 2;
 
-    Engine::init( 0, 0, "Quest App.", &settings );
+    Engine::AppCreateInfo App{};
+    App.width  = 0;
+    App.height = 0;
+    App.title  = "Quest App.";
+    App.vAppModels.push_back( "./assets/models/rectangle/model.obj" );
+    App.sSettings.MultiSamplingCount = 2;
+
+    Engine::init( App );
     Engine::SetKeyEventsCallback( []( int key, int scancode, int action, int mods )
                                   { SPDLOG_DEBUG( "key pressed code: {}", std::to_string( key ) ); } );
     while( !Engine::WindowShouldClose() )

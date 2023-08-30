@@ -1,3 +1,5 @@
+// Todo namespace with vk struct.
+
 #include <engine.hxx>
 #include <spdlog/spdlog.h>
 #include <stb_image.h>
@@ -15,6 +17,8 @@
 
 namespace Engine
 {
+    Settings settings{};
+
     namespace
     {
         const std::vector<const char *> ValidationLayers{ "VK_LAYER_KHRONOS_validation" };
@@ -28,7 +32,6 @@ namespace Engine
         GLFWmonitor *_monitor{ nullptr };
         VkInstance _instance;
         VkSurfaceKHR _surface;
-        Settings *_settings;
 
         struct Vertex
         {
@@ -76,6 +79,7 @@ namespace Engine
             uint32_t VerteciesOffset{};
             uint32_t IndeciesOffset{};
         };
+        std::unordered_map<uint32_t, Model> _models;
 
         struct DemensionsUniformrObject
         {
@@ -132,6 +136,11 @@ namespace Engine
             std::vector<VkSemaphore> ImageAvailableSemaphores;
             std::vector<VkSemaphore> RenderFinishedSemaphores;
             std::vector<VkFence> WaitFrames;
+            std::vector<VkDeviceSize> VertexIndeciesOffset;
+            VkBuffer VerteciesBuffer;
+            VkDeviceMemory VerteciesBufferMemory;
+            VkBuffer VertexIndeciesBuffer;
+            VkDeviceMemory VertexIndeciesBufferMemory;
 
             VkPhysicalDeviceFeatures enabledFeatures{};
 
@@ -158,7 +167,7 @@ namespace Engine
             VkQueue presentQueue;
             VkQueue transferQueue;
             // VkQueue computeQueue;
-            _logicalDevice( _physicalDevice &pDevice )
+            _logicalDevice( _physicalDevice &pDevice, std::vector<const char *> vModels )
             {
                 physicalDevice = &pDevice;
                 std::vector<VkDeviceQueueCreateInfo> QueuesCreateInfo{};
@@ -298,6 +307,102 @@ namespace Engine
                 vkGetDeviceQueue( device, physicalDevice->Indecies.graphic.value(), 0, &graphicQueue );
                 vkGetDeviceQueue( device, physicalDevice->Indecies.present.value(), 0, &presentQueue );
                 vkGetDeviceQueue( device, physicalDevice->Indecies.transfer.value(), 0, &transferQueue );
+
+                size_t len_vB{ 0 };
+                std::vector<Vertex> vBp;
+                std::vector<VkBufferCopy> vBpC;
+                size_t len_viB{ 0 };
+                std::vector<uint32_t> viBp;
+                std::vector<VkBufferCopy> viBpC;
+                for( uint32_t i{ 0 }; i < vModels.size(); i++ )
+                {
+                    tinyobj::attrib_t attrib;
+                    std::vector<tinyobj::shape_t> shapes;
+                    std::vector<tinyobj::material_t> materials;
+                    std::string warn, err;
+                    std::vector<Vertex> mVertecies;
+                    std::vector<uint32_t> mIndecies;
+                    VkBufferCopy sVerteciesCopy{};
+                    VkBufferCopy sIndeciesCopy{};
+                    if( !tinyobj::LoadObj( &attrib, &shapes, &materials, &warn, &err, vModels[ i ] ) )
+                    {
+                        throw fmt::format( "Failed to Load model {}:\nwarning:\t{}\nerror:\t{}.", vModels[ i ], warn, err );
+                    }
+                    if( warn.length() )
+                        SPDLOG_WARN( "Warn with load model {}:{}", vModels[ i ], warn );
+                    if( err.length() )
+                        SPDLOG_ERROR( "Error with load model {}:{}", vModels[ i ], err );
+                    Model mData;
+                    std::unordered_map<Vertex, uint32_t> uniqueVertices{};
+                    if( i ) mData.VerteciesOffset = _models[ ( i - 1 ) ].VerteciesOffset + _models[ ( i - 1 ) ].ModelVertecies.size();
+                    for( const auto &shape : shapes )
+                    {
+                        for( const auto &index : shape.mesh.indices )
+                        {
+                            Vertex vertex{};
+
+                            vertex.coordinate = {
+                                attrib.vertices[ 3 * index.vertex_index + 0 ],
+                                attrib.vertices[ 3 * index.vertex_index + 1 ],
+                                attrib.vertices[ 3 * index.vertex_index + 2 ] };
+
+                            vertex.texture = {
+                                attrib.texcoords[ 2 * index.texcoord_index + 0 ],
+                                1.0f - attrib.texcoords[ 2 * index.texcoord_index + 1 ] };
+
+                            vertex.color = { 1.0f, 1.0f, 1.0f, 1.f };
+
+                            if( uniqueVertices.count( vertex ) == 0 )
+                            {
+                                uniqueVertices[ vertex ] = mData.VerteciesOffset + static_cast<uint32_t>( mVertecies.size() );
+                                mVertecies.push_back( vertex );
+                                vBp.push_back( vertex );
+                            }
+
+                            mIndecies.push_back( uniqueVertices[ vertex ] );
+                            viBp.push_back( uniqueVertices[ vertex ] );
+                        }
+                    }
+
+                    mData.ModelVertecies          = mVertecies;
+                    mData.ModelVerteciesIndices   = mIndecies;
+                    len_vB += sVerteciesCopy.size = sizeof( Vertex ) * mData.ModelVertecies.size();
+                    len_viB += sIndeciesCopy.size = sizeof( uint32_t ) * mData.ModelVerteciesIndices.size();
+                    if( i )
+                    {
+                        sVerteciesCopy.dstOffset = sVerteciesCopy.srcOffset = vBpC.back().size + vBpC.back().srcOffset;
+                        sIndeciesCopy.dstOffset = sIndeciesCopy.srcOffset = viBpC.back().size + viBpC.back().srcOffset;
+                        mData.IndeciesOffset                              = _models[ i - 1 ].IndeciesOffset + static_cast<uint32_t>( _models[ i - 1 ].ModelVerteciesIndices.size() );
+                    }
+                    vBpC.push_back( sVerteciesCopy );
+                    VertexIndeciesOffset.push_back( sVerteciesCopy.dstOffset );
+                    viBpC.push_back( sIndeciesCopy );
+                    _models[ i ] = mData;
+                }
+                void *data;
+                VkBuffer TransferBuffer;
+                VkDeviceMemory TransferBufferMemory;
+                _createBuffer( len_vB, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, {}, TransferBuffer, TransferBufferMemory, 0 );
+                vkMapMemory( device, TransferBufferMemory, 0, len_vB, 0, &data );
+                memcpy( data, vBp.data(), static_cast<size_t>( len_vB ) );
+                vkUnmapMemory( device, TransferBufferMemory );
+                _createBuffer( len_vB, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, {}, VerteciesBuffer, VerteciesBufferMemory, 0 );
+                TransferDataBetweenBuffers( TransferBuffer, VerteciesBuffer, vBpC );
+                vkDestroyBuffer( device, TransferBuffer, nullptr );
+                vkFreeMemory( device, TransferBufferMemory, nullptr );
+
+                _createBuffer( len_viB, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, {}, TransferBuffer, TransferBufferMemory, 0 );
+
+                vkMapMemory( device, TransferBufferMemory, 0, len_viB, 0, &data );
+                memcpy( data, viBp.data(), len_viB );
+                vkUnmapMemory( device, TransferBufferMemory );
+
+                _createBuffer( len_viB, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, {}, VertexIndeciesBuffer, VertexIndeciesBufferMemory, 0 );
+
+                TransferDataBetweenBuffers( TransferBuffer, VerteciesBuffer, viBpC );
+
+                vkDestroyBuffer( device, TransferBuffer, nullptr );
+                vkFreeMemory( device, TransferBufferMemory, nullptr );
                 CreateRender();
             }
 
@@ -385,7 +490,7 @@ namespace Engine
 
                 VkAttachmentDescription ColorAttachment{};
                 ColorAttachment.format         = physicalDevice->swapchain.Format.format;
-                ColorAttachment.samples        = static_cast<VkSampleCountFlagBits>( _settings->MultiSamplingCount );
+                ColorAttachment.samples        = static_cast<VkSampleCountFlagBits>( settings.MultiSamplingCount );
                 ColorAttachment.loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
                 ColorAttachment.storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
                 ColorAttachment.stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -405,7 +510,7 @@ namespace Engine
 
                 VkAttachmentDescription DepthAttachment{};
                 DepthAttachment.format         = DepthImageFormat;
-                DepthAttachment.samples        = static_cast<VkSampleCountFlagBits>( _settings->MultiSamplingCount );
+                DepthAttachment.samples        = static_cast<VkSampleCountFlagBits>( settings.MultiSamplingCount );
                 DepthAttachment.loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
                 DepthAttachment.storeOp        = VK_ATTACHMENT_STORE_OP_DONT_CARE;
                 DepthAttachment.stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -546,7 +651,7 @@ namespace Engine
                 VkPipelineMultisampleStateCreateInfo Multisampling{};
                 Multisampling.sType                = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
                 Multisampling.sampleShadingEnable  = VK_FALSE;
-                Multisampling.rasterizationSamples = static_cast<VkSampleCountFlagBits>( _settings->MultiSamplingCount );
+                Multisampling.rasterizationSamples = static_cast<VkSampleCountFlagBits>( settings.MultiSamplingCount );
                 Multisampling.sampleShadingEnable  = VK_TRUE;
                 Multisampling.minSampleShading     = .4f;
 
@@ -613,16 +718,33 @@ namespace Engine
                 Result = vkCreateGraphicsPipelines( device, nullptr, 1, &GraphicPipeLineCreateInfo, nullptr, &Pipeline.first );
 
                 VkImageCreateInfo ColorImageCreateInfo{};
-                ColorImageCreateInfo.samples = static_cast<VkSampleCountFlagBits>( _settings->MultiSamplingCount );
+                ColorImageCreateInfo.samples = static_cast<VkSampleCountFlagBits>( settings.MultiSamplingCount );
                 ColorImageCreateInfo.format  = physicalDevice->swapchain.Format.format;
+
+                VkImageViewCreateInfo ImageViewCreateInfo{};
+                ImageViewCreateInfo.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+                ImageViewCreateInfo.image                           = ColorImage;
+                ImageViewCreateInfo.format                          = physicalDevice->swapchain.Format.format;
+                ImageViewCreateInfo.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
+                ImageViewCreateInfo.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+                ImageViewCreateInfo.subresourceRange.baseMipLevel   = 0;
+                ImageViewCreateInfo.subresourceRange.levelCount     = 1;
+                ImageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
+                ImageViewCreateInfo.subresourceRange.layerCount     = 1;
+
                 _createImage( physicalDevice->swapchain.Capabilities.currentExtent.width, physicalDevice->swapchain.Capabilities.currentExtent.height, VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_TILING_OPTIMAL, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ColorImageCreateInfo, ColorImage, ColorImageMemory, 0 );
-                ColorImageView = _createImageView( ColorImage, physicalDevice->swapchain.Format.format, VK_IMAGE_ASPECT_COLOR_BIT, {} );
+                Result = vkCreateImageView( device, &ImageViewCreateInfo, nullptr, &ColorImageView );
 
                 VkImageCreateInfo DepthImageCreateInfo{};
                 DepthImageCreateInfo.format  = DepthImageFormat;
-                DepthImageCreateInfo.samples = static_cast<VkSampleCountFlagBits>( _settings->MultiSamplingCount );
+                DepthImageCreateInfo.samples = static_cast<VkSampleCountFlagBits>( settings.MultiSamplingCount );
+
+                ImageViewCreateInfo.image                       = DepthImage;
+                ImageViewCreateInfo.format                      = DepthImageFormat;
+                ImageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
                 _createImage( physicalDevice->swapchain.Capabilities.currentExtent.width, physicalDevice->swapchain.Capabilities.currentExtent.height, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_TILING_OPTIMAL, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, DepthImageCreateInfo, DepthImage, DepthImageMemory, 0 );
-                DepthImageView = _createImageView( DepthImage, DepthImageFormat, VK_IMAGE_ASPECT_DEPTH_BIT, {} );
+                Result = vkCreateImageView( device, &ImageViewCreateInfo, nullptr, &DepthImageView );
+
                 VkPipelineStageFlags DepthSrcStageMask{ VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT };
                 VkPipelineStageFlags DepthDstStageMask{ VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT };
                 VkImageMemoryBarrier DepthImageMemoryBarrier{};
@@ -669,15 +791,11 @@ namespace Engine
 
                 ImagesViews.resize( Images.size() );
                 ImageFrameBuffers.resize( Images.size() );
-                VkImageViewCreateInfo ImageViewCreateInfo{};
-                ImageViewCreateInfo.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-                ImageViewCreateInfo.format                          = physicalDevice->swapchain.Format.format;
-                ImageViewCreateInfo.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
-                ImageViewCreateInfo.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-                ImageViewCreateInfo.subresourceRange.baseMipLevel   = 0;
-                ImageViewCreateInfo.subresourceRange.levelCount     = 1;
-                ImageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
-                ImageViewCreateInfo.subresourceRange.layerCount     = 1;
+
+                ImageViewCreateInfo.format                      = physicalDevice->swapchain.Format.format;
+                ImageViewCreateInfo.viewType                    = VK_IMAGE_VIEW_TYPE_2D;
+                ImageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+
                 for( size_t i{ 0 }; i < ImagesViews.size(); i++ )
                 {
                     ImageViewCreateInfo.image = Images[ i ];
@@ -760,99 +878,6 @@ namespace Engine
 
                 Result = vkAllocateMemory( device, &MemoryAllocateInfo, nullptr, &mImage );
                 Result = vkBindImageMemory( device, Image, mImage, MemoryOffset );
-            }
-
-            VkImageView _createImageView( VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, VkImageViewCreateInfo ImageViewCreateInfo )
-            {
-                VkImageView ImageView;
-                ImageViewCreateInfo.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-                ImageViewCreateInfo.image                           = image;
-                ImageViewCreateInfo.format                          = format;
-                ImageViewCreateInfo.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
-                ImageViewCreateInfo.subresourceRange.aspectMask     = aspectFlags;
-                ImageViewCreateInfo.subresourceRange.baseMipLevel   = ImageViewCreateInfo.subresourceRange.baseMipLevel ? ImageViewCreateInfo.subresourceRange.baseMipLevel : 0;
-                ImageViewCreateInfo.subresourceRange.levelCount     = ImageViewCreateInfo.subresourceRange.levelCount ? ImageViewCreateInfo.subresourceRange.levelCount : 1;
-                ImageViewCreateInfo.subresourceRange.baseArrayLayer = ImageViewCreateInfo.subresourceRange.baseArrayLayer ? ImageViewCreateInfo.subresourceRange.baseArrayLayer : 0;
-                ImageViewCreateInfo.subresourceRange.layerCount     = ImageViewCreateInfo.subresourceRange.layerCount ? ImageViewCreateInfo.subresourceRange.layerCount : 1;
-
-                VkResult Result{ vkCreateImageView( device, &ImageViewCreateInfo, nullptr, &ImageView ) };
-                return ImageView;
-            }
-
-            void ImageTransition( VkImage image, VkFormat format, VkImageLayout layout, VkImageLayout NewLayout, VkImageMemoryBarrier ImageMemoryBarrier )
-            {
-                VkPipelineStageFlags srcStageMask{ 0 };
-                VkPipelineStageFlags dstStageMask{ 0 };
-                ImageMemoryBarrier.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-                ImageMemoryBarrier.image               = image;
-                ImageMemoryBarrier.oldLayout           = layout;
-                ImageMemoryBarrier.newLayout           = NewLayout;
-                ImageMemoryBarrier.srcQueueFamilyIndex = ImageMemoryBarrier.srcQueueFamilyIndex ? ImageMemoryBarrier.srcQueueFamilyIndex : VK_QUEUE_FAMILY_IGNORED;
-                ImageMemoryBarrier.dstQueueFamilyIndex = ImageMemoryBarrier.dstQueueFamilyIndex ? ImageMemoryBarrier.dstQueueFamilyIndex : VK_QUEUE_FAMILY_IGNORED;
-
-                if( NewLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL )
-                {
-                    ImageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-                    if( format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT )
-                        ImageMemoryBarrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
-                }
-                else
-                    ImageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-
-                if( layout == VK_IMAGE_LAYOUT_UNDEFINED && NewLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL )
-                {
-                    ImageMemoryBarrier.srcAccessMask = 0;
-                    ImageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-                    srcStageMask                     = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-                    dstStageMask                     = VK_PIPELINE_STAGE_TRANSFER_BIT;
-                }
-                else if( layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && NewLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL )
-                {
-                    ImageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-                    ImageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-                    srcStageMask                     = VK_PIPELINE_STAGE_TRANSFER_BIT;
-                    dstStageMask                     = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-                }
-                else if( layout == VK_IMAGE_LAYOUT_UNDEFINED && NewLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL )
-                {
-                    ImageMemoryBarrier.srcAccessMask = 0;
-                    ImageMemoryBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-                    srcStageMask                     = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-                    dstStageMask                     = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-                }
-                else
-                {
-                    SPDLOG_CRITICAL( fmt::format( "Unsupported layout transition, old layout: {}, new layout: {}", std::to_string( layout ), std::to_string( NewLayout ) ) );
-                    throw std::runtime_error( std::format( "Unsupported layout transition, old layout: {}, new layout: {}", std::to_string( layout ), std::to_string( NewLayout ) ) );
-                }
-
-                ImageMemoryBarrier.subresourceRange.layerCount     = ImageMemoryBarrier.subresourceRange.layerCount ? ImageMemoryBarrier.subresourceRange.layerCount : 1;
-                ImageMemoryBarrier.subresourceRange.baseArrayLayer = ImageMemoryBarrier.subresourceRange.baseArrayLayer ? ImageMemoryBarrier.subresourceRange.baseArrayLayer : 0;
-                ImageMemoryBarrier.subresourceRange.levelCount     = ImageMemoryBarrier.subresourceRange.levelCount ? ImageMemoryBarrier.subresourceRange.levelCount : 1;
-                ImageMemoryBarrier.subresourceRange.baseMipLevel   = ImageMemoryBarrier.subresourceRange.baseMipLevel ? ImageMemoryBarrier.subresourceRange.baseMipLevel : 0;
-
-                VkCommandBuffer commandBuffer;
-                VkCommandBufferAllocateInfo CommandBufferAllocateInfo{};
-                CommandBufferAllocateInfo.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-                CommandBufferAllocateInfo.commandPool        = GrapchicCommandPool;
-                CommandBufferAllocateInfo.commandBufferCount = 1;
-                CommandBufferAllocateInfo.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-                VkResult Result{ vkAllocateCommandBuffers( device, &CommandBufferAllocateInfo, &commandBuffer ) };
-                VkCommandBufferBeginInfo CommandBufferBeginInfo{};
-                CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-                CommandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-                vkBeginCommandBuffer( commandBuffer, &CommandBufferBeginInfo );
-
-                vkCmdPipelineBarrier( commandBuffer, srcStageMask, dstStageMask, VK_DEPENDENCY_BY_REGION_BIT, 0, 0, 0, 0, 1, &ImageMemoryBarrier );
-                vkEndCommandBuffer( commandBuffer );
-                VkSubmitInfo SubmitInfo{};
-                SubmitInfo.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-                SubmitInfo.commandBufferCount = 1;
-                SubmitInfo.pCommandBuffers    = &commandBuffer;
-
-                Result = vkQueueSubmit( graphicQueue, 1, &SubmitInfo, nullptr );
-                vkQueueWaitIdle( graphicQueue );
-                vkFreeCommandBuffers( device, GrapchicCommandPool, 1, &commandBuffer );
             }
 
             void _createBuffer( VkDeviceSize size, VkBufferUsageFlags bUsage, VkMemoryPropertyFlags mProperties, VkBufferCreateInfo BufferCreateInfo, VkBuffer &Buffer, VkDeviceMemory &mBuffer, VkDeviceSize MemoryOffset )
@@ -1009,9 +1034,9 @@ namespace Engine
 
     } // namespace
 
-    void init( uint16_t width, uint16_t height, const char *title, Settings *settings )
+    void init( AppCreateInfo sAppCreateInfo )
     {
-        _settings = settings;
+        settings = sAppCreateInfo.sSettings;
         spdlog::set_level( DEBUG ? spdlog::level::trace : spdlog::level::critical );
         spdlog::set_pattern( "[%H:%M:%S.%e] [%^%l%$] %v" );
         if( glfwInit() )
@@ -1028,9 +1053,9 @@ namespace Engine
         }
         glfwWindowHint( GLFW_CLIENT_API, GLFW_NO_API );
         glfwWindowHint( GLFW_RESIZABLE, GLFW_TRUE );
-        _window = glfwCreateWindow( width ? width : _width, height ? height : _height, title, nullptr, nullptr );
-        _title  = title;
-        SetWindowResolution( width, height );
+        _window = glfwCreateWindow( sAppCreateInfo.width ? sAppCreateInfo.width : _width, sAppCreateInfo.height ? sAppCreateInfo.height : _height, sAppCreateInfo.title, nullptr, nullptr );
+        _title  = sAppCreateInfo.title;
+        SetWindowResolution( sAppCreateInfo.width, sAppCreateInfo.height );
         glfwSetFramebufferSizeCallback( _window, FramebufferResizeCallback );
         glfwSetWindowSizeCallback( _window, WindwoResizeCallback );
         CentralizeWindow();
@@ -1259,3 +1284,18 @@ namespace Engine
     }
 
 } // namespace Engine
+
+namespace std
+{
+    template <>
+    struct hash<Engine::Vertex>
+    {
+        size_t operator()( Engine::Vertex const &vertex ) const
+        {
+            return ( ( hash<glm::vec3>()( vertex.coordinate ) ^
+                       ( hash<glm::vec3>()( vertex.color ) << 1 ) ) >>
+                     1 ) ^
+                   ( hash<glm::vec2>()( vertex.texture ) << 1 );
+        }
+    };
+} // namespace std

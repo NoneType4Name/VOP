@@ -63,7 +63,16 @@ namespace Engine
         uint32_t MultiSamplingCount;
     };
 
-    ENGINE_EXPORT void init( uint16_t width, uint16_t height, const char *title, Settings *settings );
+    struct ENGINE_EXPORT AppCreateInfo
+    {
+        uint16_t width{ 800 };
+        uint16_t height{ 600 };
+        const char *title{};
+        std::vector<const char *> vAppModels{};
+        Settings sSettings{};
+    };
+
+    ENGINE_EXPORT void init( AppCreateInfo sAppCreateInfo );
     ENGINE_EXPORT void SetGraphicDevice( GrapchicPhysicalDevice device );
     ENGINE_EXPORT GrapchicPhysicalDevice GetActiveGrapchiDevice();
     ENGINE_EXPORT std::vector<GrapchicPhysicalDevice> GetGraphicDevices();
