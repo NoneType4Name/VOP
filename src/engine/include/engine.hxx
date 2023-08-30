@@ -1,34 +1,35 @@
+#pragma once
 #ifndef ENGINE_HXX
-#define ENGINE_HXX
-#define ENGINE_DEBUG
+#    define ENGINE_HXX
+#    define ENGINE_DEBUG
 
-#define TINYOBJLOADER_IMPLEMENTATION
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#define STB_IMAGE_IMPLEMENTATION
-#define GLFW_INCLUDE_VULKAN
-#if defined( _WIN32 )
-#    define VK_USE_PLATFORM_WIN32_KHR
-#    define GLFW_EXPOSE_NATIVE_WIN32
+#    define TINYOBJLOADER_IMPLEMENTATION
+#    define GLM_FORCE_RADIANS
+#    define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#    define STB_IMAGE_IMPLEMENTATION
+#    define GLFW_INCLUDE_VULKAN
+#    if defined( _WIN32 )
+#        define VK_USE_PLATFORM_WIN32_KHR
+#        define GLFW_EXPOSE_NATIVE_WIN32
 // #elif defined( __LINUX__ )
 // #    define VK_USE_PLATFORM_X11_KHR
 // #    define GLFW_EXPOSE_NATIVE_X11
-#endif
-#ifndef DEBUG
-#    ifdef _DEBUG
-#        define DEBUG               true
-#        define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
-#    else
-#        define DEBUG               false
-#        define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_CRITICAL
 #    endif
-#endif
-#include <set>
-#include <array>
-#include <string>
-#include <vector>
-#include <stdint.h>
-#include "engine_export.hxx"
+#    ifndef DEBUG
+#        ifdef _DEBUG
+#            define DEBUG               true
+#            define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
+#        else
+#            define DEBUG               false
+#            define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_CRITICAL
+#        endif
+#    endif
+#    include <set>
+#    include <array>
+#    include <string>
+#    include <vector>
+#    include <stdint.h>
+#    include "engine_export.hxx"
 
 namespace Engine
 {

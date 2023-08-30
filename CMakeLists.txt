@@ -2,11 +2,14 @@ cmake_minimum_required(VERSION 3.5)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_C_COMPILER clang)
 set(CMAKE_CXX_COMPILER clang++)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin/app)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin/app)
 
 project("quest"
         LANGUAGES CXX
         VERSION 0.0.0.1
 )
+
 
 find_program(conan_bin conan)
 if(NOT EXISTS "${CMAKE_SOURCE_DIR}/bin/conan_build/CMakePresets.json")

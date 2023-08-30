@@ -1,7 +1,5 @@
 include(GenerateExportHeader)
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
-
 add_library(engine SHARED src/engine.cxx include/engine.hxx)
 add_library(engine::engine ALIAS engine)
 

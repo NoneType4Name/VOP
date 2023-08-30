@@ -14,13 +14,15 @@ file(GLOB_RECURSE GLSL_SOURCE_FILES
 
 foreach(GLSL ${GLSL_SOURCE_FILES})
     get_filename_component(FILE_NAME ${GLSL} NAME_WLE)
-    get_filename_component(FILE_DIR ${GLSL} DIRECTORY)
+    get_filename_component(FILE_PATH ${GLSL} DIRECTORY)
+    file(RELATIVE_PATH RELATIVE_FILE_PATH ${PROJECT_SOURCE_DIR}/src ${FILE_PATH})
     get_filename_component(FILE_EXT ${GLSL} LAST_EXT)
     get_filename_component(SHADER_TYPE ${FILE_NAME} LAST_EXT)
     string(REPLACE "." "" FILE_EXT ${FILE_EXT})
     string(REPLACE "." "" SHADER_TYPE ${SHADER_TYPE})
+    message("${RELATIVE_FILE_PATH}, ${FILE_PATH}, ${PROJECT_SOURCE_DIR}")
     
-    set(SPIRV "${FILE_DIR}/${SHADER_BINARY_NAME}.${SHADER_TYPE}.${BIN_SHADER_FILE_EXT}")
+    set(SPIRV "${PROJECT_SOURCE_DIR}/bin/app/${RELATIVE_FILE_PATH}/${SHADER_BINARY_NAME}.${SHADER_TYPE}.${BIN_SHADER_FILE_EXT}")
     # if(NOT "${FILE_EXT}" STREQUAL "${BIN_SHADER_FILE_EXT}")
         add_custom_command(
             OUTPUT ${SPIRV}
