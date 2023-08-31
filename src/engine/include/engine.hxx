@@ -69,6 +69,8 @@ namespace Engine
         uint16_t height{ 600 };
         const char *title{};
         std::vector<const char *> vAppModels{};
+        const char *VertexShaderPath;
+        const char *FragmentShaderPath;
         Settings sSettings{};
     };
 

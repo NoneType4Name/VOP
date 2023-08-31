@@ -1,6 +1,6 @@
 include(GenerateExportHeader)
 
-add_library(engine SHARED src/engine.cxx include/engine.hxx)
+add_library(engine SHARED src/engine.cxx src/vulkanTools.hxx include/engine.hxx)
 add_library(engine::engine ALIAS engine)
 
 target_include_directories(engine PUBLIC ${glfw3_INCLUDE_DIRS})

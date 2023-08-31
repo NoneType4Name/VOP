@@ -50,6 +50,7 @@ set(EXECUTABLE_NAME "app")
 
 add_subdirectory(src/assets/shaders)
 add_subdirectory(src/engine)
+file(COPY ${CMAKE_SOURCE_DIR}/src/assets/models DESTINATION ${CMAKE_SOURCE_DIR}/bin/app/assets)
 
 
 add_executable(${EXECUTABLE_NAME} "src/main.cxx")
