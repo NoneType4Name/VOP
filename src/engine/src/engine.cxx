@@ -53,6 +53,8 @@ namespace Engine
             std::pair<VkPipelineLayout, bool> PipelineLayout{ nullptr, false };
             std::pair<VkPipeline, bool> Pipeline{ nullptr, false };
             VkCommandPool GrapchicCommandPool;
+            VkCommandPool PresentCommandPool;
+            VkCommandPool TransferCommandPool;
             VkImage DepthImage;
             VkImageView DepthImageView;
             VkDeviceMemory DepthImageMemory;
@@ -79,7 +81,9 @@ namespace Engine
                     { physicalDevice->Indecies.transfer.value(), 1.0f },
                     // { _selectedPhysicalDevice->Indecies.compute.value(), 1.0f },
                 };
-                std::vector<VkDeviceQueueCreateInfo> QueuesCreateInfo{ QueueFamiliesPriority.size() };
+                std::vector<VkDeviceQueueCreateInfo> QueuesCreateInfo;
+                QueuesCreateInfo.reserve( QueueFamiliesPriority.size() );
+
                 for( auto &QueueFamily : QueueFamiliesPriority )
                     QueuesCreateInfo.push_back( tools::queueCreateInfo( QueueFamily.first, 1, &QueueFamily.second ) );
                 enabledFeatures.samplerAnisotropy = VK_TRUE;
@@ -110,23 +114,28 @@ namespace Engine
                 if( Result != VK_SUCCESS )
                     SPDLOG_CRITICAL( "Failed to Create logical Device, error: {}", string_VkResult( Result ) );
 
-                auto DescriptorSetLayoutBinding{
-                    tools::descriptorSetLayoutCreateInfo(
-                        {
-                            tools::descriptorSetLayoutBinding( VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS, 0 ),
-                            tools::descriptorSetLayoutBinding( VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1 ),
-                        } ) };
-                Result = vkCreateDescriptorSetLayout( device, &DescriptorSetLayoutBinding, nullptr, &DescriptorsSetLayout );
+                std::vector<VkDescriptorSetLayoutBinding> DescriptorSetLayoutBinding{
+                    tools::descriptorSetLayoutBinding( VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS, 0 ),
+                    tools::descriptorSetLayoutBinding( VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1 ),
+                };
+                auto DescriptorSetLayoutBindingCI{ tools::descriptorSetLayoutCreateInfo( DescriptorSetLayoutBinding ) };
+                Result = vkCreateDescriptorSetLayout( device, &DescriptorSetLayoutBindingCI, nullptr, &DescriptorsSetLayout );
+                std::vector<VkDescriptorPoolSize> poolSizes{
+                    { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 },
+                    { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 } };
                 auto DescriptorPoolCreateInfo{ tools::descriptorPoolCreateInfo(
-                    { { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 },
-                      { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 } },
+                    poolSizes,
                     2 ) };
                 Result = vkCreateDescriptorPool( device, &DescriptorPoolCreateInfo, nullptr, &DescriptorPool );
 
-                auto GrapchiCommandPoolCreateInfo{ tools::commandPoolCreateInfo( VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT, physicalDevice->Indecies.graphic.value() ) };
                 auto DescriptorSetAllocateInfo{ tools::descriptorSetAllocateInfo( DescriptorPool, &DescriptorsSetLayout, 1 ) };
                 // DescriptorSets.resize( _MaxFramesInFlight );
+                auto GrapchiCommandPoolCreateInfo{ tools::commandPoolCreateInfo( VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT, physicalDevice->Indecies.graphic.value() ) };
+                auto PresentCommandPoolCreateInfo{ tools::commandPoolCreateInfo( VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT, physicalDevice->Indecies.present.value() ) };
+                auto TransferCommandPoolCreateInfo{ tools::commandPoolCreateInfo( VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT, physicalDevice->Indecies.transfer.value() ) };
                 Result = vkCreateCommandPool( device, &GrapchiCommandPoolCreateInfo, nullptr, &GrapchicCommandPool );
+                Result = vkCreateCommandPool( device, &PresentCommandPoolCreateInfo, nullptr, &PresentCommandPool );
+                Result = vkCreateCommandPool( device, &TransferCommandPoolCreateInfo, nullptr, &TransferCommandPool );
                 Result = vkAllocateDescriptorSets( device, &DescriptorSetAllocateInfo, &DescriptorSet );
 
                 UniformBuffers.resize( physicalDevice->swapchain.Capabilities.maxImageCount );
@@ -231,14 +240,15 @@ namespace Engine
                 void *data;
                 VkBuffer TransferBuffer;
                 VkDeviceMemory TransferBufferMemory;
-                tools::createBuffer( device, tools::bufferCreateInfo( VK_BUFFER_USAGE_TRANSFER_SRC_BIT, len_vB ), VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, TransferBuffer, TransferBufferMemory, 0, physicalDevice->memoryProperties );
+                std::vector<uint32_t> queueFamilyIndecies{ physicalDevice->Indecies.transfer.value() };
+                tools::createBuffer( device, tools::bufferCreateInfo( VK_BUFFER_USAGE_TRANSFER_SRC_BIT, len_vB, VK_SHARING_MODE_EXCLUSIVE, queueFamilyIndecies ), VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, TransferBuffer, TransferBufferMemory, 0, physicalDevice->memoryProperties );
                 vkMapMemory( device, TransferBufferMemory, 0, len_vB, 0, &data );
                 memcpy( data, vBp.data(), static_cast<size_t>( len_vB ) );
                 vkUnmapMemory( device, TransferBufferMemory );
                 tools::createBuffer( device, tools::bufferCreateInfo( VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, len_vB ), VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VerteciesBuffer, VerteciesBufferMemory, 0, physicalDevice->memoryProperties );
-                auto command_buffer{ tools::beginSingleTimeCommand( device, GrapchicCommandPool ) };
+                auto command_buffer{ tools::beginSingleTimeCommand( device, TransferCommandPool ) };
                 tools::bufcpy( command_buffer, TransferBuffer, VerteciesBuffer, vBpC );
-                tools::endSingleTimeCommand( device, GrapchicCommandPool, command_buffer, transferQueue );
+                tools::endSingleTimeCommand( device, TransferCommandPool, command_buffer, transferQueue );
                 vkDestroyBuffer( device, TransferBuffer, nullptr );
                 vkFreeMemory( device, TransferBufferMemory, nullptr );
 
@@ -248,11 +258,11 @@ namespace Engine
                 memcpy( data, viBp.data(), len_viB );
                 vkUnmapMemory( device, TransferBufferMemory );
 
-                tools::createBuffer( device, tools::bufferCreateInfo( VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, len_viB ), VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VertexIndeciesBuffer, VertexIndeciesBufferMemory, 0, physicalDevice->memoryProperties );
+                tools::createBuffer( device, tools::bufferCreateInfo( VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, len_viB, VK_SHARING_MODE_EXCLUSIVE, queueFamilyIndecies ), VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VertexIndeciesBuffer, VertexIndeciesBufferMemory, 0, physicalDevice->memoryProperties );
 
-                command_buffer = tools::beginSingleTimeCommand( device, GrapchicCommandPool );
-                tools::bufcpy( command_buffer, TransferBuffer, VerteciesBuffer, viBpC );
-                tools::endSingleTimeCommand( device, GrapchicCommandPool, command_buffer, transferQueue );
+                command_buffer = tools::beginSingleTimeCommand( device, TransferCommandPool );
+                tools::bufcpy( command_buffer, TransferBuffer, VertexIndeciesBuffer, viBpC );
+                tools::endSingleTimeCommand( device, TransferCommandPool, command_buffer, transferQueue );
 
                 vkDestroyBuffer( device, TransferBuffer, nullptr );
                 vkFreeMemory( device, TransferBufferMemory, nullptr );
@@ -291,6 +301,8 @@ namespace Engine
                     vkDestroyImageView( device, ImagesViews[ i ], nullptr );
                 }
                 vkDestroyCommandPool( device, GrapchicCommandPool, nullptr );
+                vkDestroyCommandPool( device, PresentCommandPool, nullptr );
+                vkDestroyCommandPool( device, TransferCommandPool, nullptr );
                 vkDestroyDescriptorPool( device, DescriptorPool, nullptr );
                 vkDestroyDescriptorSetLayout( device, DescriptorsSetLayout, nullptr );
                 vkDestroyPipeline( device, Pipeline.first, nullptr );
@@ -622,30 +634,11 @@ namespace Engine
                 DepthImageMemoryBarrier.subresourceRange.levelCount     = 1;
                 DepthImageMemoryBarrier.subresourceRange.baseMipLevel   = 0;
 
-                VkCommandBuffer TransitionCommandBuffer;
-                VkCommandBufferAllocateInfo CommandBufferAllocateInfo{};
-                CommandBufferAllocateInfo.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-                CommandBufferAllocateInfo.commandPool        = GrapchicCommandPool;
-                CommandBufferAllocateInfo.commandBufferCount = 1;
-                CommandBufferAllocateInfo.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+                auto command_buffer{ tools::beginSingleTimeCommand( device, GrapchicCommandPool ) };
 
-                Result = vkAllocateCommandBuffers( device, &CommandBufferAllocateInfo, &TransitionCommandBuffer );
-                VkCommandBufferBeginInfo CommandBufferBeginInfo{};
-                CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-                CommandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-                vkBeginCommandBuffer( TransitionCommandBuffer, &CommandBufferBeginInfo );
+                vkCmdPipelineBarrier( command_buffer, DepthSrcStageMask, DepthDstStageMask, VK_DEPENDENCY_BY_REGION_BIT, 0, 0, 0, 0, 1, &DepthImageMemoryBarrier );
 
-                vkCmdPipelineBarrier( TransitionCommandBuffer, DepthSrcStageMask, DepthDstStageMask, VK_DEPENDENCY_BY_REGION_BIT, 0, 0, 0, 0, 1, &DepthImageMemoryBarrier );
-
-                vkEndCommandBuffer( TransitionCommandBuffer );
-                VkSubmitInfo SubmitInfo{};
-                SubmitInfo.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-                SubmitInfo.commandBufferCount = 1;
-                SubmitInfo.pCommandBuffers    = &TransitionCommandBuffer;
-
-                Result = vkQueueSubmit( graphicQueue, 1, &SubmitInfo, nullptr );
-                vkQueueWaitIdle( graphicQueue );
-                vkFreeCommandBuffers( device, GrapchicCommandPool, 1, &TransitionCommandBuffer );
+                tools::endSingleTimeCommand( device, GrapchicCommandPool, command_buffer, graphicQueue );
 
                 ImagesViews.resize( Images.size() );
                 ImageFrameBuffers.resize( Images.size() );
@@ -674,89 +667,6 @@ namespace Engine
 
           private:
             std::unordered_map<const char *, VkShaderModule> _shaders;
-            // VkShaderModule _loadShader( VkDevice uDevice, const char *sPath )
-            // {
-            //     auto AviliableShader = _shaderStage[ sPath ];
-            //     if( AviliableShader )
-            //         return AviliableShader;
-            //     std::ifstream File{ sPath, std::fstream::ate | std::fstream::binary };
-            //     if( !File.is_open() )
-            //     {
-            //         SPDLOG_CRITICAL( "Failed to open shader: {}.", sPath );
-            //         throw std::runtime_error( std::format( "Failed to open shader: {}.", sPath ) );
-            //     }
-            //     size_t shBsize{ static_cast<size_t>( File.tellg() ) };
-            //     std::vector<char> Data( shBsize );
-            //     File.seekg( 0 );
-            //     File.read( Data.data(), shBsize );
-            //     File.close();
-            //     VkShaderModuleCreateInfo ShaderModuleCreateInfo{};
-            //     ShaderModuleCreateInfo.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-            //     ShaderModuleCreateInfo.codeSize = Data.size();
-            //     ShaderModuleCreateInfo.pCode    = reinterpret_cast<const uint32_t *>( Data.data() );
-            //     VkShaderModule shaderModule;
-            //     VkResult Result{ vkCreateShaderModule( uDevice, &ShaderModuleCreateInfo, nullptr, &shaderModule ) };
-            //     _shaderStage[ sPath ] = shaderModule;
-            //     return shaderModule;
-            // }
-
-            // uint32_t _memoryTypeIndex( uint32_t type, VkMemoryPropertyFlags properties )
-            // {
-            //     for( uint32_t i{ 0 }; i < physicalDevice->memoryProperties.memoryTypeCount; i++ )
-            //     {
-            //         if( ( type & ( 1 << i ) ) && ( ( physicalDevice->memoryProperties.memoryTypes[ i ].propertyFlags & properties ) == properties ) ) return i;
-            //     }
-            //     return -1;
-            // }
-            // void _createImage( const uint32_t width, const uint32_t height, const VkBufferUsageFlags iUsage, const VkImageTiling tiling, const VkMemoryPropertyFlags mProperties, VkImageCreateInfo ImageCreateInfo, VkImage &Image, VkDeviceMemory &mImage, VkDeviceSize MemoryOffset )
-            // {
-            //     ImageCreateInfo.sType         = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-            //     ImageCreateInfo.imageType     = VK_IMAGE_TYPE_2D;
-            //     ImageCreateInfo.extent.width  = width;
-            //     ImageCreateInfo.extent.height = height;
-            //     ImageCreateInfo.extent.depth  = ImageCreateInfo.extent.depth ? ImageCreateInfo.extent.depth : 1;
-            //     ImageCreateInfo.mipLevels     = ImageCreateInfo.mipLevels ? ImageCreateInfo.mipLevels : 1;
-            //     ImageCreateInfo.arrayLayers   = ImageCreateInfo.arrayLayers ? ImageCreateInfo.arrayLayers : 1;
-            //     ImageCreateInfo.format        = ImageCreateInfo.format ? ImageCreateInfo.format : VK_FORMAT_R8G8B8A8_SRGB;
-            //     ImageCreateInfo.tiling        = tiling;
-            //     ImageCreateInfo.initialLayout = ImageCreateInfo.initialLayout ? ImageCreateInfo.initialLayout : VK_IMAGE_LAYOUT_UNDEFINED;
-            //     ImageCreateInfo.usage         = iUsage;
-            //     ImageCreateInfo.sharingMode   = ImageCreateInfo.sharingMode ? ImageCreateInfo.sharingMode : VK_SHARING_MODE_EXCLUSIVE;
-            //     ImageCreateInfo.samples       = ImageCreateInfo.samples ? ImageCreateInfo.samples : VK_SAMPLE_COUNT_1_BIT;
-
-            //     VkResult Result{ vkCreateImage( device, &ImageCreateInfo, nullptr, &Image ) };
-
-            //     VkMemoryRequirements MemoryRequirements{};
-            //     vkGetImageMemoryRequirements( device, Image, &MemoryRequirements );
-
-            //     VkMemoryAllocateInfo MemoryAllocateInfo{};
-            //     MemoryAllocateInfo.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-            //     MemoryAllocateInfo.allocationSize  = MemoryRequirements.size;
-            //     MemoryAllocateInfo.memoryTypeIndex = _memoryTypeIndex( MemoryRequirements.memoryTypeBits, mProperties );
-
-            //     Result = vkAllocateMemory( device, &MemoryAllocateInfo, nullptr, &mImage );
-            //     Result = vkBindImageMemory( device, Image, mImage, MemoryOffset );
-            // }
-
-            // void _createBuffer( VkDeviceSize size, VkBufferUsageFlags bUsage, VkMemoryPropertyFlags mProperties, VkBufferCreateInfo BufferCreateInfo, VkBuffer &Buffer, VkDeviceMemory &mBuffer, VkDeviceSize MemoryOffset )
-            // {
-            //     BufferCreateInfo.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-            //     BufferCreateInfo.size        = size;
-            //     BufferCreateInfo.usage       = bUsage;
-            //     BufferCreateInfo.flags       = BufferCreateInfo.flags ? BufferCreateInfo.flags : 0;
-            //     BufferCreateInfo.sharingMode = BufferCreateInfo.sharingMode ? BufferCreateInfo.sharingMode : VK_SHARING_MODE_EXCLUSIVE;
-
-            //     VkResult Result{ vkCreateBuffer( device, &BufferCreateInfo, nullptr, &Buffer ) };
-            //     VkMemoryRequirements Requirements;
-            //     vkGetBufferMemoryRequirements( device, Buffer, &Requirements );
-            //     VkMemoryAllocateInfo MemoryAllocateInfo{};
-            //     MemoryAllocateInfo.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-            //     MemoryAllocateInfo.allocationSize  = Requirements.size;
-            //     MemoryAllocateInfo.memoryTypeIndex = _memoryTypeIndex( Requirements.memoryTypeBits, mProperties );
-
-            //     Result = vkAllocateMemory( device, &MemoryAllocateInfo, nullptr, &mBuffer );
-            //     Result = vkBindBufferMemory( device, Buffer, mBuffer, MemoryOffset );
-            // }
         };
 
         logicalDevice *_selectedLogicalDevice;
@@ -786,14 +696,14 @@ namespace Engine
             height    = mode->height;
         }
 
-        inline GrapchicPhysicalDevice _getPhysicalDeviceStruct( _physicalDevice *_device )
+        inline GrapchicPhysicalDevice _getPhysicalDeviceStruct( tools::physicalDevice *device )
         {
-            return { _device->properties.deviceName, GrapchiDeviceType( _device->properties.deviceType ), _device->properties.deviceID };
+            return { device->properties.deviceName, GrapchiDeviceType( device->properties.deviceType ), device->properties.deviceID };
         };
 
-        QueueFamilyIndices _physicalDeviceGetIndecies( VkPhysicalDevice _dev )
+        tools::queueFamilyIndices _physicalDeviceGetIndecies( VkPhysicalDevice _dev )
         {
-            QueueFamilyIndices _indices;
+            tools::queueFamilyIndices _indices;
             uint32_t _c{ 0 };
             vkGetPhysicalDeviceQueueFamilyProperties( _dev, &_c, nullptr );
             std::vector<VkQueueFamilyProperties> QueueFamilies( _c );
@@ -1016,7 +926,7 @@ namespace Engine
         for( auto device : _avilableDevices )
         {
             uint16_t mark{ 0 };
-            SwapChain swpchnprprts;
+            tools::swapChain swpchnprprts;
             VkPhysicalDeviceMemoryProperties PhysicalDeviceMemoryProperties{};
             VkPhysicalDeviceProperties PhysicalDeviceProperties{};
             VkPhysicalDeviceFeatures PhysicalDeviceFeatures{};
@@ -1046,7 +956,7 @@ namespace Engine
                 _physicalDeviceGetIndecies( device ),
             } );
         }
-        _selectedLogicalDevice = new _logicalDevice( _avilablePhysicalDevices[ 0 ] );
+        _selectedLogicalDevice = new logicalDevice( _avilablePhysicalDevices[ 0 ] );
     }
 
     void SetGraphicDevice( GrapchicPhysicalDevice device )
@@ -1056,7 +966,7 @@ namespace Engine
             if( dev.properties.deviceID == device.deviceID )
             {
                 delete _selectedLogicalDevice;
-                _selectedLogicalDevice = new _logicalDevice( dev );
+                _selectedLogicalDevice = new logicalDevice( dev );
                 return;
             }
         }

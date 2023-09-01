@@ -37,8 +37,8 @@ int main()
     App.height = 0;
     App.title  = "Quest App.";
     App.vAppModels.push_back( "./assets/models/rectangle/model.obj" );
-    App.VertexShaderPath             = "./assets/shaders/binary.frag.spv";
     App.VertexShaderPath             = "./assets/shaders/binary.vert.spv";
+    App.FragmentShaderPath           = "./assets/shaders/binary.frag.spv";
     App.sSettings.MultiSamplingCount = 2;
     Engine::init( App );
     Engine::SetKeyEventsCallback( []( int key, int scancode, int action, int mods )

@@ -77,8 +77,7 @@ namespace Engine
                 queueFamilyIndices Indecies;
             };
 
-            inline VkDeviceQueueCreateInfo
-            queueCreateInfo( uint32_t index, uint32_t count, const float *priority )
+            inline VkDeviceQueueCreateInfo queueCreateInfo( uint32_t index, uint32_t count, const float *priority )
             {
                 return { VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO, 0, 0, index, count, priority };
             };
@@ -128,9 +127,9 @@ namespace Engine
                 return { VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO };
             }
 
-            inline VkBufferCreateInfo bufferCreateInfo( VkBufferUsageFlags usage, VkDeviceSize size, VkSharingMode sharingMode = VK_SHARING_MODE_EXCLUSIVE )
+            inline VkBufferCreateInfo bufferCreateInfo( VkBufferUsageFlags usage, VkDeviceSize size, VkSharingMode sharingMode = VK_SHARING_MODE_EXCLUSIVE, const std::vector<uint32_t> &queueFamilyIndices = {} )
             {
-                return { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO, 0, 0, size, usage, sharingMode };
+                return { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO, 0, 0, size, usage, sharingMode, static_cast<uint32_t>( queueFamilyIndices.size() ), queueFamilyIndices.data() };
             }
 
             inline static VkVertexInputBindingDescription getVertexBindingDescription()
@@ -251,7 +250,7 @@ namespace Engine
                 if( !File.is_open() )
                 {
                     SPDLOG_CRITICAL( "Failed to open shader: {}.", cPath );
-                    throw std::runtime_error( std::format( "Failed to open shader: {}.", sPath ) );
+                    throw std::runtime_error( std::format( "Failed to open shader: {}.", cPath ) );
                 }
                 size_t shBsize{ static_cast<size_t>( File.tellg() ) };
                 std::vector<char> Data( shBsize );
