@@ -7,14 +7,6 @@
 #    define GLM_FORCE_RADIANS
 #    define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #    define STB_IMAGE_IMPLEMENTATION
-#    define GLFW_INCLUDE_VULKAN
-#    if defined( _WIN32 )
-#        define VK_USE_PLATFORM_WIN32_KHR
-#        define GLFW_EXPOSE_NATIVE_WIN32
-// #elif defined( __LINUX__ )
-// #    define VK_USE_PLATFORM_X11_KHR
-// #    define GLFW_EXPOSE_NATIVE_X11
-#    endif
 #    ifndef DEBUG
 #        ifdef _DEBUG
 #            define DEBUG               true
@@ -63,12 +55,29 @@ namespace Engine
         uint32_t MultiSamplingCount;
     };
 
+    // struct ENGINE_EXPORT AppModels
+    // {
+    //     inline uint32_t add( std::array<const char *, 2> &&_model_texture )
+    //     {
+    //         models_texture.push_back( _model_texture );
+    //         return _model_texture.size();
+    //     };
+
+    //     std::vector<std::array<const char *, 2>> get()
+    //     {
+    //         return models_texture;
+    //     }
+
+    //   private:
+    //     std::vector<std::array<const char *, 2>> models_texture;
+    // };
+
     struct ENGINE_EXPORT AppCreateInfo
     {
         uint16_t width{ 800 };
         uint16_t height{ 600 };
         const char *title{};
-        std::vector<const char *> vAppModels{};
+        std::vector<std::array<const char *, 2>> vAppModels{};
         const char *VertexShaderPath;
         const char *FragmentShaderPath;
         Settings sSettings{};

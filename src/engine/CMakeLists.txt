@@ -1,7 +1,28 @@
 include(GenerateExportHeader)
 
-add_library(engine SHARED src/engine.cxx src/vulkanTools.hxx include/engine.hxx)
+set(ENGINE_SOURCE_FILES 
+    ./src/engine.cxx
+    ./include/engine.hxx
+    ./src/common/globals.hxx
+    ./src/common/logging.hxx
+    ./src/debug.cxx
+    ./src/platform.hxx
+    )
+if(WIN32)
+    list(APPEND ENGINE_SOURCE_FILES src/windows/WindowsPlatform.cxx src/windows/WindowsPlatform.hxx src/windows/PlatformDefines.hxx)
+    add_definitions(-DPLATFORM_WINDOWS)
+endif()
+
+
+add_library(engine SHARED ${ENGINE_SOURCE_FILES})
 add_library(engine::engine ALIAS engine)
+
+find_package(Vulkan)
+find_package(glfw3 PATHS "${CMAKE_SOURCE_DIR}/conan_build")
+find_package(spdlog PATHS "${CMAKE_SOURCE_DIR}/conan_build")
+find_package(glm PATHS "${CMAKE_SOURCE_DIR}/conan_build")
+find_package(tinyobjloader PATHS "${CMAKE_SOURCE_DIR}/conan_build")
+find_package(stb PATHS "${CMAKE_SOURCE_DIR}/conan_build")
 
 target_include_directories(engine PUBLIC ${glfw3_INCLUDE_DIRS})
 target_link_libraries(engine glfw)

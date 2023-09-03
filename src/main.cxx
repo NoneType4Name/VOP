@@ -1,3 +1,11 @@
+#ifdef _DEBUG
+#    define DEBUG               true
+#    define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
+#else
+#    define DEBUG               false
+#    define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_CRITICAL
+#endif
+
 #include <engine.hxx>
 #include <spdlog/spdlog.h>
 #include <iostream>
@@ -31,14 +39,14 @@ namespace
 
 int main()
 {
-
     Engine::AppCreateInfo App{};
-    App.width  = 0;
-    App.height = 0;
-    App.title  = "Quest App.";
-    App.vAppModels.push_back( "./assets/models/rectangle/model.obj" );
-    App.VertexShaderPath             = "./assets/shaders/binary.vert.spv";
-    App.FragmentShaderPath           = "./assets/shaders/binary.frag.spv";
+    App.width              = 0;
+    App.height             = 0;
+    App.title              = "Quest App.";
+    App.VertexShaderPath   = "./assets/shaders/binary.vert.spv";
+    App.FragmentShaderPath = "./assets/shaders/binary.frag.spv";
+    // App.vAppModels.push_back( { "./assets/models/rectangle/model.obj", "./assets/textures/rectangle/model.png" } );
+    // App.vAppModels.push_back( { "./assets/models/rectangle/model.obj", "./assets/textures/rectangle/model2.png" } );
     App.sSettings.MultiSamplingCount = 2;
     Engine::init( App );
     Engine::SetKeyEventsCallback( []( int key, int scancode, int action, int mods )

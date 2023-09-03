@@ -1,14 +1,12 @@
 #include <engine.hxx>
+#include <platform.hxx>
 #include <spdlog/spdlog.h>
 #include <stb_image.h>
 #include <glm/glm.hpp>
 #include <glm/gtx/hash.hpp>
-#include <GLFW/glfw3.h>
-#include <GLFW/glfw3native.h>
 #include <glm/gtx/hash.hpp>
 #include <tiny_obj_loader.h>
 #include <glm/gtc/matrix_transform.hpp>
-#include <vulkan/vk_enum_string_helper.h>
 #include <fstream>
 
 namespace Engine
@@ -34,6 +32,15 @@ namespace Engine
                 std::vector<uint32_t> ModelVerteciesIndices;
                 uint32_t VerteciesOffset{};
                 uint32_t IndeciesOffset{};
+            };
+
+            struct texture
+            {
+                std::vector<vertex> ModelVertecies;
+                std::vector<uint32_t> ModelVerteciesIndices;
+                uint32_t VerteciesOffset{};
+                uint32_t IndeciesOffset{};
+                uint32_t ModelIndex{};
             };
 
             struct uniformrObject

@@ -2,6 +2,7 @@
 #include <vulkanTools.hxx>
 #include <format>
 #include <iostream>
+
 #define ENGINE_VERSION VK_MAKE_VERSION( 0, 0, 1 )
 
 namespace Engine
@@ -23,6 +24,7 @@ namespace Engine
         VkSurfaceKHR _surface;
 
         std::unordered_map<uint32_t, tools::model> _models;
+        std::unordered_map<uint32_t, tools::texture> _textures;
 
         class logicalDevice
         {
@@ -116,7 +118,7 @@ namespace Engine
 
                 std::vector<VkDescriptorSetLayoutBinding> DescriptorSetLayoutBinding{
                     tools::descriptorSetLayoutBinding( VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS, 0 ),
-                    tools::descriptorSetLayoutBinding( VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1 ),
+                    tools::descriptorSetLayoutBinding( VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1, 2 ),
                 };
                 auto DescriptorSetLayoutBindingCI{ tools::descriptorSetLayoutCreateInfo( DescriptorSetLayoutBinding ) };
                 Result = vkCreateDescriptorSetLayout( device, &DescriptorSetLayoutBindingCI, nullptr, &DescriptorsSetLayout );
@@ -165,107 +167,6 @@ namespace Engine
                 vkGetDeviceQueue( device, physicalDevice->Indecies.graphic.value(), 0, &graphicQueue );
                 vkGetDeviceQueue( device, physicalDevice->Indecies.present.value(), 0, &presentQueue );
                 vkGetDeviceQueue( device, physicalDevice->Indecies.transfer.value(), 0, &transferQueue );
-
-                size_t len_vB{ 0 };
-                std::vector<tools::vertex> vBp;
-                std::vector<VkBufferCopy> vBpC;
-                size_t len_viB{ 0 };
-                std::vector<uint32_t> viBp;
-                std::vector<VkBufferCopy> viBpC;
-                for( uint32_t i{ 0 }; i < AppSettings.vAppModels.size(); i++ )
-                {
-                    tinyobj::attrib_t attrib;
-                    std::vector<tinyobj::shape_t> shapes;
-                    std::vector<tinyobj::material_t> materials;
-                    std::string warn, err;
-                    std::vector<tools::vertex> mVertecies;
-                    std::vector<uint32_t> mIndecies;
-                    VkBufferCopy sVerteciesCopy{};
-                    VkBufferCopy sIndeciesCopy{};
-                    if( !tinyobj::LoadObj( &attrib, &shapes, &materials, &warn, &err, AppSettings.vAppModels[ i ] ) )
-                    {
-                        throw std::runtime_error( std::format( "\nwarning:\t{}\nerror:\t{}.", AppSettings.vAppModels[ i ], warn, err ) );
-                    }
-                    if( warn.length() )
-                        SPDLOG_WARN( "Warn with load model {}:{}", AppSettings.vAppModels[ i ], warn );
-                    if( err.length() )
-                        SPDLOG_ERROR( "Error with load model {}:{}", AppSettings.vAppModels[ i ], err );
-                    tools::model mData;
-                    std::unordered_map<tools::vertex, uint32_t> uniqueVertices{};
-                    if( i ) mData.VerteciesOffset = _models[ ( i - 1 ) ].VerteciesOffset + _models[ ( i - 1 ) ].ModelVertecies.size();
-                    for( const auto &shape : shapes )
-                    {
-                        for( const auto &index : shape.mesh.indices )
-                        {
-                            tools::vertex vertex{};
-
-                            vertex.coordinate = {
-                                attrib.vertices[ 3 * index.vertex_index + 0 ],
-                                attrib.vertices[ 3 * index.vertex_index + 1 ],
-                                attrib.vertices[ 3 * index.vertex_index + 2 ] };
-
-                            vertex.texture = {
-                                attrib.texcoords[ 2 * index.texcoord_index + 0 ],
-                                1.0f - attrib.texcoords[ 2 * index.texcoord_index + 1 ] };
-
-                            vertex.color = { 1.0f, 1.0f, 1.0f, 1.f };
-
-                            if( uniqueVertices.count( vertex ) == 0 )
-                            {
-                                uniqueVertices[ vertex ] = mData.VerteciesOffset + static_cast<uint32_t>( mVertecies.size() );
-                                mVertecies.push_back( vertex );
-                                vBp.push_back( vertex );
-                            }
-
-                            mIndecies.push_back( uniqueVertices[ vertex ] );
-                            viBp.push_back( uniqueVertices[ vertex ] );
-                        }
-                    }
-
-                    mData.ModelVertecies          = mVertecies;
-                    mData.ModelVerteciesIndices   = mIndecies;
-                    len_vB += sVerteciesCopy.size = sizeof( tools::vertex ) * mData.ModelVertecies.size();
-                    len_viB += sIndeciesCopy.size = sizeof( uint32_t ) * mData.ModelVerteciesIndices.size();
-                    if( i )
-                    {
-                        sVerteciesCopy.dstOffset = sVerteciesCopy.srcOffset = vBpC.back().size + vBpC.back().srcOffset;
-                        sIndeciesCopy.dstOffset = sIndeciesCopy.srcOffset = viBpC.back().size + viBpC.back().srcOffset;
-                        mData.IndeciesOffset                              = _models[ i - 1 ].IndeciesOffset + static_cast<uint32_t>( _models[ i - 1 ].ModelVerteciesIndices.size() );
-                    }
-                    vBpC.push_back( sVerteciesCopy );
-                    VertexIndeciesOffset.push_back( sVerteciesCopy.dstOffset );
-                    viBpC.push_back( sIndeciesCopy );
-                    _models[ i ] = mData;
-                }
-                void *data;
-                VkBuffer TransferBuffer;
-                VkDeviceMemory TransferBufferMemory;
-                std::vector<uint32_t> queueFamilyIndecies{ physicalDevice->Indecies.transfer.value() };
-                tools::createBuffer( device, tools::bufferCreateInfo( VK_BUFFER_USAGE_TRANSFER_SRC_BIT, len_vB, VK_SHARING_MODE_EXCLUSIVE, queueFamilyIndecies ), VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, TransferBuffer, TransferBufferMemory, 0, physicalDevice->memoryProperties );
-                vkMapMemory( device, TransferBufferMemory, 0, len_vB, 0, &data );
-                memcpy( data, vBp.data(), static_cast<size_t>( len_vB ) );
-                vkUnmapMemory( device, TransferBufferMemory );
-                tools::createBuffer( device, tools::bufferCreateInfo( VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, len_vB ), VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VerteciesBuffer, VerteciesBufferMemory, 0, physicalDevice->memoryProperties );
-                auto command_buffer{ tools::beginSingleTimeCommand( device, TransferCommandPool ) };
-                tools::bufcpy( command_buffer, TransferBuffer, VerteciesBuffer, vBpC );
-                tools::endSingleTimeCommand( device, TransferCommandPool, command_buffer, transferQueue );
-                vkDestroyBuffer( device, TransferBuffer, nullptr );
-                vkFreeMemory( device, TransferBufferMemory, nullptr );
-
-                tools::createBuffer( device, tools::bufferCreateInfo( VK_BUFFER_USAGE_TRANSFER_SRC_BIT, len_viB ), VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, TransferBuffer, TransferBufferMemory, 0, physicalDevice->memoryProperties );
-
-                vkMapMemory( device, TransferBufferMemory, 0, len_viB, 0, &data );
-                memcpy( data, viBp.data(), len_viB );
-                vkUnmapMemory( device, TransferBufferMemory );
-
-                tools::createBuffer( device, tools::bufferCreateInfo( VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, len_viB, VK_SHARING_MODE_EXCLUSIVE, queueFamilyIndecies ), VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VertexIndeciesBuffer, VertexIndeciesBufferMemory, 0, physicalDevice->memoryProperties );
-
-                command_buffer = tools::beginSingleTimeCommand( device, TransferCommandPool );
-                tools::bufcpy( command_buffer, TransferBuffer, VertexIndeciesBuffer, viBpC );
-                tools::endSingleTimeCommand( device, TransferCommandPool, command_buffer, transferQueue );
-
-                vkDestroyBuffer( device, TransferBuffer, nullptr );
-                vkFreeMemory( device, TransferBufferMemory, nullptr );
                 CreateRender();
             }
 
@@ -667,6 +568,7 @@ namespace Engine
 
           private:
             std::unordered_map<const char *, VkShaderModule> _shaders;
+            std::unordered_map<const char *, VkShaderModule> _textures;
         };
 
         logicalDevice *_selectedLogicalDevice;
