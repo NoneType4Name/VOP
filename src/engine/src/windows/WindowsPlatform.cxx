@@ -17,7 +17,7 @@ namespace Engine
                 if( _window == nullptr )
                     window::create();
                 VkWin32SurfaceCreateInfoKHR CI{ VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR, 0, 0, GetModuleHandle( nullptr ), glfwGetWin32Window( _window ) };
-                CHECK_RESULT( vkCreateWin32SurfaceKHR( instance, &CI, nullptr, &_surface ) );
+                CHECK_RESULT( vkCreateWin32SurfaceKHR( instance, &CI, ALLOCATION_CALLBACK, &_surface ) );
                 return _surface;
             };
 

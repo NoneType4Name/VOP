@@ -8,6 +8,8 @@
 #include <stdint.h>
 #include <common/logging.hxx>
 
+#define ALLOCATION_CALLBACK nullptr
+
 #define CHECK_RESULT( ret_result )                                                                                                                                        \
     {                                                                                                                                                                     \
         const VkResult result{ ret_result };                                                                                                                              \

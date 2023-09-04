@@ -3,8 +3,6 @@
 #include <format>
 #include <iostream>
 
-#define ENGINE_VERSION VK_MAKE_VERSION( 0, 0, 1 )
-
 namespace Engine
 {
     AppCreateInfo AppSettings{};
