@@ -10,6 +10,6 @@ namespace Engine
     {
         void createDevice( VkPhysicalDevice phDevice );
         void destroyDevice();
-        void getDevice();
+        const VkDevice getDevice();
     } // namespace tools
 } // namespace Engine

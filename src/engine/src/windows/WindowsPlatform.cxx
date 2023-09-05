@@ -7,21 +7,21 @@ namespace Engine
     {
         namespace tools
         {
-            GLFWwindow *_window{ nullptr };
-            VkSurfaceKHR _surface{ nullptr };
+            namespace
+            {
+                GLFWwindow *_window{ nullptr };
+                VkSurfaceKHR _surface{ nullptr };
+            } // namespace
 
-            void createWindow();
-
-            VkSurfaceKHR createSurface( VkInstance instance )
+            void createSurface( VkInstance instance )
             {
                 if( _window == nullptr )
                     window::create();
                 VkWin32SurfaceCreateInfoKHR CI{ VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR, 0, 0, GetModuleHandle( nullptr ), glfwGetWin32Window( _window ) };
                 CHECK_RESULT( vkCreateWin32SurfaceKHR( instance, &CI, ALLOCATION_CALLBACK, &_surface ) );
-                return _surface;
             };
 
-            VkSurfaceKHR getSurface()
+            const VkSurfaceKHR getSurface()
             {
                 return _surface;
             };

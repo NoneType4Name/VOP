@@ -22,20 +22,19 @@ namespace Engine
                 ApplicationInfo.pApplicationName   = nullptr;
                 ApplicationInfo.applicationVersion = ENGINE_VERSION;
 
-                VkInstanceCreateInfo InstanceCreateInfo{};
-                InstanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-
                 VkValidationFeatureEnableEXT enabled[]{ VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT };
                 VkValidationFeaturesEXT ValidationFeatures{};
                 ValidationFeatures.sType                         = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
                 ValidationFeatures.enabledValidationFeatureCount = sizeof( enabled ) / sizeof( enabled[ 0 ] );
                 ValidationFeatures.pEnabledValidationFeatures    = enabled;
+
+                VkInstanceCreateInfo InstanceCreateInfo{};
+                InstanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 #ifdef ENGINE_DEBUG
                 InstanceCreateInfo.pNext = &ValidationFeatures;
 #endif
-
                 std::vector<const char *> Extensions{}, Layers{};
-                Engine::tools::getInstanceLayersAndExtension( Extensions, Layers );
+                getInstanceLayersAndExtension( Extensions, Layers );
                 InstanceCreateInfo.enabledLayerCount       = Layers.size();
                 InstanceCreateInfo.ppEnabledLayerNames     = Layers.size() ? Layers.data() : nullptr;
                 InstanceCreateInfo.enabledExtensionCount   = Extensions.size();

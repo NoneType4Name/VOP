@@ -16,7 +16,8 @@ namespace Engine
     {
         namespace tools
         {
-            VkSurfaceKHR createSurface( VkInstance instance );
+            void createSurface( VkInstance instance );
+            const VkSurfaceKHR getSurface();
 
         } // namespace tools
     }     // namespace
@@ -29,7 +30,6 @@ namespace Engine
         };
         typedef void ( *ResizeCallback )( int width, int height );
         typedef void ( *EventCallBack )( int key, int scancode, int action, int mods );
-
         resolution getResolution();
         resolution getDisplayResolution();
         void create();
