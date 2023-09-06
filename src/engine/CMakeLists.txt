@@ -1,21 +1,38 @@
 include(GenerateExportHeader)
 
-set(ENGINE_SOURCE_FILES 
-    ./src/engine.cxx
-    ./include/engine.hxx
-    ./src/common/globals.hxx
-    ./src/common/logging.hxx
-    ./src/debug.cxx
-    ./src/platform.hxx
-    )
+# file(GLOB_RECURSE ENGINE_SOURCE_FILES
+        # "src/*.cxx"
+        # "src/*.hxx"
+        # "src/common/*.hxx"
+        # "src/common/*.cxx"
+# )
+
 if(WIN32)
-    list(APPEND ENGINE_SOURCE_FILES src/windows/WindowsPlatform.cxx src/windows/WindowsPlatform.hxx src/windows/PlatformDefines.hxx)
+    set(ENGINE_PLATFORM_FILES ./src/windows/WindowsPlatform.hxx ./src/windows/PlatformDefines.hxx ./src/windows/WindowsPlatform.cxx)
     add_definitions(-DPLATFORM_WINDOWS)
 endif()
+
+set( ENGINE_SOURCE_FILES
+    ./src/common/globals.hxx
+    ./src/common/logging.hxx
+    ./src/platform.hxx
+    ${ENGINE_PLATFORM_FILES}
+    ./src/RHI.hxx
+    ./src/debug.cxx
+    ./src/RHI.cxx
+    ./src/LayersAndExtensions.cxx
+    ./src/queue.hxx
+    ./src/queue.cxx
+    ./include/engine.hxx
+    ./src/engine.cxx
+    )
 
 
 add_library(engine SHARED ${ENGINE_SOURCE_FILES})
 add_library(engine::engine ALIAS engine)
+target_include_directories(engine PUBLIC src)
+set_target_properties(engine PROPERTIES COMPILE_FLAGS "-Wundefined-internal")
+
 
 find_package(Vulkan)
 find_package(glfw3 PATHS "${CMAKE_SOURCE_DIR}/conan_build")

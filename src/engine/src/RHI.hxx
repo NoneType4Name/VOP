@@ -20,9 +20,8 @@ namespace Engine
             //     std::vector<VkPresentModeKHR> AviliablePresentModes;
             // };
 
-#if ENGINE_DEBUG
-            void
-            setupDebugLayerCallback();
+#ifdef ENGINE_DEBUG
+            void setupDebugLayerCallback();
             void destoroyDebugLayerCallback();
 #endif
 

@@ -13,9 +13,9 @@ namespace Engine
             class queue
             {
               public:
-                queue();
+                queue() = default;
                 queue( VkDevice device, uint32_t familyIndex, uint32_t queueIndex );
-                ~queue();
+                ~queue() = default;
                 void init( VkDevice device, uint32_t familyIndex, uint32_t queueIndex );
                 void init( VkDevice device );
                 void setFamilyIndex( uint32_t index );
@@ -32,13 +32,16 @@ namespace Engine
                 std::optional<uint32_t> _queueIndex;
             };
 
-            struct Queues
+            class Queues
             {
+              public:
                 tools::queue graphic;
                 tools::queue present;
                 tools::queue transfer;
                 // tools::queue compute;
 
+                Queues()  = default;
+                ~Queues() = default;
                 void operator=( std::initializer_list<uint32_t> right );
                 tools::queue operator[]( size_t index );
                 void init( VkDevice device );

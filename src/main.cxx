@@ -49,12 +49,12 @@ int main()
     // App.vAppModels.push_back( { "./assets/models/rectangle/model.obj", "./assets/textures/rectangle/model2.png" } );
     App.sSettings.MultiSamplingCount = 2;
     Engine::init( App );
-    Engine::SetKeyEventsCallback( []( int key, int scancode, int action, int mods )
-                                  { SPDLOG_DEBUG( "key pressed code: {}", std::to_string( key ) ); } );
-    while( !Engine::WindowShouldClose() )
-    {
-        Engine::UpdateEvents();
-        auto d = Engine::GrapchicPhysicalDevice{};
-    }
+    // Engine::SetKeyEventsCallback( []( int key, int scancode, int action, int mods )
+    //                               { SPDLOG_DEBUG( "key pressed code: {}", std::to_string( key ) ); } );
+    // while( !Engine::WindowShouldClose() )
+    // {
+    //     Engine::UpdateEvents();
+    //     // auto d = Engine::GrapchicPhysicalDevice{};
+    // }
     return 0;
 }

@@ -5,18 +5,14 @@ namespace Engine
     {
         namespace tools
         {
-            queue::queue()
-            {
-            }
+            // queue::queue( void ) = default;
 
             queue::queue( VkDevice device, uint32_t familyIndex, uint32_t queueIndex ) : _familyIndex{ familyIndex }, _queueIndex{ queueIndex }
             {
                 vkGetDeviceQueue( device, _familyIndex, queueIndex, &_queue );
             }
 
-            queue::~queue()
-            {
-            }
+            // queue::~queue( void ) = default;
 
             void queue::init( VkDevice device, uint32_t familyIndex, uint32_t queueIndex )
             {
