@@ -20,13 +20,9 @@
 #    include <vector>
 #    include <stdint.h>
 #    include "engine_export.hxx"
-#    include <RHI.hxx>
 
 namespace Engine
 {
-    typedef void ( *KeyEventCallBack )( int key, int scancode, int action, int mods );
-    typedef void ( *SettingCallBack )( void *data );
-
     struct ENGINE_EXPORT Settings
     {
         uint32_t MultiSamplingCount;
@@ -65,13 +61,6 @@ namespace Engine
     // ENGINE_EXPORT GrapchicPhysicalDevice GetActiveGrapchiDevice();
     // ENGINE_EXPORT std::vector<GrapchicPhysicalDevice> GetGraphicDevices();
     ENGINE_EXPORT void shutdown();
-    ENGINE_EXPORT void SetWindowResolution( uint16_t width, uint16_t height );
-    ENGINE_EXPORT void CentralizeWindow();
-    ENGINE_EXPORT void SetWindowTitle( const char *new_title );
-    ENGINE_EXPORT void SetWindowTitle( std::string &new_title );
-    ENGINE_EXPORT KeyEventCallBack SetKeyEventsCallback( KeyEventCallBack Callback );
-    ENGINE_EXPORT bool WindowShouldClose();
-    ENGINE_EXPORT void UpdateEvents();
 
 } // namespace Engine
 

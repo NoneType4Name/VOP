@@ -12,15 +12,11 @@
 
 namespace Engine
 {
-    namespace
+    namespace tools
     {
-        namespace tools
-        {
-            void createSurface( VkInstance instance );
-            const VkSurfaceKHR getSurface();
-
-        } // namespace tools
-    }     // namespace
+        void createSurface( VkInstance instance );
+        const VkSurfaceKHR getSurface();
+    } // namespace tools
     namespace window
     {
         struct resolution
@@ -29,7 +25,7 @@ namespace Engine
             RESOLUTION_TYPE height{ 0 };
         };
         typedef void ( *ResizeCallback )( int width, int height );
-        typedef void ( *EventCallBack )( int key, int scancode, int action, int mods );
+        typedef void ( *KeyEventCallBack )( int key, int scancode, int action, int mods );
         resolution getResolution();
         resolution getDisplayResolution();
         void create();
@@ -38,7 +34,7 @@ namespace Engine
         void setTitle( std::string title );
         void setWindowResolution( RESOLUTION_TYPE width, RESOLUTION_TYPE height );
         void setResizeCallBack( ResizeCallback callback );
-        void setKeyEventsCallback( EventCallBack callback );
+        void setKeyEventsCallback( KeyEventCallBack callback );
         void updateEvents();
         bool shouldClose();
     } // namespace window

@@ -1,5 +1,5 @@
-#define ENGINE_DEBUG
 #include <engine.hxx>
+#include <RHI.hxx>
 
 namespace Engine
 {
@@ -9,10 +9,11 @@ namespace Engine
 
     void init( AppCreateInfo sAppCreateInfo )
     {
+        tools::createInstance();
     }
 
     void shutdown()
     {
+        tools::destroyInstance();
     }
-
 } // namespace Engine

@@ -30,7 +30,7 @@ namespace
         }
         ~_()
         {
-            Engine::shutdown();
+            // Engine::shutdown();
             SPDLOG_DEBUG( "--- Logging end ---" );
             spdlog::shutdown();
         }
@@ -49,6 +49,7 @@ int main()
     // App.vAppModels.push_back( { "./assets/models/rectangle/model.obj", "./assets/textures/rectangle/model2.png" } );
     App.sSettings.MultiSamplingCount = 2;
     Engine::init( App );
+    Engine::shutdown();
     // Engine::SetKeyEventsCallback( []( int key, int scancode, int action, int mods )
     //                               { SPDLOG_DEBUG( "key pressed code: {}", std::to_string( key ) ); } );
     // while( !Engine::WindowShouldClose() )

@@ -3,30 +3,27 @@
 
 namespace Engine
 {
-    namespace
+    namespace tools
     {
-        namespace tools
+        namespace
         {
-            namespace
-            {
-                GLFWwindow *_window{ nullptr };
-                VkSurfaceKHR _surface{ nullptr };
-            } // namespace
+            GLFWwindow *_window{ nullptr };
+            VkSurfaceKHR _surface{ nullptr };
+        } // namespace
 
-            void createSurface( VkInstance instance )
-            {
-                if( _window == nullptr )
-                    window::create();
-                VkWin32SurfaceCreateInfoKHR CI{ VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR, 0, 0, GetModuleHandle( nullptr ), glfwGetWin32Window( _window ) };
-                CHECK_RESULT( vkCreateWin32SurfaceKHR( instance, &CI, ALLOCATION_CALLBACK, &_surface ) );
-            };
+        void createSurface( VkInstance instance )
+        {
+            if( _window == nullptr )
+                window::create();
+            VkWin32SurfaceCreateInfoKHR CI{ VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR, 0, 0, GetModuleHandle( nullptr ), glfwGetWin32Window( _window ) };
+            CHECK_RESULT( vkCreateWin32SurfaceKHR( instance, &CI, ALLOCATION_CALLBACK, &_surface ) );
+        };
 
-            const VkSurfaceKHR getSurface()
-            {
-                return _surface;
-            };
-        } // namespace tools
-    }     // namespace
+        const VkSurfaceKHR getSurface()
+        {
+            return _surface;
+        };
+    } // namespace tools
     namespace window
     {
         namespace
@@ -34,7 +31,7 @@ namespace Engine
             RESOLUTION_TYPE _width{ 0 };
             RESOLUTION_TYPE _height{ 0 };
             ResizeCallback _resizeCallBack{ nullptr };
-            EventCallBack _eventCallBack{ nullptr };
+            KeyEventCallBack _eventCallBack{ nullptr };
         } // namespace
 
         resolution getResolution()
@@ -90,7 +87,7 @@ namespace Engine
                                         _resizeCallBack(w, h); } );
         }
 
-        void setKeyEventsCallback( EventCallBack callback )
+        void setKeyEventsCallback( KeyEventCallBack callback )
         {
             _eventCallBack = callback;
             glfwSetKeyCallback( tools::_window, []( GLFWwindow *wnd, int key, int scancode, int action, int mods )

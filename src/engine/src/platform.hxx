@@ -1,8 +1,6 @@
 #pragma once
-
-#include "windows/PlatformDefines.hxx"
 #if defined( PLATFORM_WINDOWS )
-// #    include "windows/PlatformDefines.hxx"
+#    include "windows/PlatformDefines.hxx"
 // #elif defined( PLATFORM_LINUX )
 // #    include "linux/VulkanPlatformDefines.h"
 // #elif defined( PLATFORM_ANDROID )
