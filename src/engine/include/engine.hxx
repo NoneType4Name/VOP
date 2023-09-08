@@ -5,24 +5,52 @@
 #    define GLM_FORCE_RADIANS
 #    define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #    define STB_IMAGE_IMPLEMENTATION
-#    ifndef DEBUG
-#        ifdef _DEBUG
-#            define DEBUG               true
-#            define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
-#        else
-#            define DEBUG               false
-#            define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_CRITICAL
-#        endif
-#    endif
-#    include <set>
+#    define RESOLUTION_TYPE uint16_t
+
+#    include <vector>
 #    include <array>
 #    include <string>
-#    include <vector>
 #    include <stdint.h>
 #    include "engine_export.hxx"
 
 namespace Engine
 {
+    namespace window
+    {
+        struct ENGINE_EXPORT resolution
+        {
+            RESOLUTION_TYPE width{ 0 };
+            RESOLUTION_TYPE height{ 0 };
+        };
+        typedef void ( *ResizeCallback )( int width, int height );
+        typedef void ( *KeyEventCallBack )( int key, int scancode, int action, int mods );
+        ENGINE_EXPORT resolution getResolution();
+        ENGINE_EXPORT resolution getDisplayResolution();
+        ENGINE_EXPORT void cenralize();
+        ENGINE_EXPORT void setTitle( const char *title );
+        ENGINE_EXPORT void setTitle( std::string title );
+        ENGINE_EXPORT void setWindowResolution( RESOLUTION_TYPE width, RESOLUTION_TYPE height );
+        ENGINE_EXPORT void setResizeCallBack( ResizeCallback callback );
+        ENGINE_EXPORT void setKeyEventsCallback( KeyEventCallBack callback );
+        ENGINE_EXPORT void updateEvents();
+        ENGINE_EXPORT bool shouldClose();
+    } // namespace window
+
+    enum PhysicalDeviceType
+    {
+        OTHER          = 0x0ui8,
+        INTEGRATED_GPU = 0x1ui8,
+        DISCRETE_GPU   = 0x2ui8,
+        VIRTUAL_GPU    = 0x4ui8,
+        CPU            = 0x8ui8
+    };
+
+    struct ENGINE_EXPORT Device
+    {
+        const char *name{ nullptr };
+        void *ptr;
+    };
+
     struct ENGINE_EXPORT Settings
     {
         uint32_t MultiSamplingCount;
@@ -50,16 +78,17 @@ namespace Engine
         uint16_t width{ 800 };
         uint16_t height{ 600 };
         const char *title{};
+        Device device;
         std::vector<std::array<const char *, 2>> vAppModels{};
         const char *VertexShaderPath;
         const char *FragmentShaderPath;
         Settings sSettings{};
     };
-    ENGINE_EXPORT void setup();
+
+    ENGINE_EXPORT std::vector<Device> GetGraphicDevices( uint8_t devicesTypeFlag = 0 );
     ENGINE_EXPORT void init( AppCreateInfo sAppCreateInfo );
-    // ENGINE_EXPORT void SetGraphicDevice( GrapchicPhysicalDevice device );
-    // ENGINE_EXPORT GrapchicPhysicalDevice GetActiveGrapchiDevice();
-    // ENGINE_EXPORT std::vector<GrapchicPhysicalDevice> GetGraphicDevices();
+    ENGINE_EXPORT void SetGraphicDevice( Device device ); // todo
+    ENGINE_EXPORT Device GetActiveGrapchiDevice();
     ENGINE_EXPORT void shutdown();
 
 } // namespace Engine

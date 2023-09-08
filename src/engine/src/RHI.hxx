@@ -31,6 +31,8 @@ namespace Engine
         std::vector<VkPhysicalDeviceProperties> getAviliableDevicesProperties();
         void getDeviceLayersAndExtension( std::vector<const char *> &deviceLayers, std::vector<const char *> &deviceExtensions );
         void getInstanceLayersAndExtension( std::vector<const char *> &instanceLayers, std::vector<const char *> &instanceExtensions );
+        bool instanseSupportExtensionsAndLayers( std::vector<const char *> extensions, std::vector<const char *> layers );
+        bool deviceSupportExtensionsAndLayers( std::vector<const char *> extensions, std::vector<const char *> layers );
         VkInstance getInstance();
         VkSwapchainKHR getSwapchain();
     } // namespace tools

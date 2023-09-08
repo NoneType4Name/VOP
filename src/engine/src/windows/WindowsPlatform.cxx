@@ -1,5 +1,6 @@
 #include "WindowsPlatform.hxx"
 #include <common/logging.hxx>
+#include <engine.hxx>
 
 namespace Engine
 {
@@ -13,16 +14,30 @@ namespace Engine
 
         void createSurface( VkInstance instance )
         {
-            if( _window == nullptr )
-                window::create();
             VkWin32SurfaceCreateInfoKHR CI{ VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR, 0, 0, GetModuleHandle( nullptr ), glfwGetWin32Window( _window ) };
             CHECK_RESULT( vkCreateWin32SurfaceKHR( instance, &CI, ALLOCATION_CALLBACK, &_surface ) );
         };
+
+        void createWindow( RESOLUTION_TYPE width, RESOLUTION_TYPE height, const char *title )
+        {
+            window::resolution displayRes{ window::getDisplayResolution() };
+            glfwWindowHint( GLFW_CLIENT_API, GLFW_NO_API );
+            glfwWindowHint( GLFW_RESIZABLE, GLFW_TRUE );
+            _window = glfwCreateWindow( width ? width : displayRes.width, height ? height : displayRes.height, title, nullptr, nullptr );
+            window::setTitle( title );
+            window::setWindowResolution( width, height );
+        }
+
+        void destroyWindow()
+        {
+            glfwDestroyWindow( _window );
+        }
 
         const VkSurfaceKHR getSurface()
         {
             return _surface;
         };
+
     } // namespace tools
     namespace window
     {
@@ -30,6 +45,7 @@ namespace Engine
         {
             RESOLUTION_TYPE _width{ 0 };
             RESOLUTION_TYPE _height{ 0 };
+            std::string _title{};
             ResizeCallback _resizeCallBack{ nullptr };
             KeyEventCallBack _eventCallBack{ nullptr };
         } // namespace
@@ -51,10 +67,6 @@ namespace Engine
             return { static_cast<RESOLUTION_TYPE>( mode->width ), static_cast<RESOLUTION_TYPE>( mode->height ) };
         }
 
-        void create()
-        {
-        }
-
         void cenralize()
         {
             auto monitor_resolution{ getDisplayResolution() };
@@ -64,17 +76,34 @@ namespace Engine
 
         void setTitle( const char *title )
         {
+            _title = title;
             glfwSetWindowTitle( tools::_window, title );
         }
 
         void setTitle( std::string title )
         {
-            glfwSetWindowTitle( tools::_window, title.c_str() );
+            setTitle( title.c_str() );
         }
 
         void setWindowResolution( RESOLUTION_TYPE width, RESOLUTION_TYPE height )
         {
-            glfwSetWindowSize( tools::_window, width, height );
+            resolution displayRes{ getDisplayResolution() };
+            if( width + height )
+            {
+                glfwSetWindowAttrib( tools::_window, GLFW_RESIZABLE, GLFW_TRUE );
+                glfwSetWindowAttrib( tools::_window, GLFW_DECORATED, GLFW_TRUE );
+            }
+            else
+            {
+
+                glfwSetWindowAttrib( tools::_window, GLFW_RESIZABLE, GLFW_FALSE );
+                glfwSetWindowAttrib( tools::_window, GLFW_DECORATED, GLFW_FALSE );
+            }
+            if( !width ) width = displayRes.width;
+            if( !height ) height = displayRes.height;
+            _width  = width;
+            _height = height;
+            glfwSetWindowSize( tools::_window, static_cast<int>( width ), static_cast<int>( height ) );
             _resizeCallBack( width, height );
         }
 

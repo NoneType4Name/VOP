@@ -1,5 +1,11 @@
 #pragma once
 #include <fstream>
+#include <optional>
+#include <vector>
+#include <array>
+#include <set>
+#include <format>
+#include <stdint.h>
 
 #define ALLOCATION_CALLBACK nullptr
 

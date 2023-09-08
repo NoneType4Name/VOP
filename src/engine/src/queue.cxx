@@ -7,7 +7,7 @@ namespace Engine
 
         queue::queue( VkDevice device, uint32_t familyIndex, uint32_t queueIndex ) : _familyIndex{ familyIndex }, _queueIndex{ queueIndex }
         {
-            vkGetDeviceQueue( device, _familyIndex, queueIndex, &_queue );
+            vkGetDeviceQueue( device, _familyIndex.value(), queueIndex, &_queue );
         }
 
         // queue::~queue( void ) = default;
@@ -18,22 +18,22 @@ namespace Engine
         }
         void queue::init( VkDevice device )
         {
-            queue( device, _familyIndex, _queueIndex.value() );
+            queue( device, _familyIndex.value(), _queueIndex );
         }
 
         const uint32_t queue::GetFamilyIndex() const
         {
-            return _familyIndex;
+            return _familyIndex.value();
         }
 
         const uint32_t queue::GetQueueIndex() const
         {
-            return _queueIndex.value();
+            return _queueIndex;
         }
 
         const bool queue::inited() const
         {
-            return _queueIndex.has_value();
+            return _familyIndex.has_value();
         }
 
         const VkQueue queue::GetHandle() const

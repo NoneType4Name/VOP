@@ -1,5 +1,4 @@
 #pragma once
-#include <optional>
 #include <common/globals.hxx>
 #include <common/logging.hxx>
 #include <platform.hxx>
@@ -26,8 +25,8 @@ namespace Engine
 
           private:
             VkQueue _queue{ nullptr };
-            uint32_t _familyIndex{ 0 };
-            std::optional<uint32_t> _queueIndex;
+            uint32_t _queueIndex{ 0 };
+            std::optional<uint32_t> _familyIndex;
         };
 
         class Queues

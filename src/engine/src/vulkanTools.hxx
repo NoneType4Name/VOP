@@ -11,8 +11,7 @@
 
 namespace Engine
 {
-    namespace
-    {
+
         namespace tools
         {
             struct vertex
@@ -275,7 +274,7 @@ namespace Engine
 
         } // namespace tools
     }     // namespace
-} // namespace Engine
+
 
 namespace std
 {
