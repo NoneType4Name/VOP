@@ -83,7 +83,7 @@ namespace Engine
             }
         }
 
-        bool deviceSupportExtensionsAndLayers( std::vector<const char *> extensions, std::vector<const char *> layers )
+        bool isDeviceSupportExtensions( std::vector<const char *> extensions )
         {
             uint32_t _c{ 0 };
             vkEnumerateDeviceExtensionProperties( _phDevice, nullptr, &_c, nullptr );
@@ -95,15 +95,6 @@ namespace Engine
                 tmpRequeredDeviceExts.erase( ext.extensionName );
             }
 
-            vkEnumerateDeviceLayerProperties( _phDevice, &_c, nullptr );
-            std::vector<VkLayerProperties> AvilableLNames{ _c };
-            vkEnumerateDeviceLayerProperties( _phDevice, &_c, AvilableLNames.data() );
-            std::set<std::string> tmpRequeredDeviceL{ layers.begin(), layers.end() };
-            for( const auto &l : AvilableLNames )
-            {
-                tmpRequeredDeviceL.erase( l.layerName );
-            }
-
             if( tmpRequeredDeviceExts.size() )
             {
                 std::string e{ "Not avilable device extensions:\n" };
@@ -113,17 +104,8 @@ namespace Engine
                 }
                 SPDLOG_CRITICAL( e );
             }
-            if( tmpRequeredDeviceL.size() )
-            {
-                std::string e{ "Not avilable device extensions:\n" };
-                for( const auto &l : tmpRequeredDeviceL )
-                {
-                    auto s{ std::format( "\t{}\n", l ) };
-                }
-                SPDLOG_CRITICAL( e );
-            }
 
-            return tmpRequeredDeviceExts.empty() && tmpRequeredDeviceL.empty();
+            return tmpRequeredDeviceExts.empty();
         }
 
         void createDevice( VkPhysicalDevice phDevice )
@@ -133,15 +115,12 @@ namespace Engine
             vkGetPhysicalDeviceQueueFamilyProperties( _phDevice, &_c, nullptr );
             std::vector<VkQueueFamilyProperties> queueFamilyProperties{ _c };
             vkGetPhysicalDeviceQueueFamilyProperties( _phDevice, &_c, queueFamilyProperties.data() );
-            std::vector<VkDeviceQueueCreateInfo> QueuesCreateInfo( _queues.count() );
-            std::vector<float> _priorities( _queues.count() );
-            float *_pPriorities{ _priorities.data() };
             _queues = getIndecies( _phDevice );
-            for( size_t i{ 0 }; i < _queues.count(); i++ )
-            {
-                QueuesCreateInfo[ i ] = queueCreateInfo( _queues[ i ].GetQueueIndex(), 1, _pPriorities );
-                *_pPriorities++       = 1.f;
-            }
+            std::vector<VkDeviceQueueCreateInfo> QueuesCreateInfo( _queues.getUniqueIndeciesCount().size() );
+            std::vector<float> _priorities( _queues.getUniqueIndeciesCount().size() );
+            _c = 0;
+            for( const auto &index : _queues.getUniqueIndeciesCount() )
+                QueuesCreateInfo[ _c++ ] = queueCreateInfo( index.first, index.second.first, index.second.second.data() );
 
             VkPhysicalDeviceFeatures enabledFeatures{};
             enabledFeatures.samplerAnisotropy = VK_TRUE;
@@ -153,9 +132,9 @@ namespace Engine
             PhysicalDeviceDescriptorIndexingFeatures.runtimeDescriptorArray                    = VK_TRUE;
             PhysicalDeviceDescriptorIndexingFeatures.descriptorBindingVariableDescriptorCount  = VK_TRUE;
 
-            std::vector<const char *> Layers, Extensions{};
-            getDeviceLayersAndExtension( Layers, Extensions );
-            assert( deviceSupportExtensionsAndLayers );
+            std::vector<const char *> Extensions{};
+            getDeviceExtensions( Extensions );
+            assert( isDeviceSupportExtensions( Extensions ) );
             VkDeviceCreateInfo createInfo{};
             createInfo.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
             createInfo.pNext                   = &PhysicalDeviceDescriptorIndexingFeatures;
@@ -164,8 +143,6 @@ namespace Engine
             createInfo.pEnabledFeatures        = &enabledFeatures;
             createInfo.enabledExtensionCount   = static_cast<uint32_t>( Extensions.size() );
             createInfo.ppEnabledExtensionNames = Extensions.size() ? Extensions.data() : nullptr;
-            createInfo.enabledLayerCount       = static_cast<uint32_t>( Layers.size() );
-            createInfo.ppEnabledLayerNames     = Layers.size() ? Layers.data() : nullptr;
             CHECK_RESULT( vkCreateDevice( _phDevice, &createInfo, nullptr, &_device ) );
         }
 

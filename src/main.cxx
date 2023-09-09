@@ -53,7 +53,6 @@ int main()
     // App.vAppModels.push_back( { "./assets/models/rectangle/model.obj", "./assets/textures/rectangle/model2.png" } );
 
     Engine::init( App );
-    Engine::shutdown();
     // Engine::SetKeyEventsCallback( []( int key, int scancode, int action, int mods )
     //                               { SPDLOG_DEBUG( "key pressed code: {}", std::to_string( key ) ); } );
     while( !Engine::window::shouldClose() )
@@ -61,5 +60,6 @@ int main()
         Engine::window::updateEvents();
         // auto d = Engine::GrapchicPhysicalDevice{};
     }
+    Engine::shutdown();
     return 0;
 }

@@ -21,9 +21,32 @@ namespace Engine
             queue( device, _familyIndex.value(), _queueIndex );
         }
 
+        void queue::setFamilyIndex( uint32_t index )
+        {
+            _familyIndex = index;
+        }
+
+        void queue::setQueueIndex( uint32_t index )
+        {
+            _queueIndex = index;
+        }
+
+        void queue::setHandle( VkQueue queue )
+        {
+            _queue = queue;
+        }
+
+        const VkQueue queue::GetHandle() const
+        {
+            return _queue;
+        }
+
         const uint32_t queue::GetFamilyIndex() const
         {
-            return _familyIndex.value();
+            if( _familyIndex.has_value() )
+                return _familyIndex.value();
+            SPDLOG_CRITICAL( "Queue hasn't value." );
+            return -1;
         }
 
         const uint32_t queue::GetQueueIndex() const
@@ -36,24 +59,9 @@ namespace Engine
             return _familyIndex.has_value();
         }
 
-        const VkQueue queue::GetHandle() const
-        {
-            return _queue;
-        }
-
         void queue::operator=( uint32_t right )
         {
             setFamilyIndex( right );
-        }
-
-        void queue::setFamilyIndex( uint32_t index )
-        {
-            _familyIndex = index;
-        }
-
-        void queue::setQueueIndex( uint32_t index )
-        {
-            _queueIndex = index;
         }
 
         void Queues::operator=( std::initializer_list<uint32_t> right )
@@ -68,12 +76,31 @@ namespace Engine
 
         tools::queue Queues::operator[]( size_t index )
         {
-            return *( ( tools::queue * )( ( &*this ) + sizeof( tools::queue ) * index ) );
+            return *reinterpret_cast<tools::queue *>( reinterpret_cast<char *>( this ) + sizeof( tools::queue ) * index );
+        }
+
+        std::unordered_map<uint32_t, std::pair<uint32_t, std::vector<float>>> &Queues::getUniqueIndeciesCount()
+        {
+            if( _unique.empty() )
+                for( uint32_t i{ 0 }; i < count(); i++ )
+                {
+                    uint32_t index{ operator[]( i ).GetFamilyIndex() };
+                    if( _unique.count( index ) )
+                    {
+                        _unique[ index ].first += 1;
+                    }
+                    else
+                    {
+                        _unique[ index ].first = 1;
+                    }
+                    _unique[ index ].second.push_back( 1.f );
+                }
+            return _unique;
         }
 
         const size_t Queues::count() const
         {
-            return ( sizeof( *this ) / sizeof( tools::queue ) );
+            return ( ( sizeof( *this ) - sizeof( _unique ) ) / sizeof( tools::queue ) );
         }
 
         void Queues::init( VkDevice device )
@@ -93,23 +120,23 @@ namespace Engine
             vkGetPhysicalDeviceQueueFamilyProperties( device, &_c, QueueFamilies.data() );
             if( _c - 1 )
             {
-                _c = 0;
                 for( uint32_t i{ 0 }; i < QueueFamilies.size(); i++ )
                 {
+
                     VkBool32 presentSupport{ false };
-                    vkGetPhysicalDeviceSurfaceSupportKHR( device, _c, tools::getSurface(), &presentSupport );
+                    vkGetPhysicalDeviceSurfaceSupportKHR( device, i, tools::getSurface(), &presentSupport );
                     if( !_indecies.graphic.inited() && QueueFamilies[ i ].queueFlags & VK_QUEUE_GRAPHICS_BIT )
                     {
-                        _indecies.graphic = _c;
+                        _indecies.graphic = i;
                     }
-                    if( !_indecies.present.inited() && presentSupport ) _indecies.present = _c;
+                    if( !_indecies.present.inited() && presentSupport )
+                        _indecies.present = i;
                     else if( !_indecies.transfer.inited() && QueueFamilies[ i ].queueFlags & VK_QUEUE_TRANSFER_BIT )
-                        _indecies.transfer = _c;
+                        _indecies.transfer = i;
                     // else if( !_indecies.compute.has_value() && QueueFamilies[ i ].queueFlags & VK_QUEUE_COMPUTE_BIT )
                     //     _indecies.compute = _c;
                     else
                         break;
-                    _c++;
                 }
             }
             else

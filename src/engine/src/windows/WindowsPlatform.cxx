@@ -1,5 +1,6 @@
 #include "WindowsPlatform.hxx"
 #include <common/logging.hxx>
+#include <RHI.hxx>
 #include <engine.hxx>
 
 namespace Engine
@@ -22,15 +23,21 @@ namespace Engine
         {
             window::resolution displayRes{ window::getDisplayResolution() };
             glfwWindowHint( GLFW_CLIENT_API, GLFW_NO_API );
-            glfwWindowHint( GLFW_RESIZABLE, GLFW_TRUE );
+            glfwWindowHint( GLFW_RESIZABLE, GLFW_FALSE );
             _window = glfwCreateWindow( width ? width : displayRes.width, height ? height : displayRes.height, title, nullptr, nullptr );
             window::setTitle( title );
-            window::setWindowResolution( width, height );
+            // window::setWindowResolution( width, height );
+        }
+
+        void destroySurface()
+        {
+            vkDestroySurfaceKHR( getInstance(), _surface, ALLOCATION_CALLBACK );
         }
 
         void destroyWindow()
         {
             glfwDestroyWindow( _window );
+            glfwTerminate();
         }
 
         const VkSurfaceKHR getSurface()
@@ -57,13 +64,7 @@ namespace Engine
 
         resolution getDisplayResolution()
         {
-            GLFWmonitor *_monitor{ nullptr };
-            if( tools::_window == nullptr )
-                _monitor = glfwGetPrimaryMonitor();
-            else
-                _monitor = glfwGetWindowMonitor( tools::_window );
-            glfwGetVideoMode( _monitor );
-            auto mode = glfwGetVideoMode( _monitor );
+            auto mode = glfwGetVideoMode( glfwGetPrimaryMonitor() );
             return { static_cast<RESOLUTION_TYPE>( mode->width ), static_cast<RESOLUTION_TYPE>( mode->height ) };
         }
 
@@ -87,7 +88,7 @@ namespace Engine
 
         void setWindowResolution( RESOLUTION_TYPE width, RESOLUTION_TYPE height )
         {
-            resolution displayRes{ getDisplayResolution() };
+            resolution displayRes{ window::getDisplayResolution() };
             if( width + height )
             {
                 glfwSetWindowAttrib( tools::_window, GLFW_RESIZABLE, GLFW_TRUE );
@@ -104,7 +105,7 @@ namespace Engine
             _width  = width;
             _height = height;
             glfwSetWindowSize( tools::_window, static_cast<int>( width ), static_cast<int>( height ) );
-            _resizeCallBack( width, height );
+            if( _resizeCallBack ) _resizeCallBack( width, height );
         }
 
         void setResizeCallBack( ResizeCallback callback )

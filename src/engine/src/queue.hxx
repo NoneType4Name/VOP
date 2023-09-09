@@ -15,12 +15,13 @@ namespace Engine
             ~queue() = default;
             void init( VkDevice device, uint32_t familyIndex, uint32_t queueIndex );
             void init( VkDevice device );
+            void setHandle( VkQueue queue );
             void setFamilyIndex( uint32_t index );
             void setQueueIndex( uint32_t index );
+            const VkQueue GetHandle() const;
             const uint32_t GetFamilyIndex() const;
             const uint32_t GetQueueIndex() const;
             const bool inited() const;
-            const VkQueue GetHandle() const;
             void operator=( uint32_t right );
 
           private:
@@ -43,6 +44,10 @@ namespace Engine
             tools::queue operator[]( size_t index );
             void init( VkDevice device );
             const size_t count() const;
+            std::unordered_map<uint32_t, std::pair<uint32_t, std::vector<float>>> &getUniqueIndeciesCount();
+
+          private:
+            std::unordered_map<uint32_t, std::pair<uint32_t, std::vector<float>>> _unique{};
         };
 
         VkDeviceQueueCreateInfo queueCreateInfo( uint32_t index, uint32_t count, const float *priority );

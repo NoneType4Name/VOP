@@ -8,11 +8,9 @@ namespace
     {
         __init()
         {
+            assert( glfwInit() );
             Engine::tools::createInstance();
-        }
-        ~__init()
-        {
-            Engine::tools::destroyInstance();
+            Engine::tools::setupDebugLayerCallback();
         }
     } _;
 } // namespace
@@ -36,14 +34,19 @@ namespace Engine
 
     void init( AppCreateInfo sAppCreateInfo )
     {
-        tools::createInstance();
         tools::createWindow( sAppCreateInfo.width, sAppCreateInfo.height, sAppCreateInfo.title );
+        tools::createSurface( tools::getInstance() );
         tools::createDevice( static_cast<VkPhysicalDevice>( sAppCreateInfo.device.ptr ) );
+        window::setWindowResolution( 0, 0 );
+        window::cenralize();
     }
 
     void shutdown()
     {
         tools::destroyWindow();
+        tools::destroySurface();
         tools::destroyDevice();
+        tools::destroyDebugLayerCallback();
+        tools::destroyInstance();
     }
 } // namespace Engine

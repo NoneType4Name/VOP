@@ -20,7 +20,7 @@ namespace Engine
 
         // #ifdef ENGINE_DEBUG
         void setupDebugLayerCallback();
-        void destoroyDebugLayerCallback();
+        void destroyDebugLayerCallback();
         // #endif
         void createInstance();
         void destroyInstance();
@@ -29,10 +29,11 @@ namespace Engine
         void destroySwapchain();
         std::vector<VkPhysicalDevice> getAviliableDevices();
         std::vector<VkPhysicalDeviceProperties> getAviliableDevicesProperties();
-        void getDeviceLayersAndExtension( std::vector<const char *> &deviceLayers, std::vector<const char *> &deviceExtensions );
-        void getInstanceLayersAndExtension( std::vector<const char *> &instanceLayers, std::vector<const char *> &instanceExtensions );
-        bool instanseSupportExtensionsAndLayers( std::vector<const char *> extensions, std::vector<const char *> layers );
-        bool deviceSupportExtensionsAndLayers( std::vector<const char *> extensions, std::vector<const char *> layers );
+        void getLayers( std::vector<const char *> &layers );
+        void getDeviceExtensions( std::vector<const char *> &deviceExtensions );
+        void getInstanceExtensions( std::vector<const char *> &instanceExtensions );
+        bool isInstanseSupportExtensions( std::vector<const char *> extensions );
+        bool isDeviceSupportExtensions( std::vector<const char *> extensions );
         VkInstance getInstance();
         VkSwapchainKHR getSwapchain();
     } // namespace tools

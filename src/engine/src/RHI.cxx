@@ -11,7 +11,39 @@ namespace Engine
             std::vector<VkPhysicalDeviceProperties> _aviliable_phDevicesProperties{};
         } // namespace
 
-        bool instanseSupportExtensionsAndLayers( std::vector<const char *> extensions, std::vector<const char *> layers )
+        bool initGLFW()
+        {
+            glfwSetErrorCallback( []( int code, const char *data )
+                                  { SPDLOG_CRITICAL( "GLFW ERROR {}: {}", code, data ); } );
+            assert( glfwInit() );
+            return true;
+        }
+
+        bool isInstanseSupportLayers( std::vector<const char *> layers )
+        {
+            uint32_t _c{ 0 };
+            vkEnumerateInstanceLayerProperties( &_c, nullptr );
+            std::vector<VkLayerProperties> AvilableLNames{ _c };
+            vkEnumerateInstanceLayerProperties( &_c, AvilableLNames.data() );
+            std::set<std::string> tmpRequeredDeviceL{ layers.begin(), layers.end() };
+            for( const auto &l : AvilableLNames )
+            {
+                tmpRequeredDeviceL.erase( l.layerName );
+            }
+            if( tmpRequeredDeviceL.size() )
+            {
+                std::string e{ "Not avilable instance extensions:\n" };
+                for( const auto &ext : tmpRequeredDeviceL )
+                {
+                    auto s{ std::format( "\t{}\n", ext ) };
+                    e += s;
+                }
+                SPDLOG_CRITICAL( e );
+            }
+            return tmpRequeredDeviceL.empty();
+        }
+
+        bool isInstanseSupportExtensions( std::vector<const char *> extensions )
         {
             uint32_t _c{ 0 };
             vkEnumerateInstanceExtensionProperties( nullptr, &_c, nullptr );
@@ -23,37 +55,18 @@ namespace Engine
                 tmpRequeredDeviceExts.erase( ext.extensionName );
             }
 
-            vkEnumerateInstanceLayerProperties( &_c, nullptr );
-            std::vector<VkLayerProperties> AvilableLNames{ _c };
-            vkEnumerateInstanceLayerProperties( &_c, AvilableLNames.data() );
-            std::set<std::string> tmpRequeredDeviceL{ layers.begin(), layers.end() };
-            for( const auto &l : AvilableLNames )
+            if( tmpRequeredDeviceExts.size() )
             {
-                tmpRequeredDeviceL.erase( l.layerName );
-            }
-
-            if( tmpRequeredDeviceL.size() )
-            {
-                std::string e{ "Not avilable instance extensions:\n" };
-                for( const auto &ext : tmpRequeredDeviceL )
+                std::string e{ "Not avilable device extensions:\n" };
+                for( const auto &ext : tmpRequeredDeviceExts )
                 {
                     auto s{ std::format( "\t{}\n", ext ) };
                     e += s;
                 }
                 SPDLOG_CRITICAL( e );
             }
-            if( tmpRequeredDeviceL.size() )
-            {
-                std::string e{ "Not avilable device extensions:\n" };
-                for( const auto &l : tmpRequeredDeviceL )
-                {
-                    auto s{ std::format( "\t{}\n", l ) };
-                    e += s;
-                }
-                SPDLOG_CRITICAL( e );
-            }
 
-            return tmpRequeredDeviceExts.empty() && tmpRequeredDeviceL.empty();
+            return tmpRequeredDeviceExts.empty();
         }
 
         void createInstance()
@@ -73,14 +86,16 @@ namespace Engine
 
             VkInstanceCreateInfo InstanceCreateInfo{};
             InstanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-#ifdef ENGINE_DEBUG
+            // #ifdef ENGINE_DEBUG
             InstanceCreateInfo.pNext = &ValidationFeatures;
-#endif
+            // #endif
             std::vector<const char *> Extensions{}, Layers{};
-            getInstanceLayersAndExtension( Extensions, Layers );
-            assert( instanseSupportExtensionsAndLayers( Extensions, Layers ) );
+            getInstanceExtensions( Extensions );
+            getLayers( Layers );
+            assert( isInstanseSupportExtensions( Extensions ) );
+            assert( isInstanseSupportLayers( Layers ) );
             InstanceCreateInfo.enabledLayerCount       = Layers.size();
-            InstanceCreateInfo.ppEnabledLayerNames     = Layers.size() ? Layers.data() : nullptr;
+            InstanceCreateInfo.ppEnabledLayerNames     = Layers.size() ? Layers.data() : 0;
             InstanceCreateInfo.enabledExtensionCount   = Extensions.size();
             InstanceCreateInfo.ppEnabledExtensionNames = Extensions.size() ? Extensions.data() : nullptr;
             InstanceCreateInfo.pApplicationInfo        = &ApplicationInfo;
@@ -89,12 +104,7 @@ namespace Engine
 
         void destroyInstance()
         {
-            vkDestroyInstance( _instance, ALLOCATION_CALLBACK );
-        }
-
-        VkQueue estroyInstance()
-        {
-            return nullptr;
+            vkDestroyInstance( _instance, nullptr );
         }
 
         std::vector<VkPhysicalDevice> getAviliableDevices()

@@ -5,6 +5,7 @@
 #include <array>
 #include <set>
 #include <format>
+#include <iostream>
 #include <stdint.h>
 
 #define ALLOCATION_CALLBACK nullptr

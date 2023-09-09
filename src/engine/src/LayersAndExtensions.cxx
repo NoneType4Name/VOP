@@ -5,62 +5,51 @@ namespace Engine
 {
     namespace tools
     {
-        namespace
-        {
-            const std::vector<std::string> _layersInstance{
+        std::vector<std::string> instanceLayers{
+#ifdef PLATFORM_WINDOWS
+            "VK_LAYER_KHRONOS_validation"
+#endif
+        };
+        std::vector<std::string> instanceExtensions{
+            VK_EXT_DEBUG_UTILS_EXTENSION_NAME
 #ifdef PLATFORM_WINDOWS
 #endif
-            };
-            const std::vector<std::string> _extensionsInstance{
-                VK_EXT_DEBUG_UTILS_EXTENSION_NAME
+        };
+        std::vector<std::string> deviceExtensions{
 #ifdef PLATFORM_WINDOWS
+            VK_KHR_SWAPCHAIN_EXTENSION_NAME
 #endif
-            };
-            const std::vector<std::string> _layersDevice{
-#ifdef PLATFORM_WINDOWS
-                "VK_LAYER_KHRONOS_validation"
-#endif
-            };
-            const std::vector<std::string> _extensionsDevice{
-#ifdef PLATFORM_WINDOWS
-                VK_KHR_SWAPCHAIN_EXTENSION_NAME
-#endif
-            };
+        };
 
-        } // namespace
-        static void getDeviceLayersAndExtension( std::vector<const char *> &deviceLayers, std::vector<const char *> &deviceExtensions )
+        void getDeviceExtensions( std::vector<const char *> &deviceExtensions )
         {
-            // #ifdef ENGINE_DEBUG
-            for( size_t i{ 0 }; _layersDevice.size() > i; i++ )
+            for( size_t i{ 0 }; tools::deviceExtensions.size() > i; i++ )
             {
-                deviceLayers.push_back( _layersDevice[ i ].data() );
-            }
-            // #endif
-            for( size_t i{ 0 }; _extensionsDevice.size() > i; i++ )
-            {
-                deviceExtensions.push_back( _extensionsDevice[ i ].data() );
+                deviceExtensions.push_back( tools::deviceExtensions[ i ].data() );
             }
         }
 
-        static void getInstanceLayersAndExtension( std::vector<const char *> &instanceLayers, std::vector<const char *> &instanceExtensions )
+        void getInstanceExtensions( std::vector<const char *> &instanceExtensions )
         {
-            // #ifdef ENGINE_DEBUG
-            for( size_t i{ 0 }; _layersInstance.size() > i; i++ )
+            for( size_t i{ 0 }; tools::instanceExtensions.size() > i; i++ )
             {
-                instanceLayers.push_back( _layersInstance[ i ].data() );
-            }
-            // #endif
-
-            for( size_t i{ 0 }; _extensionsInstance.size() > i; i++ )
-            {
-                instanceLayers.push_back( _extensionsInstance[ i ].data() );
+                instanceExtensions.push_back( tools::instanceExtensions[ i ].data() );
             }
             uint32_t _c{ 0 };
             const char **req_exts{ glfwGetRequiredInstanceExtensions( &_c ) };
             for( size_t i{ 0 }; _c > i; i++ )
             {
-                instanceLayers.push_back( req_exts[ i ] );
+                instanceExtensions.push_back( req_exts[ i ] );
             }
         }
-    } // namespace tools
+
+        void getLayers( std::vector<const char *> &layers )
+        { // #ifdef ENGINE_DEBUG
+            for( size_t i{ 0 }; tools::instanceLayers.size() > i; i++ )
+            {
+                layers.push_back( tools::instanceLayers[ i ].data() );
+            }
+            // #endif
+        } // namespace tools
+    }     // namespace tools
 } // namespace Engine
