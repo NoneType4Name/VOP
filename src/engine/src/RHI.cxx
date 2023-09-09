@@ -107,6 +107,18 @@ namespace Engine
             vkDestroyInstance( _instance, nullptr );
         }
 
+        void createSwapchain()
+        {
+        }
+
+        void reCreateSwapchain()
+        {
+        }
+
+        void destroySwapchain()
+        {
+        }
+
         std::vector<VkPhysicalDevice> getAviliableDevices()
         {
             if( _aviliable_phDevices.empty() )

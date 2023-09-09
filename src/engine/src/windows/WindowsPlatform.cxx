@@ -45,6 +45,11 @@ namespace Engine
             return _surface;
         };
 
+        GLFWwindow *getWindow()
+        {
+            return _window;
+        }
+
     } // namespace tools
     namespace window
     {

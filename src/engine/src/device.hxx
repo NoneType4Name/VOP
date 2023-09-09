@@ -2,6 +2,7 @@
 #include <platform.hxx>
 #include <common/globals.hxx>
 #include <common/logging.hxx>
+#include <queue.hxx>
 #include <engine.hxx>
 
 namespace Engine
@@ -26,6 +27,7 @@ namespace Engine
         void destroyDevice();
         const VkDevice getDevice();
         const VkPhysicalDevice getPhysicalDevice();
+        tools::Queues getQueues();
         void getSuitableDevices( std::vector<Device> &devices );
         void getSuitableDevices( std::vector<Device> &devices, uint8_t types );
         void getSuitableDevices( std::vector<PhysicalDevice> &devices );

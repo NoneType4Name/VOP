@@ -1,6 +1,7 @@
 #include <engine.hxx>
 #include <RHI.hxx>
 #include <device.hxx>
+#include <swapchain.hxx>
 
 namespace
 {
@@ -37,15 +38,15 @@ namespace Engine
         tools::createWindow( sAppCreateInfo.width, sAppCreateInfo.height, sAppCreateInfo.title );
         tools::createSurface( tools::getInstance() );
         tools::createDevice( static_cast<VkPhysicalDevice>( sAppCreateInfo.device.ptr ) );
-        window::setWindowResolution( 0, 0 );
-        window::cenralize();
+        tools::createSwapchain();
     }
 
     void shutdown()
     {
-        tools::destroyWindow();
-        tools::destroySurface();
+        tools::destroySwapchain();
         tools::destroyDevice();
+        tools::destroySurface();
+        tools::destroyWindow();
         tools::destroyDebugLayerCallback();
         tools::destroyInstance();
     }

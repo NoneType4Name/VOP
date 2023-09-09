@@ -20,5 +20,6 @@ namespace Engine
         void destroySurface();
         void destroyWindow();
         const VkSurfaceKHR getSurface();
+        GLFWwindow *getWindow();
     } // namespace tools
 } // namespace Engine

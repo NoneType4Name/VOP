@@ -1,5 +1,4 @@
 #include <device.hxx>
-#include <queue.hxx>
 #include <RHI.hxx>
 
 namespace Engine
@@ -150,6 +149,7 @@ namespace Engine
         {
             vkDestroyDevice( _device, nullptr );
         }
+
         const VkDevice getDevice()
         {
             return _device;
@@ -159,7 +159,13 @@ namespace Engine
         {
             return _phDevice;
         }
+
+        tools::Queues getQueues()
+        {
+            return tools::_queues;
+        }
     } // namespace tools
+
     PhysicalDevice::PhysicalDevice() = default;
     PhysicalDevice::PhysicalDevice( const char *name, VkPhysicalDevice handle )
     {

@@ -8,25 +8,12 @@ namespace Engine
 {
     namespace tools
     {
-        // struct swapChain
-        // {
-        //     VkSwapchainKHR Swapchain;
-        //     VkSurfaceFormatKHR Format{ VK_FORMAT_UNDEFINED };
-        //     VkPresentModeKHR PresentMode;
-        //     VkSurfaceCapabilitiesKHR Capabilities;
-        //     std::vector<VkSurfaceFormatKHR> AviliableFormats;
-        //     std::vector<VkPresentModeKHR> AviliablePresentModes;
-        // };
-
         // #ifdef ENGINE_DEBUG
         void setupDebugLayerCallback();
         void destroyDebugLayerCallback();
         // #endif
         void createInstance();
         void destroyInstance();
-        void createSwapchain();
-        void ReCreateSwapchain();
-        void destroySwapchain();
         std::vector<VkPhysicalDevice> getAviliableDevices();
         std::vector<VkPhysicalDeviceProperties> getAviliableDevicesProperties();
         void getLayers( std::vector<const char *> &layers );
