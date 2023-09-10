@@ -23,10 +23,10 @@ namespace Engine
         {
             uint32_t _c{ 0 };
             vkEnumerateInstanceLayerProperties( &_c, nullptr );
-            std::vector<VkLayerProperties> AvilableLNames{ _c };
-            vkEnumerateInstanceLayerProperties( &_c, AvilableLNames.data() );
+            std::vector<VkLayerProperties> AvailableLNames{ _c };
+            vkEnumerateInstanceLayerProperties( &_c, AvailableLNames.data() );
             std::set<std::string> tmpRequeredDeviceL{ layers.begin(), layers.end() };
-            for( const auto &l : AvilableLNames )
+            for( const auto &l : AvailableLNames )
             {
                 tmpRequeredDeviceL.erase( l.layerName );
             }
@@ -47,10 +47,10 @@ namespace Engine
         {
             uint32_t _c{ 0 };
             vkEnumerateInstanceExtensionProperties( nullptr, &_c, nullptr );
-            std::vector<VkExtensionProperties> AvilableExtNames{ _c };
-            vkEnumerateInstanceExtensionProperties( nullptr, &_c, AvilableExtNames.data() );
+            std::vector<VkExtensionProperties> AvailableExtNames{ _c };
+            vkEnumerateInstanceExtensionProperties( nullptr, &_c, AvailableExtNames.data() );
             std::set<std::string> tmpRequeredDeviceExts{ extensions.begin(), extensions.end() };
-            for( const auto &ext : AvilableExtNames )
+            for( const auto &ext : AvailableExtNames )
             {
                 tmpRequeredDeviceExts.erase( ext.extensionName );
             }
@@ -105,18 +105,6 @@ namespace Engine
         void destroyInstance()
         {
             vkDestroyInstance( _instance, nullptr );
-        }
-
-        void createSwapchain()
-        {
-        }
-
-        void reCreateSwapchain()
-        {
-        }
-
-        void destroySwapchain()
-        {
         }
 
         std::vector<VkPhysicalDevice> getAviliableDevices()

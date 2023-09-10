@@ -18,6 +18,8 @@ namespace Engine
         {
             VkImage image;
             VkImageView view;
+            VkSemaphore isAvailable;
+            VkSemaphore isRendered;
         };
 
         namespace
@@ -28,9 +30,11 @@ namespace Engine
             SwapchainProperties _swapchainProperties{};
             VkFormat _depthImageFormat{ VK_FORMAT_UNDEFINED };
             std::vector<SwapchainImage> _swapchainImages{};
+            uint32_t _imageIndex{ 0 };
+            uint32_t _semaphoreIndex{ 0 };
+            VkSwapchainCreateInfoKHR _swapchainCreateInfo{};
         } // namespace
-        SwapchainProperties
-        getSwapchainProperties()
+        SwapchainProperties getSwapchainProperties()
         {
             auto device{ tools::getPhysicalDevice() };
             auto surface{ tools::getSurface() };
@@ -92,16 +96,17 @@ namespace Engine
             _swapchainSurfaceFormat      = getSwapchainSurfaceFormat();
             _swapchainSurfacePresentMode = getSwapchainSurfacePresentMode();
             _depthImageFormat            = getSwapchainDepthImageFormat();
+            glfwSetWindowSizeLimits( tools::getWindow(), _swapchainProperties.Capabilities.minImageExtent.width, _swapchainProperties.Capabilities.minImageExtent.height, _swapchainProperties.Capabilities.maxImageExtent.width, _swapchainProperties.Capabilities.maxImageExtent.height );
             VkSwapchainCreateInfoKHR SwapchainCreateInfo{};
             SwapchainCreateInfo.sType            = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
             SwapchainCreateInfo.surface          = tools::getSurface();
-            SwapchainCreateInfo.minImageCount    = _swapchainProperties.Capabilities.minImageCount;
+            SwapchainCreateInfo.minImageCount    = _swapchainProperties.Capabilities.minImageCount; // imgs count
             SwapchainCreateInfo.imageFormat      = _swapchainSurfaceFormat.format;
             SwapchainCreateInfo.imageColorSpace  = _swapchainSurfaceFormat.colorSpace;
             SwapchainCreateInfo.presentMode      = _swapchainSurfacePresentMode;
             SwapchainCreateInfo.imageExtent      = _swapchainProperties.Capabilities.currentExtent;
             SwapchainCreateInfo.imageArrayLayers = 1;
-            SwapchainCreateInfo.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+            SwapchainCreateInfo.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
             auto queues{ tools::getQueues() };
             if( queues.count() == queues.getUniqueIndeciesCount().size() )
             {
@@ -117,39 +122,133 @@ namespace Engine
             {
                 SwapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
             }
-            SwapchainCreateInfo.preTransform   = _swapchainProperties.Capabilities.currentTransform;
+            SwapchainCreateInfo.preTransform   = _swapchainProperties.Capabilities.supportedTransforms & VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR ? VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR : _swapchainProperties.Capabilities.currentTransform;
             SwapchainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
             SwapchainCreateInfo.clipped        = VK_TRUE;
             SwapchainCreateInfo.oldSwapchain   = VK_NULL_HANDLE;
-            CHECK_RESULT( vkCreateSwapchainKHR( tools::getDevice(), &SwapchainCreateInfo, nullptr, &_swapchain ) );
+            CHECK_RESULT( vkCreateSwapchainKHR( tools::getDevice(), &SwapchainCreateInfo, ALLOCATION_CALLBACK, &_swapchain ) );
             uint32_t _c{ 0 };
             vkGetSwapchainImagesKHR( tools::getDevice(), _swapchain, &_c, nullptr );
             std::vector<VkImage> imgs{ _c };
+            _swapchainImages.resize( _c );
             vkGetSwapchainImagesKHR( tools::getDevice(), _swapchain, &_c, imgs.data() );
+            VkImageViewCreateInfo ImageViewCreateInfo           = {};
+            ImageViewCreateInfo.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+            ImageViewCreateInfo.format                          = _swapchainSurfaceFormat.format;
+            ImageViewCreateInfo.components                      = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
+            ImageViewCreateInfo.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+            ImageViewCreateInfo.subresourceRange.baseMipLevel   = 0;
+            ImageViewCreateInfo.subresourceRange.levelCount     = 1;
+            ImageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
+            ImageViewCreateInfo.subresourceRange.layerCount     = 1;
+            ImageViewCreateInfo.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
+            ImageViewCreateInfo.flags                           = 0;
+            VkSemaphoreCreateInfo semaphoreInfo{};
+            semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
             for( size_t i{ 0 }; i < imgs.size(); i++ )
             {
-                VkImageViewCreateInfo ImageViewCreateInfo           = {};
-                ImageViewCreateInfo.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-                ImageViewCreateInfo.format                          = _swapchainSurfaceFormat.format;
-                ImageViewCreateInfo.components                      = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
-                ImageViewCreateInfo.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-                ImageViewCreateInfo.subresourceRange.baseMipLevel   = 0;
-                ImageViewCreateInfo.subresourceRange.levelCount     = 1;
-                ImageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
-                ImageViewCreateInfo.subresourceRange.layerCount     = 1;
-                ImageViewCreateInfo.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
-                ImageViewCreateInfo.flags                           = 0;
                 ImageViewCreateInfo.image = _swapchainImages[ i ].image = imgs[ i ];
-                CHECK_RESULT( vkCreateImageView( tools::getDevice(), &ImageViewCreateInfo, nullptr, &_swapchainImages[ i ].view ) );
+                CHECK_RESULT( vkCreateImageView( tools::getDevice(), &ImageViewCreateInfo, ALLOCATION_CALLBACK, &_swapchainImages[ i ].view ) );
+                CHECK_RESULT( vkCreateSemaphore( tools::getDevice(), &semaphoreInfo, ALLOCATION_CALLBACK, &_swapchainImages[ i ].isAvailable ) );
+                CHECK_RESULT( vkCreateSemaphore( tools::getDevice(), &semaphoreInfo, ALLOCATION_CALLBACK, &_swapchainImages[ i ].isRendered ) );
             }
         }
 
-        void reCreateSwapchain();
+        void reCreateSwapchain()
+        {
+            _imageIndex = 0;
+            for( const auto &img : _swapchainImages )
+            {
+                vkDestroyImageView( tools::getDevice(), img.view, ALLOCATION_CALLBACK );
+            }
+            _swapchainProperties         = getSwapchainProperties();
+            _swapchainSurfaceFormat      = getSwapchainSurfaceFormat();
+            _swapchainSurfacePresentMode = getSwapchainSurfacePresentMode();
+            _depthImageFormat            = getSwapchainDepthImageFormat();
+            glfwSetWindowSizeLimits( tools::getWindow(), _swapchainProperties.Capabilities.minImageExtent.width, _swapchainProperties.Capabilities.minImageExtent.height, _swapchainProperties.Capabilities.maxImageExtent.width, _swapchainProperties.Capabilities.maxImageExtent.height );
+            VkSwapchainCreateInfoKHR SwapchainCreateInfo{};
+            SwapchainCreateInfo.sType            = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+            SwapchainCreateInfo.surface          = tools::getSurface();
+            SwapchainCreateInfo.minImageCount    = _swapchainProperties.Capabilities.minImageCount; // imgs count
+            SwapchainCreateInfo.imageFormat      = _swapchainSurfaceFormat.format;
+            SwapchainCreateInfo.imageColorSpace  = _swapchainSurfaceFormat.colorSpace;
+            SwapchainCreateInfo.presentMode      = _swapchainSurfacePresentMode;
+            SwapchainCreateInfo.imageExtent      = _swapchainProperties.Capabilities.currentExtent;
+            SwapchainCreateInfo.imageArrayLayers = 1;
+            SwapchainCreateInfo.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+            auto queues{ tools::getQueues() };
+            if( queues.count() == queues.getUniqueIndeciesCount().size() )
+            {
+                std::vector<uint32_t> indecies{};
+                indecies.reserve( queues.getUniqueIndeciesCount().size() );
+                for( const auto &ind : queues.getUniqueIndeciesCount() )
+                    indecies.push_back( ind.first );
+                SwapchainCreateInfo.imageSharingMode      = VK_SHARING_MODE_CONCURRENT;
+                SwapchainCreateInfo.queueFamilyIndexCount = static_cast<uint32_t>( indecies.size() );
+                SwapchainCreateInfo.pQueueFamilyIndices   = indecies.data();
+            }
+            else
+            {
+                SwapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+            }
+            SwapchainCreateInfo.preTransform   = _swapchainProperties.Capabilities.supportedTransforms & VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR ? VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR : _swapchainProperties.Capabilities.currentTransform;
+            SwapchainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+            SwapchainCreateInfo.clipped        = VK_TRUE;
+            SwapchainCreateInfo.oldSwapchain   = _swapchain;
+            CHECK_RESULT( vkCreateSwapchainKHR( tools::getDevice(), &SwapchainCreateInfo, ALLOCATION_CALLBACK, &_swapchain ) );
+            vkDestroySwapchainKHR( tools::getDevice(), SwapchainCreateInfo.oldSwapchain, ALLOCATION_CALLBACK );
+            uint32_t _c{ 0 };
+            vkGetSwapchainImagesKHR( tools::getDevice(), _swapchain, &_c, nullptr );
+            std::vector<VkImage> imgs{ _c };
+            _swapchainImages.resize( _c );
+            vkGetSwapchainImagesKHR( tools::getDevice(), _swapchain, &_c, imgs.data() );
+            VkImageViewCreateInfo ImageViewCreateInfo           = {};
+            ImageViewCreateInfo.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+            ImageViewCreateInfo.format                          = _swapchainSurfaceFormat.format;
+            ImageViewCreateInfo.components                      = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
+            ImageViewCreateInfo.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+            ImageViewCreateInfo.subresourceRange.baseMipLevel   = 0;
+            ImageViewCreateInfo.subresourceRange.levelCount     = 1;
+            ImageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
+            ImageViewCreateInfo.subresourceRange.layerCount     = 1;
+            ImageViewCreateInfo.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
+            ImageViewCreateInfo.flags                           = 0;
+            for( size_t i{ 0 }; i < imgs.size(); i++ )
+            {
+                ImageViewCreateInfo.image = _swapchainImages[ i ].image = imgs[ i ];
+                CHECK_RESULT( vkCreateImageView( tools::getDevice(), &ImageViewCreateInfo, ALLOCATION_CALLBACK, &_swapchainImages[ i ].view ) );
+            }
+        }
+
         void destroySwapchain()
         {
             for( const auto &img : _swapchainImages )
+            {
+                vkDestroySemaphore( tools::getDevice(), img.isAvailable, ALLOCATION_CALLBACK );
+                vkDestroySemaphore( tools::getDevice(), img.isRendered, ALLOCATION_CALLBACK );
                 vkDestroyImageView( tools::getDevice(), img.view, ALLOCATION_CALLBACK );
+            }
             vkDestroySwapchainKHR( tools::getDevice(), _swapchain, ALLOCATION_CALLBACK );
+        }
+
+        uint32_t AcquireImageIndex( VkSemaphore &semaphore )
+        {
+            _semaphoreIndex = ( _semaphoreIndex + 1 ) % _swapchainImages.size();
+            CHECK_RESULT( vkAcquireNextImageKHR( tools::getDevice(), _swapchain, UINT32_MAX, _swapchainImages[ _semaphoreIndex ].isAvailable, nullptr, &_imageIndex ) )
+            semaphore = _swapchainImages[ _imageIndex ].isAvailable;
+            return _imageIndex;
+        }
+
+        void swapchainPresent( VkSemaphore *semaphore )
+        {
+            VkPresentInfoKHR PresentInfo{};
+            PresentInfo.sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+            PresentInfo.waitSemaphoreCount = 1;
+            PresentInfo.pWaitSemaphores    = semaphore;
+            PresentInfo.swapchainCount     = 1;
+            PresentInfo.pSwapchains        = &_swapchain;
+            PresentInfo.pImageIndices      = &_imageIndex;
+            vkQueuePresentKHR( tools::getQueues().present.GetHandle(), &PresentInfo );
         }
     } // namespace tools
 } // namespace Engine

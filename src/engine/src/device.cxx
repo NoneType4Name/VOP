@@ -86,10 +86,10 @@ namespace Engine
         {
             uint32_t _c{ 0 };
             vkEnumerateDeviceExtensionProperties( _phDevice, nullptr, &_c, nullptr );
-            std::vector<VkExtensionProperties> AvilableExtNames{ _c };
-            vkEnumerateDeviceExtensionProperties( _phDevice, nullptr, &_c, AvilableExtNames.data() );
+            std::vector<VkExtensionProperties> AvailableExtNames{ _c };
+            vkEnumerateDeviceExtensionProperties( _phDevice, nullptr, &_c, AvailableExtNames.data() );
             std::set<std::string> tmpRequeredDeviceExts{ extensions.begin(), extensions.end() };
-            for( const auto &ext : AvilableExtNames )
+            for( const auto &ext : AvailableExtNames )
             {
                 tmpRequeredDeviceExts.erase( ext.extensionName );
             }
@@ -143,6 +143,7 @@ namespace Engine
             createInfo.enabledExtensionCount   = static_cast<uint32_t>( Extensions.size() );
             createInfo.ppEnabledExtensionNames = Extensions.size() ? Extensions.data() : nullptr;
             CHECK_RESULT( vkCreateDevice( _phDevice, &createInfo, nullptr, &_device ) );
+            _queues.init( _device );
         }
 
         void destroyDevice()

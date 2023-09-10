@@ -9,6 +9,8 @@ namespace Engine
         void createSwapchain();
         void reCreateSwapchain();
         void destroySwapchain();
+        uint32_t AcquireImageIndex( VkSemaphore &semaphore );
+        void swapchainPresent( VkSemaphore *semaphore );
         VkSurfaceFormatKHR getSwapchainSurfaceFormat();
         VkPresentModeKHR getSwapchainSurfacePresentMode();
         VkFormat getSwapchainDepthImageFormat();
