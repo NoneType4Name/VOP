@@ -35,6 +35,7 @@ namespace Engine
 
     void init( AppCreateInfo sAppCreateInfo )
     {
+        tools::setSettings( sAppCreateInfo );
         tools::createWindow( sAppCreateInfo.width, sAppCreateInfo.height, sAppCreateInfo.title );
         tools::createSurface( tools::getInstance() );
         tools::createDevice( static_cast<VkPhysicalDevice>( sAppCreateInfo.device.ptr ) );

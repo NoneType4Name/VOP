@@ -70,5 +70,53 @@ namespace Engine
             vkUnmapMemory( tools::getDevice(), _memory );
             _mapped = nullptr;
         }
+
+        commandBuffer::commandBuffer( VkCommandPool commandPool, VkCommandBufferLevel level, queue queue )
+        {
+            _queue = queue;
+            VkCommandBufferAllocateInfo CommandBufferAllocateInfo{};
+            CommandBufferAllocateInfo.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+            CommandBufferAllocateInfo.commandPool        = commandPool;
+            CommandBufferAllocateInfo.level              = level;
+            CommandBufferAllocateInfo.commandBufferCount = 1;
+            CHECK_RESULT( vkAllocateCommandBuffers( tools::getDevice(), &CommandBufferAllocateInfo, &_commandBuffer ) );
+
+            VkFenceCreateInfo FenceCreateInfo;
+            FenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+            CHECK_RESULT( vkCreateFence( tools::getDevice(), &FenceCreateInfo, nullptr, &_fence ) );
+        }
+
+        commandBuffer::~commandBuffer()
+        {
+            vkFreeCommandBuffers( tools::getDevice(), _commandPool, 1, &_commandBuffer );
+            vkDestroyFence( tools::getDevice(), _fence, ALLOCATION_CALLBACK );
+        }
+
+        void commandBuffer::begin()
+        {
+            if( began ) return;
+            VkCommandBufferBeginInfo CommandBufferBeginInfo{};
+            CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+            CommandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+            vkBeginCommandBuffer( _commandBuffer, &CommandBufferBeginInfo );
+        }
+
+        void commandBuffer::submit()
+        {
+            end();
+            VkSubmitInfo SubmitInfo{};
+            SubmitInfo.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+            SubmitInfo.commandBufferCount = 1;
+            SubmitInfo.pCommandBuffers    = &_commandBuffer;
+            vkResetFences( tools::getDevice(), 1, &_fence );
+            vkQueueSubmit( _queue.GetHandle(), 1, &SubmitInfo, _fence );
+            vkWaitForFences( tools::getDevice(), 1, &_fence, true, -1ui64 );
+        }
+
+        void commandBuffer::end()
+        {
+            if( began )
+                vkEndCommandBuffer( _commandBuffer );
+        }
     } // namespace tools
 } // namespace Engine

@@ -7,28 +7,13 @@ namespace Engine
 {
     namespace tools
     {
-        struct SwapchainProperties
-        {
-            VkSurfaceCapabilitiesKHR Capabilities;
-            std::vector<VkSurfaceFormatKHR> Format;
-            std::vector<VkPresentModeKHR> PresentModes;
-        };
-
-        struct SwapchainImage
-        {
-            VkImage image;
-            VkImageView view;
-            VkSemaphore isAvailable;
-            VkSemaphore isRendered;
-        };
-
         namespace
         {
             VkSwapchainKHR _swapchain{ nullptr };
-            VkSurfaceFormatKHR _swapchainSurfaceFormat{ VK_FORMAT_UNDEFINED };
-            VkPresentModeKHR _swapchainSurfacePresentMode;
+            VkSurfaceFormatKHR _swapchainSurfaceFormat{ VK_FORMAT_MAX_ENUM };
+            VkPresentModeKHR _swapchainSurfacePresentMode{ VK_PRESENT_MODE_MAX_ENUM_KHR };
             SwapchainProperties _swapchainProperties{};
-            VkFormat _depthImageFormat{ VK_FORMAT_UNDEFINED };
+            VkFormat _depthImageFormat{ VK_FORMAT_MAX_ENUM };
             std::vector<SwapchainImage> _swapchainImages{};
             uint32_t _imageIndex{ 0 };
             uint32_t _semaphoreIndex{ 0 };
@@ -54,6 +39,8 @@ namespace Engine
 
         VkSurfaceFormatKHR getSwapchainSurfaceFormat()
         {
+            if( _swapchainSurfaceFormat.format != VK_FORMAT_MAX_ENUM )
+                return _swapchainSurfaceFormat;
             VkSurfaceFormatKHR SurfaceFormat{ _swapchainProperties.Format[ 0 ] };
             for( const auto &format : _swapchainProperties.Format )
             {
@@ -65,6 +52,9 @@ namespace Engine
 
         VkPresentModeKHR getSwapchainSurfacePresentMode()
         {
+            if( _swapchainSurfacePresentMode != VK_PRESENT_MODE_MAX_ENUM_KHR )
+                return _swapchainSurfacePresentMode;
+
             VkPresentModeKHR SurfacePresentMode{ VK_PRESENT_MODE_FIFO_KHR };
             for( const auto &mode : _swapchainProperties.PresentModes )
             {
@@ -76,7 +66,9 @@ namespace Engine
 
         VkFormat getSwapchainDepthImageFormat()
         {
-            VkFormat Format{ VK_FORMAT_UNDEFINED };
+            if( _depthImageFormat != VK_FORMAT_MAX_ENUM )
+                return _depthImageFormat;
+            VkFormat Format{ VK_FORMAT_MAX_ENUM };
             for( auto format : std::vector<VkFormat>{ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT } )
             {
                 VkFormatProperties FormatProperties{};
@@ -161,10 +153,13 @@ namespace Engine
             {
                 vkDestroyImageView( tools::getDevice(), img.view, ALLOCATION_CALLBACK );
             }
-            _swapchainProperties         = getSwapchainProperties();
-            _swapchainSurfaceFormat      = getSwapchainSurfaceFormat();
-            _swapchainSurfacePresentMode = getSwapchainSurfacePresentMode();
-            _depthImageFormat            = getSwapchainDepthImageFormat();
+            _swapchainSurfaceFormat.format = VK_FORMAT_MAX_ENUM;
+            _swapchainSurfacePresentMode   = VK_PRESENT_MODE_MAX_ENUM_KHR;
+            _depthImageFormat              = VK_FORMAT_MAX_ENUM;
+            _swapchainProperties           = getSwapchainProperties();
+            _swapchainSurfaceFormat        = getSwapchainSurfaceFormat();
+            _swapchainSurfacePresentMode   = getSwapchainSurfacePresentMode();
+            _depthImageFormat              = getSwapchainDepthImageFormat();
             glfwSetWindowSizeLimits( tools::getWindow(), _swapchainProperties.Capabilities.minImageExtent.width, _swapchainProperties.Capabilities.minImageExtent.height, _swapchainProperties.Capabilities.maxImageExtent.width, _swapchainProperties.Capabilities.maxImageExtent.height );
             VkSwapchainCreateInfoKHR SwapchainCreateInfo{};
             SwapchainCreateInfo.sType            = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
@@ -222,6 +217,9 @@ namespace Engine
 
         void destroySwapchain()
         {
+            _swapchainSurfaceFormat.format = VK_FORMAT_MAX_ENUM;
+            _swapchainSurfacePresentMode   = VK_PRESENT_MODE_MAX_ENUM_KHR;
+            _depthImageFormat              = VK_FORMAT_MAX_ENUM;
             for( const auto &img : _swapchainImages )
             {
                 vkDestroySemaphore( tools::getDevice(), img.isAvailable, ALLOCATION_CALLBACK );

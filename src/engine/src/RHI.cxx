@@ -7,6 +7,7 @@ namespace Engine
         namespace
         {
             VkInstance _instance{ nullptr };
+            AppCreateInfo _settings;
             std::vector<VkPhysicalDevice> _aviliable_phDevices{};
             std::vector<VkPhysicalDeviceProperties> _aviliable_phDevicesProperties{};
         } // namespace
@@ -135,6 +136,16 @@ namespace Engine
         VkInstance getInstance()
         {
             return _instance;
+        }
+
+        void setSettings( const AppCreateInfo settings )
+        {
+            _settings = settings;
+        }
+
+        const AppCreateInfo &getSettings()
+        {
+            return _settings;
         }
     } // namespace tools
 } // namespace Engine

@@ -1,6 +1,7 @@
 #include <common/globals.hxx>
 #include <common/logging.hxx>
 #include <platform.hxx>
+#include <engine.hxx>
 
 #define ENGINE_VERSION VK_MAKE_VERSION( 0, 0, 1 )
 
@@ -23,5 +24,8 @@ namespace Engine
         bool isDeviceSupportExtensions( std::vector<const char *> extensions );
         VkInstance getInstance();
         VkSwapchainKHR getSwapchain();
+        void setSettings( const AppCreateInfo settings );
+        const AppCreateInfo &getSettings();
+
     } // namespace tools
 } // namespace Engine

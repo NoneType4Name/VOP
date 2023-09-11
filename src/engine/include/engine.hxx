@@ -45,6 +45,17 @@ namespace Engine
         CPU            = 0x8ui8
     };
 
+    enum MultiSamplingCount
+    {
+        SAMPLE_COUNT_1_BIT  = 0x01,
+        SAMPLE_COUNT_2_BIT  = 0x02,
+        SAMPLE_COUNT_4_BIT  = 0x04,
+        SAMPLE_COUNT_8_BIT  = 0x08,
+        SAMPLE_COUNT_16_BIT = 0x10,
+        SAMPLE_COUNT_32_BIT = 0x20,
+        SAMPLE_COUNT_64_BIT = 0x40,
+    };
+
     struct ENGINE_EXPORT Device
     {
         const char *name{ nullptr };
@@ -53,7 +64,7 @@ namespace Engine
 
     struct ENGINE_EXPORT Settings
     {
-        uint32_t MultiSamplingCount;
+        MultiSamplingCount MultiSamplingCount;
     };
 
     // struct ENGINE_EXPORT AppModels
@@ -79,7 +90,7 @@ namespace Engine
         uint16_t height{ 600 };
         const char *title{};
         Device device;
-        std::vector<std::array<const char *, 2>> vAppModels{};
+        // std::vector<std::array<const char *, 2>> vAppModels{};
         const char *VertexShaderPath;
         const char *FragmentShaderPath;
         Settings sSettings{};
