@@ -107,7 +107,7 @@ namespace Engine
         {
             for( uint32_t i{ 0 }; i < count(); i++ )
             {
-                ( ( tools::queue * )( ( &*this ) + sizeof( tools::queue ) * i++ ) )->init( device );
+                ( ( tools::queue * )( ( ( uint8_t * )this ) + sizeof( tools::queue ) * i ) )->init( device );
             }
         }
 

@@ -26,7 +26,8 @@ namespace Engine
             glfwWindowHint( GLFW_RESIZABLE, GLFW_FALSE );
             _window = glfwCreateWindow( width ? width : displayRes.width, height ? height : displayRes.height, title, nullptr, nullptr );
             window::setTitle( title );
-            // window::setWindowResolution( width, height );
+            window::setWindowResolution( width, height );
+            window::cenralize();
         }
 
         void destroySurface()

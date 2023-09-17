@@ -56,6 +56,14 @@ namespace Engine
         SAMPLE_COUNT_64_BIT = 0x40,
     };
 
+    typedef uint64_t textureID;
+    typedef uint64_t modelID;
+    enum modelType
+    {
+        MODEL_TYPE_GUI    = 1,
+        MODEL_TYPE_ENTITY = 2
+    };
+
     struct ENGINE_EXPORT Device
     {
         const char *name{ nullptr };
@@ -67,41 +75,25 @@ namespace Engine
         MultiSamplingCount MultiSamplingCount;
     };
 
-    // struct ENGINE_EXPORT AppModels
-    // {
-    //     inline uint32_t add( std::array<const char *, 2> &&_model_texture )
-    //     {
-    //         models_texture.push_back( _model_texture );
-    //         return _model_texture.size();
-    //     };
-
-    //     std::vector<std::array<const char *, 2>> get()
-    //     {
-    //         return models_texture;
-    //     }
-
-    //   private:
-    //     std::vector<std::array<const char *, 2>> models_texture;
-    // };
-
     struct ENGINE_EXPORT AppCreateInfo
     {
         uint16_t width{ 800 };
         uint16_t height{ 600 };
         const char *title{};
         Device device;
-        // std::vector<std::array<const char *, 2>> vAppModels{};
         const char *VertexShaderPath;
         const char *FragmentShaderPath;
-        Settings sSettings{};
+        Settings settings{};
     };
 
-    ENGINE_EXPORT std::vector<Device> GetGraphicDevices( uint8_t devicesTypeFlag = 0 );
     ENGINE_EXPORT void init( AppCreateInfo sAppCreateInfo );
+    ENGINE_EXPORT void shutdown();
+    ENGINE_EXPORT std::vector<Device> GetGraphicDevices( uint8_t devicesTypeFlag = 0 );
     ENGINE_EXPORT void SetGraphicDevice( Device device ); // todo
     ENGINE_EXPORT Device GetActiveGrapchiDevice();
-    ENGINE_EXPORT void shutdown();
-
+    ENGINE_EXPORT textureID CreateTexture( const char *path );
+    ENGINE_EXPORT modelID CreateModel( modelType, const char *path );
+    ENGINE_EXPORT void ModelBindTexture( modelID model, textureID texture );
 } // namespace Engine
 
 #endif

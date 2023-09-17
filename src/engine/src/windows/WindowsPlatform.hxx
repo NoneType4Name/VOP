@@ -5,9 +5,9 @@
 #define RESOLUTION_TYPE uint16_t
 
 // #include <vulkan/vulkan.hpp>
-// #include <vulkan/vulkan.h>
 #include <stddef.h>
 #include <GLFW/glfw3.h>
+#include <vulkan/vulkan.h>
 #include <GLFW/glfw3native.h>
 #include <vulkan/vk_enum_string_helper.h>
 

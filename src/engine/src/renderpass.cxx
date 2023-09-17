@@ -16,7 +16,7 @@ namespace Engine
         {
             VkAttachmentDescription ColorAttachment{};
             ColorAttachment.format         = tools::getSwapchainSurfaceFormat().format;
-            ColorAttachment.samples        = static_cast<VkSampleCountFlagBits>( tools::getSettings().sSettings.MultiSamplingCount );
+            ColorAttachment.samples        = static_cast<VkSampleCountFlagBits>( tools::getSettings().settings.MultiSamplingCount );
             ColorAttachment.loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
             ColorAttachment.storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
             ColorAttachment.stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;

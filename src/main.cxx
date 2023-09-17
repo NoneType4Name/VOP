@@ -39,18 +39,17 @@ namespace
 
 int main()
 {
+    // auto rectangle{ Engine::CreateModel( Engine::modelType::MODEL_TYPE_ENTITY, "./assets/models/rectangle/model.obj" ) };
+    auto rectangle_texture{ Engine::CreateTexture( "./assets/textures/rectangle/model.png" ) };
     auto devices{ Engine::GetGraphicDevices( Engine::DISCRETE_GPU | Engine::INTEGRATED_GPU ) };
-
     Engine::AppCreateInfo App{};
-    App.width                        = 0;
-    App.height                       = 0;
-    App.title                        = "Quest App.";
-    App.device                       = devices.front();
-    App.VertexShaderPath             = "./assets/shaders/binary.vert.spv";
-    App.FragmentShaderPath           = "./assets/shaders/binary.frag.spv";
-    App.sSettings.MultiSamplingCount = 2;
-    // App.vAppModels.push_back( { "./assets/models/rectangle/model.obj", "./assets/textures/rectangle/model.png" } );
-    // App.vAppModels.push_back( { "./assets/models/rectangle/model.obj", "./assets/textures/rectangle/model2.png" } );
+    App.width                       = 0;
+    App.height                      = 0;
+    App.title                       = "Quest App.";
+    App.device                      = devices.front();
+    App.VertexShaderPath            = "./assets/shaders/binary.vert.spv";
+    App.FragmentShaderPath          = "./assets/shaders/binary.frag.spv";
+    App.settings.MultiSamplingCount = Engine::MultiSamplingCount::SAMPLE_COUNT_2_BIT;
 
     Engine::init( App );
     // Engine::SetKeyEventsCallback( []( int key, int scancode, int action, int mods )
@@ -58,7 +57,6 @@ int main()
     while( !Engine::window::shouldClose() )
     {
         Engine::window::updateEvents();
-        // auto d = Engine::GrapchicPhysicalDevice{};
     }
     Engine::shutdown();
     return 0;
