@@ -1,9 +1,10 @@
 #include <engine.hxx>
 #include <map>
-#include <texture.hxx>
 #include <RHI.hxx>
 #include <device.hxx>
 #include <swapchain.hxx>
+#include <texture.hxx>
+#include <model.hxx>
 
 namespace
 {
@@ -20,13 +21,6 @@ namespace
 
 namespace Engine
 {
-    namespace tools
-    {
-        namespace
-        {
-            std::unordered_map<textureID, texture> _textures;
-        }
-    } // namespace tools
     std::vector<Device> GetGraphicDevices( uint8_t devicesTypeFlag )
     {
         std::vector<Device> devices{};
@@ -53,7 +47,6 @@ namespace Engine
 
     void shutdown()
     {
-        tools::_textures.clear();
         tools::destroySwapchain();
         tools::destroyDevice();
         tools::destroySurface();
@@ -64,11 +57,12 @@ namespace Engine
 
     textureID CreateTexture( const char *path )
     {
-        auto t                         = new tools::texture( path );
-        tools::_textures[ t->GetID() ] = *t;
-        return t->GetID();
+        return ( new tools::texture( path ) )->GetID();
     };
 
-    modelID CreateModel( modelType, const char *path );
+    modelID CreateModel( modelType, const char *path )
+    {
+        return ( new tools::model( path ) )->GetID();
+    }
     void ModelBindTexture( modelID model, textureID texture );
 } // namespace Engine

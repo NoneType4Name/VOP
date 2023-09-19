@@ -41,6 +41,7 @@ int main()
 {
     // auto rectangle{ Engine::CreateModel( Engine::modelType::MODEL_TYPE_ENTITY, "./assets/models/rectangle/model.obj" ) };
     auto rectangle_texture{ Engine::CreateTexture( "./assets/textures/rectangle/model.png" ) };
+    auto rectangle_model{ Engine::CreateModel( Engine::modelType::MODEL_TYPE_ENTITY, "./assets/models/rectangle/model.obj" ) };
     auto devices{ Engine::GetGraphicDevices( Engine::DISCRETE_GPU | Engine::INTEGRATED_GPU ) };
     Engine::AppCreateInfo App{};
     App.width                       = 0;
@@ -52,8 +53,8 @@ int main()
     App.settings.MultiSamplingCount = Engine::MultiSamplingCount::SAMPLE_COUNT_2_BIT;
 
     Engine::init( App );
-    // Engine::SetKeyEventsCallback( []( int key, int scancode, int action, int mods )
-    //                               { SPDLOG_DEBUG( "key pressed code: {}", std::to_string( key ) ); } );
+    // Engine::window::setKeyEventsCallback( []( int key, int scancode, int action, int mods )
+    //   { SPDLOG_DEBUG( "key pressed code: {}", std::to_string( key ) ); } );
     while( !Engine::window::shouldClose() )
     {
         Engine::window::updateEvents();
