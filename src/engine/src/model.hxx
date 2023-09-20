@@ -48,3 +48,14 @@ namespace Engine
         const model &getModel( modelID const id );
     } // namespace tools
 } // namespace Engine
+namespace std
+{
+    template <>
+    struct hash<Engine::tools::vertex>
+    {
+        size_t operator()( Engine::tools::vertex const &vertex ) const
+        {
+            return ( hash<glm::vec3>()( vertex.coordinate ) );
+        }
+    };
+} // namespace std

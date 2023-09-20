@@ -58,26 +58,29 @@ namespace Engine
                 SPDLOG_WARN( "Warn with load model {}:{}", path, warn );
             if( err.length() )
                 SPDLOG_ERROR( "Error with load model {}:{}", path, err );
+            std::unordered_map<vertex, uint64_t> uniqueVertices{};
 
             for( const auto &shape : shapes )
             {
                 for( const auto &index : shape.mesh.indices )
                 {
-                    vertex vertex{};
+                    vertex _vert{};
 
-                    vertex.coordinate = {
+                    _vert.coordinate = {
                         attrib.vertices[ 3 * index.vertex_index + 0 ],
                         attrib.vertices[ 3 * index.vertex_index + 1 ],
                         attrib.vertices[ 3 * index.vertex_index + 2 ] };
 
-                    vertex.texture_coordinate = {
+                    _vert.texture_coordinate = {
                         attrib.texcoords[ 2 * index.texcoord_index + 0 ],
                         1.0f - attrib.texcoords[ 2 * index.texcoord_index + 1 ] };
 
-                    vertex.color = { 1.0f, 1.0f, 1.0f, 1.f };
-
-                    // indecies.push_back( index.vertex_index );
-                    // vertecies.push_back( vertex ); // todo
+                    _vert.color = { 1.0f, 1.0f, 1.0f, 1.f };
+                    if( !uniqueVertices.count( _vert ) )
+                    {
+                        indecies.push_back( index.vertex_index );
+                        vertecies.push_back( _vert ); // todo}
+                    }
                 }
             }
 
@@ -120,15 +123,3 @@ namespace Engine
         }
     } // namespace tools
 } // namespace Engine
-
-namespace std
-{
-    template <>
-    struct hash<Engine::tools::vertex>
-    {
-        size_t operator()( Engine::tools::vertex const &vertex ) const
-        {
-            return ( ( hash<glm::vec3>()( vertex.coordinate ) ^ ( hash<glm::vec3>()( vertex.color ) << 1 ) ) >> 1 ) ^ ( hash<glm::vec2>()( vertex.texture_coordinate ) << 1 );
-        }
-    };
-} // namespace std
