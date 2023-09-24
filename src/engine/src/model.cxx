@@ -78,23 +78,29 @@ namespace Engine
                     _vert.color = { 1.0f, 1.0f, 1.0f, 1.f };
                     if( !uniqueVertices.count( _vert ) )
                     {
-                        indecies.push_back( index.vertex_index );
+                        uniqueVertices[ _vert ] = vertecies.size();
                         vertecies.push_back( _vert ); // todo}
                     }
+                    indecies.push_back( uniqueVertices[ _vert ] );
                 }
             }
 
             _models[ id ] = *this;
         }
 
-        const modelID model::GetID() const
+        const modelID model::getID() const
         {
             return id;
         }
 
-        const textureID model::GetTextureID() const
+        const textureID model::getTextureID() const
         {
             return texture_id;
+        }
+
+        void model::setTexture( textureID texture )
+        {
+            texture_id = texture;
         }
 
         void model::setVerteciesBufferOffset( const uint64_t offset )
@@ -117,7 +123,7 @@ namespace Engine
             return indecies_offset;
         }
 
-        const model &getTexture( const modelID id )
+        model &getTexture( const modelID id )
         {
             return _models[ id ];
         }

@@ -1,3 +1,4 @@
+#pragma once
 #include <common/globals.hxx>
 #include <common/logging.hxx>
 #include <platform.hxx>

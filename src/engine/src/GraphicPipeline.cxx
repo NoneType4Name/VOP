@@ -1,12 +1,22 @@
-#include <shaders.hxx>
+#include <GraphicPipeline.hxx>
 #include <device.hxx>
 
 namespace Engine
 {
     namespace tools
     {
-        VkShaderModule shaderInfo::load()
+        namespace
         {
+            std::unordered_map<const char *, VkShaderModule> _shaderModules{};
+        }
+
+        void createGrapchiPipeline(){};
+
+        VkShaderModule
+        shaderInfo::load()
+        {
+            if( _shaderModules.count( path ) )
+                return _shaderModules[ path ];
             std::ifstream File{ path, std::fstream::ate | std::fstream::binary };
             if( !File.is_open() )
             {
@@ -24,6 +34,7 @@ namespace Engine
             ShaderModuleCreateInfo.pCode    = reinterpret_cast<const uint32_t *>( Data.data() );
             VkShaderModule shaderModule{};
             VkResult Result{ vkCreateShaderModule( tools::getDevice(), &ShaderModuleCreateInfo, nullptr, &shaderModule ) };
+            _shaderModules[ path ] = shaderModule;
             return shaderModule;
         }
     } // namespace tools

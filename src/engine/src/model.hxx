@@ -28,16 +28,17 @@ namespace Engine
           public:
             model() = default;
             model( const char *path );
-            const modelID GetID() const;
-            const textureID GetTextureID() const;
+            const modelID getID() const;
+            const textureID getTextureID() const;
+            void setTexture( textureID texture );
             void setVerteciesBufferOffset( const uint64_t offset );
             const uint64_t getVerteciesBufferOffset();
             void setIndeciesBufferOffset( const uint64_t offset );
             const uint64_t getIndeciesBufferOffset();
 
           private:
-            modelID id;
-            textureID texture_id;
+            modelID id{ 0 };
+            textureID texture_id{ 0 };
             std::vector<vertex> vertecies;
             std::vector<uint32_t> indecies;
             uint64_t vertecies_offset{ 0 };
@@ -45,7 +46,7 @@ namespace Engine
             // uint64_t texture_coordinate_offset{ 0 };
             // uint64_t normals_offset{ 0 };
         };
-        const model &getModel( modelID const id );
+        model &getModel( modelID const id );
     } // namespace tools
 } // namespace Engine
 namespace std

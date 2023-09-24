@@ -27,27 +27,27 @@ namespace Engine
                 stbi_image_free( p );
         }
 
-        const textureID texture::GetID() const
+        const textureID texture::getID() const
         {
             return id;
         }
 
-        const uint8_t *texture::GetHandle( const size_t mip_level ) const
+        const uint8_t *texture::getHandle( const size_t mip_level ) const
         {
             return mips[ mip_level ];
         }
 
-        const uint32_t texture::GetWidth() const
+        const uint32_t texture::getWidth() const
         {
             return static_cast<uint32_t>( _x );
         }
 
-        const uint32_t texture::GetHeight() const
+        const uint32_t texture::getHeight() const
         {
             return static_cast<uint32_t>( _y );
         }
 
-        const uint32_t texture::GetChanels() const
+        const uint32_t texture::getChanels() const
         {
             return static_cast<uint32_t>( _c );
         }

@@ -58,11 +58,20 @@ namespace Engine
 
     typedef uint64_t textureID;
     typedef uint64_t modelID;
+    typedef uint64_t shadersLayoutID;
+
     enum modelType
     {
         MODEL_TYPE_GUI    = 1,
         MODEL_TYPE_ENTITY = 2
     };
+
+    // enum ShaderType
+    // {
+    //     NONE_SHADER_TYPE,
+    //     VERTEX_SHADER_TYPE,
+    //     FRAGMENT_SHADER_TYPE
+    // };
 
     struct ENGINE_EXPORT Device
     {
@@ -75,14 +84,18 @@ namespace Engine
         MultiSamplingCount MultiSamplingCount;
     };
 
+    struct ENGINE_EXPORT ShadersLayout
+    {
+        const char *VertexShaderPath;
+        const char *FragmentShaderPath;
+    };
+
     struct ENGINE_EXPORT AppCreateInfo
     {
         uint16_t width{ 800 };
         uint16_t height{ 600 };
         const char *title{};
         Device device;
-        const char *VertexShaderPath;
-        const char *FragmentShaderPath;
         Settings settings{};
     };
 
@@ -94,6 +107,7 @@ namespace Engine
     ENGINE_EXPORT textureID CreateTexture( const char *path );
     ENGINE_EXPORT modelID CreateModel( modelType, const char *path );
     ENGINE_EXPORT void ModelBindTexture( modelID model, textureID texture );
+    ENGINE_EXPORT shadersLayoutID CreateShadersLayout( ShadersLayout layout );
 } // namespace Engine
 
 #endif

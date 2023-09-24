@@ -57,12 +57,20 @@ namespace Engine
 
     textureID CreateTexture( const char *path )
     {
-        return ( new tools::texture( path ) )->GetID();
+        return ( new tools::texture( path ) )->getID();
     };
 
     modelID CreateModel( modelType, const char *path )
     {
-        return ( new tools::model( path ) )->GetID();
+        return ( new tools::model( path ) )->getID();
     }
-    void ModelBindTexture( modelID model, textureID texture );
+
+    void ModelBindTexture( modelID model, textureID texture )
+    {
+        tools::getModel( model ).setTexture( texture );
+    }
+
+    shadersLayoutID CreateShadersLayout( ShadersLayout layout )
+    {
+    }
 } // namespace Engine

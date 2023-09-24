@@ -84,6 +84,11 @@ namespace Engine
             CHECK_RESULT( vkCreateRenderPass( tools::getDevice(), &renderPassInfo, nullptr, &_renderpass ) );
         }
 
+        VkRenderPass getRenderPass()
+        {
+            return _renderpass;
+        }
+
         void destroyRenderPass()
         {
             vkDestroyRenderPass( tools::getDevice(), _renderpass, ALLOCATION_CALLBACK );
