@@ -5,6 +5,9 @@
 #include <swapchain.hxx>
 #include <texture.hxx>
 #include <model.hxx>
+#include <renderpass.hxx>
+
+#define CHECK_FOR_INIT assert( inited )
 
 namespace
 {
@@ -21,6 +24,10 @@ namespace
 
 namespace Engine
 {
+    namespace
+    {
+        bool inited{ false };
+    }
     std::vector<Device> GetGraphicDevices( uint8_t devicesTypeFlag )
     {
         std::vector<Device> devices{};
@@ -28,7 +35,7 @@ namespace Engine
         return devices;
     }
 
-    void GetActiveGrapchiDevice( Device &device )
+    void GetActiveGrapchicDevice( Device &device )
     {
         VkPhysicalDeviceProperties pr{};
         vkGetPhysicalDeviceProperties( tools::getPhysicalDevice(), &pr );
@@ -43,10 +50,13 @@ namespace Engine
         tools::createSurface( tools::getInstance() );
         tools::createDevice( static_cast<VkPhysicalDevice>( sAppCreateInfo.device.ptr ) );
         tools::createSwapchain();
+        tools::createRenderPass();
+        inited = true;
     }
 
     void shutdown()
     {
+        tools::destroyRenderPass();
         tools::destroySwapchain();
         tools::destroyDevice();
         tools::destroySurface();
@@ -57,20 +67,19 @@ namespace Engine
 
     textureID CreateTexture( const char *path )
     {
+        CHECK_FOR_INIT;
         return ( new tools::texture( path ) )->getID();
     };
 
     modelID CreateModel( modelType, const char *path )
     {
+        CHECK_FOR_INIT;
         return ( new tools::model( path ) )->getID();
     }
 
     void ModelBindTexture( modelID model, textureID texture )
     {
+        CHECK_FOR_INIT;
         tools::getModel( model ).setTexture( texture );
-    }
-
-    shadersLayoutID CreateShadersLayout( ShadersLayout layout )
-    {
     }
 } // namespace Engine

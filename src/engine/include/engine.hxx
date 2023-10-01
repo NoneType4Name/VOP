@@ -66,12 +66,12 @@ namespace Engine
         MODEL_TYPE_ENTITY = 2
     };
 
-    // enum ShaderType
-    // {
-    //     NONE_SHADER_TYPE,
-    //     VERTEX_SHADER_TYPE,
-    //     FRAGMENT_SHADER_TYPE
-    // };
+    enum ShaderStage
+    {
+        NONE_SHADER_TYPE,
+        VERTEX_SHADER_TYPE,
+        FRAGMENT_SHADER_TYPE
+    };
 
     struct ENGINE_EXPORT Device
     {
@@ -82,12 +82,6 @@ namespace Engine
     struct ENGINE_EXPORT Settings
     {
         MultiSamplingCount MultiSamplingCount;
-    };
-
-    struct ENGINE_EXPORT ShadersLayout
-    {
-        const char *VertexShaderPath;
-        const char *FragmentShaderPath;
     };
 
     struct ENGINE_EXPORT AppCreateInfo
@@ -103,11 +97,10 @@ namespace Engine
     ENGINE_EXPORT void shutdown();
     ENGINE_EXPORT std::vector<Device> GetGraphicDevices( uint8_t devicesTypeFlag = 0 );
     ENGINE_EXPORT void SetGraphicDevice( Device device ); // todo
-    ENGINE_EXPORT Device GetActiveGrapchiDevice();
+    ENGINE_EXPORT Device GetActiveGrapchicDevice();
     ENGINE_EXPORT textureID CreateTexture( const char *path );
     ENGINE_EXPORT modelID CreateModel( modelType, const char *path );
     ENGINE_EXPORT void ModelBindTexture( modelID model, textureID texture );
-    ENGINE_EXPORT shadersLayoutID CreateShadersLayout( ShadersLayout layout );
 } // namespace Engine
 
 #endif

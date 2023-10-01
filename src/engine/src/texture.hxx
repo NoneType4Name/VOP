@@ -13,12 +13,12 @@ namespace Engine
           public:
             texture() = default;
             texture( const char *path );
-            ~texture();
             const textureID getID() const;
             const uint8_t *getHandle( const size_t mip_level = 0 ) const;
             const uint32_t getWidth() const;
             const uint32_t getHeight() const;
             const uint32_t getChanels() const;
+            ~texture();
 
           private:
             textureID id{ 0 };

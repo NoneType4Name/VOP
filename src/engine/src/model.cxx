@@ -8,7 +8,7 @@ namespace Engine
     {
         namespace
         {
-            modelID _modelID{ 1 };
+            modelID model_id{ 0 };
             std::unordered_map<modelID, model> _models;
 
         } // namespace
@@ -43,7 +43,7 @@ namespace Engine
             return VertexInputAttributeDescription;
         }
 
-        model::model( const char *path ) : id{ _modelID++ }
+        model::model( const char *path ) : id{ ++model_id }
         {
             tinyobj::attrib_t attrib;
             std::vector<tinyobj::shape_t> shapes;
@@ -121,6 +121,10 @@ namespace Engine
         const uint64_t model::getIndeciesBufferOffset()
         {
             return indecies_offset;
+        }
+
+        model::~model()
+        {
         }
 
         model &getModel( const modelID id )

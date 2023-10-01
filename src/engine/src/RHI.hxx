@@ -22,10 +22,11 @@ namespace Engine
         void getInstanceExtensions( std::vector<const char *> &instanceExtensions );
         bool isInstanseSupportExtensions( std::vector<const char *> extensions );
         bool isDeviceSupportExtensions( std::vector<const char *> extensions );
+        VkDescriptorSetLayoutBinding getUniformDescriptor();
+        VkDescriptorSetLayoutBinding getSamplerDescriptor();
         VkInstance getInstance();
         VkSwapchainKHR getSwapchain();
         void setSettings( const AppCreateInfo settings );
         const AppCreateInfo &getSettings();
-
     } // namespace tools
 } // namespace Engine

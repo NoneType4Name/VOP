@@ -35,6 +35,7 @@ namespace Engine
             const uint64_t getVerteciesBufferOffset();
             void setIndeciesBufferOffset( const uint64_t offset );
             const uint64_t getIndeciesBufferOffset();
+            ~model();
 
           private:
             modelID id{ 0 };

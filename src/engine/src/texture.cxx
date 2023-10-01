@@ -10,11 +10,11 @@ namespace Engine
     {
         namespace
         {
-            textureID _textureID{ 1 };
+            textureID _textureID{ 0 };
             std::unordered_map<textureID, texture> _textures;
         } // namespace
 
-        texture::texture( const char *path ) : id{ _textureID++ }
+        texture::texture( const char *path ) : id{ ++_textureID }
         {
             mips.reserve( 1 );
             mips.push_back( stbi_load( path, &_x, &_y, &_c, STBI_rgb_alpha ) );
