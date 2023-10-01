@@ -123,7 +123,7 @@ namespace Engine
             return indecies_offset;
         }
 
-        model &getTexture( const modelID id )
+        model &getModel( const modelID id )
         {
             return _models[ id ];
         }

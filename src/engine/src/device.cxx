@@ -131,15 +131,20 @@ namespace Engine
             PhysicalDeviceDescriptorIndexingFeatures.runtimeDescriptorArray                    = VK_TRUE;
             PhysicalDeviceDescriptorIndexingFeatures.descriptorBindingVariableDescriptorCount  = VK_TRUE;
 
+            VkPhysicalDeviceFeatures2 physicalDeviceFeatures{};
+            physicalDeviceFeatures.sType    = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+            physicalDeviceFeatures.pNext    = &PhysicalDeviceDescriptorIndexingFeatures;
+            physicalDeviceFeatures.features = enabledFeatures;
+
             std::vector<const char *> Extensions{};
             getDeviceExtensions( Extensions );
             assert( isDeviceSupportExtensions( Extensions ) );
             VkDeviceCreateInfo createInfo{};
             createInfo.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-            createInfo.pNext                   = &PhysicalDeviceDescriptorIndexingFeatures;
+            createInfo.pNext                   = &physicalDeviceFeatures;
             createInfo.queueCreateInfoCount    = static_cast<uint32_t>( QueuesCreateInfo.size() );
             createInfo.pQueueCreateInfos       = QueuesCreateInfo.data();
-            createInfo.pEnabledFeatures        = &enabledFeatures;
+            createInfo.pEnabledFeatures        = nullptr;
             createInfo.enabledExtensionCount   = static_cast<uint32_t>( Extensions.size() );
             createInfo.ppEnabledExtensionNames = Extensions.size() ? Extensions.data() : nullptr;
             CHECK_RESULT( vkCreateDevice( _phDevice, &createInfo, nullptr, &_device ) );

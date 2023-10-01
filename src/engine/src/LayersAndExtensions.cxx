@@ -11,13 +11,16 @@ namespace Engine
 #endif
         };
         std::vector<std::string> instanceExtensions{
-            VK_EXT_DEBUG_UTILS_EXTENSION_NAME
+            VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
+            VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME
 #ifdef PLATFORM_WINDOWS
 #endif
         };
         std::vector<std::string> deviceExtensions{
 #ifdef PLATFORM_WINDOWS
-            VK_KHR_SWAPCHAIN_EXTENSION_NAME
+            VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+            VK_KHR_MAINTENANCE3_EXTENSION_NAME,
+            VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME
 #endif
         };
 
