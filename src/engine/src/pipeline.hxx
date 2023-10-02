@@ -21,7 +21,11 @@ namespace Engine
 
           private:
             pipelineID id;
-            VkPipeline ptr{ nullptr };
+            VkDescriptorPool DescriptorPool{ nullptr };
+            VkDescriptorSetLayout DescriptorLayout{ nullptr };
+            VkDescriptorSet DescriptorSet{ nullptr };
+            VkPipelineLayout PipelineLayout{ nullptr };
+            VkPipeline Pipeline{ nullptr };
         };
     } // namespace tools
 } // namespace Engine

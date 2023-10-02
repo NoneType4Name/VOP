@@ -1,11 +1,17 @@
-#include <descriptor.hxx>
+#include <descriptorSet.hxx>
+#include <RHI.hxx>
 #include <device.hxx>
 
 namespace Engine
 {
     namespace tools
     {
-        descriptor::descriptor( std::vector<VkDescriptorSetLayoutBinding> layouts )
+        namespace
+        {
+            std::unordered_map<descriptorSetID, descriptorSet> _descriptorSets{};
+            descriptorSetID descriptorSet_id{ 0 };
+        } // namespace
+        descriptorSet::descriptorSet( std::vector<VkDescriptorSetLayoutBinding> layouts ) : id{ ++descriptorSet_id }
         {
             std::vector<VkDescriptorPoolSize> sizes{};
             sizes.reserve( layouts.size() );
@@ -36,27 +42,34 @@ namespace Engine
             vkAllocateDescriptorSets( getDevice(), &descriptorSetAllocateInfo, &set );
         }
 
-        VkDescriptorPool descriptor::getPool() const
-        {
-            return pool;
-        }
-
-        VkDescriptorSetLayout descriptor::getLayout() const
+        VkDescriptorSetLayout descriptorSet::getLayout() const
         {
             return layout;
         }
 
-        VkDescriptorSet descriptor::getSet() const
+        VkDescriptorSet descriptorSet::getHandle() const
         {
             return set;
         }
 
-        descriptor::~descriptor()
+        descriptorSetID descriptorSet::getID() const
+        {
+            return id;
+        };
+
+        descriptorSet::~descriptorSet()
         {
             vkFreeDescriptorSets( getDevice(), pool, 1, &set );
             vkDestroyDescriptorPool( getDevice(), pool, ALLOCATION_CALLBACK ); // todo as classs
             vkDestroyDescriptorSetLayout( getDevice(), layout, ALLOCATION_CALLBACK );
         }
 
+        void createDescriptorPool()
+        {
+        }
+
+        void destroyDescriptorPool()
+        {
+        }
     } // namespace tools
 } // namespace Engine

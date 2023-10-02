@@ -7,17 +7,20 @@ namespace Engine
 {
     namespace tools
     {
-        class descriptor
+        typedef uint64_t descriptorSetID;
+        class descriptorSet
         {
           public:
-            descriptor() = default;
-            descriptor( std::vector<VkDescriptorSetLayoutBinding> layouts );
+            descriptorSet() = default;
+            descriptorSet( std::vector<VkDescriptorSetLayoutBinding> layouts );
             VkDescriptorPool getPool() const;
             VkDescriptorSetLayout getLayout() const;
-            VkDescriptorSet getSet() const;
-            ~descriptor();
+            VkDescriptorSet getHandle() const;
+            descriptorSetID getID() const;
+            ~descriptorSet();
 
           private:
+            descriptorSetID id;
             VkDescriptorPool pool{ nullptr };
             VkDescriptorSetLayout layout{ nullptr };
             VkDescriptorSet set{ nullptr };

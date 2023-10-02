@@ -8,7 +8,6 @@ namespace Engine
 {
     namespace tools
     {
-        typedef uint64_t shaderID;
         class shader
         {
           public:

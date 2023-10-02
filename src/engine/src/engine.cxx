@@ -63,6 +63,7 @@ namespace Engine
         tools::destroyWindow();
         tools::destroyDebugLayerCallback();
         tools::destroyInstance();
+        inited = false;
     }
 
     textureID CreateTexture( const char *path )

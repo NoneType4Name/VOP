@@ -9,5 +9,6 @@ namespace Engine
     {
         void createRenderPass();
         void destroyRenderPass();
+        VkRenderPass getRenderPass();
     } // namespace tools
 } // namespace Engine

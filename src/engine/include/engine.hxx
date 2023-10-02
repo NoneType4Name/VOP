@@ -58,7 +58,8 @@ namespace Engine
 
     typedef uint64_t textureID;
     typedef uint64_t modelID;
-    typedef uint64_t shadersLayoutID;
+    typedef uint64_t shaderID;
+    typedef uint64_t pipelineID;
 
     enum modelType
     {
@@ -93,6 +94,14 @@ namespace Engine
         Settings settings{};
     };
 
+    // struct ENGINE_EXPORT DescriptorSetInfo
+    // {
+    // };
+
+    struct ENGINE_EXPORT PipelineInfo
+    {
+    };
+
     ENGINE_EXPORT void init( AppCreateInfo sAppCreateInfo );
     ENGINE_EXPORT void shutdown();
     ENGINE_EXPORT std::vector<Device> GetGraphicDevices( uint8_t devicesTypeFlag = 0 );
@@ -100,7 +109,11 @@ namespace Engine
     ENGINE_EXPORT Device GetActiveGrapchicDevice();
     ENGINE_EXPORT textureID CreateTexture( const char *path );
     ENGINE_EXPORT modelID CreateModel( modelType, const char *path );
+    ENGINE_EXPORT shaderID CreateShader( const char *path, const char *mainFuncName, ShaderStage stage );
+    // ENGINE_EXPORT pipelineID CreateDescriptorSet( DescriptorSetInfo info );
+    ENGINE_EXPORT pipelineID CreatePipeline( PipelineInfo info );
     ENGINE_EXPORT void ModelBindTexture( modelID model, textureID texture );
+
 } // namespace Engine
 
 #endif

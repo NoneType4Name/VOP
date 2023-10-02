@@ -2,12 +2,13 @@
 #include <device.hxx>
 #include <model.hxx>
 #include <pipeline.hxx>
+#include <renderpass.hxx>
 
 namespace Engine
 {
     namespace tools
     {
-        pipeline::pipeline( std::vector<shaderID> )
+        pipeline::pipeline( std::vector<shaderID> shaders )
         {
             // VkPipelineShaderStageCreateInfo VertexShaderStage{};
             // VertexShaderStage.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -22,6 +23,37 @@ namespace Engine
             // FragmentShaderStage.pName  = "main";
 
             // VkPipelineShaderStageCreateInfo ShaderStage[]{ VertexShaderStage, FragmentShaderStage };
+
+            std::vector<VkDescriptorSetLayoutBinding> layouts{
+                { 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS, 1 },
+                { 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1 } };
+            std::vector<VkDescriptorPoolSize> sizes{};
+            sizes.reserve( layouts.size() );
+
+            VkDescriptorSetLayoutCreateInfo layoutsSet{};
+            layoutsSet.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+            layoutsSet.bindingCount = layouts.size();
+            layoutsSet.pBindings    = layouts.data();
+            uint32_t maxSets{ 0 };
+            for( auto l : layouts )
+            {
+                sizes.push_back( { l.descriptorType, l.descriptorCount } );
+                if( l.descriptorCount > maxSets ) maxSets = l.descriptorCount;
+            }
+            vkCreateDescriptorSetLayout( getDevice(), &layoutsSet, ALLOCATION_CALLBACK, &DescriptorLayout );
+
+            VkDescriptorPoolCreateInfo poolCreateInfo{};
+            poolCreateInfo.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+            poolCreateInfo.poolSizeCount = sizes.size();
+            poolCreateInfo.pPoolSizes    = sizes.data();
+            poolCreateInfo.maxSets       = maxSets;
+            vkCreateDescriptorPool( getDevice(), &poolCreateInfo, ALLOCATION_CALLBACK, &DescriptorPool ); // todo ads class
+
+            VkDescriptorSetAllocateInfo descriptorSetAllocateInfo{};
+            descriptorSetAllocateInfo.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+            descriptorSetAllocateInfo.descriptorSetCount = 1;
+            descriptorSetAllocateInfo.pSetLayouts        = &DescriptorLayout;
+            vkAllocateDescriptorSets( getDevice(), &descriptorSetAllocateInfo, &DescriptorSet );
 
             VkDynamicState dStates[]{ VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
 
@@ -104,9 +136,9 @@ namespace Engine
             VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
             pipelineLayoutInfo.sType          = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
             pipelineLayoutInfo.setLayoutCount = 1;
-            pipelineLayoutInfo.pSetLayouts    = &DescriptorsSetLayout;
+            pipelineLayoutInfo.pSetLayouts    = &DescriptorLayout;
 
-            Result = vkCreatePipelineLayout( device, &pipelineLayoutInfo, nullptr, &PipelineLayout.first );
+            CHECK_RESULT( vkCreatePipelineLayout( getDevice(), &pipelineLayoutInfo, nullptr, &PipelineLayout ) );
 
             VkGraphicsPipelineCreateInfo GraphicPipeLineCreateInfo{};
             GraphicPipeLineCreateInfo.sType               = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -120,11 +152,11 @@ namespace Engine
             GraphicPipeLineCreateInfo.pMultisampleState   = &Multisampling;
             GraphicPipeLineCreateInfo.pColorBlendState    = &colorBlending;
             GraphicPipeLineCreateInfo.pDynamicState       = &dStatescreateInfo;
-            GraphicPipeLineCreateInfo.layout              = PipelineLayout.first;
-            GraphicPipeLineCreateInfo.renderPass          = renderpass.first;
+            GraphicPipeLineCreateInfo.layout              = PipelineLayout;
+            GraphicPipeLineCreateInfo.renderPass          = getRenderPass();
             GraphicPipeLineCreateInfo.subpass             = 0;
 
-            Result = vkCreateGraphicsPipelines( device, nullptr, 1, &GraphicPipeLineCreateInfo, nullptr, &Pipeline.first );
+            CHECK_RESULT( vkCreateGraphicsPipelines( getDevice(), nullptr, 1, &GraphicPipeLineCreateInfo, nullptr, &Pipeline.first ) );
         }
 
         const pipelineID pipeline::getID() const
@@ -134,7 +166,7 @@ namespace Engine
 
         VkPipeline pipeline::getHandle() const
         {
-            return ptr;
+            return Pipeline;
         }
 
         pipeline::~pipeline()
