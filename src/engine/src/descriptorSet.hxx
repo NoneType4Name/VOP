@@ -7,7 +7,10 @@ namespace Engine
 {
     namespace tools
     {
-        typedef uint64_t descriptorSetID;
+        struct UniformObject
+        {
+        };
+
         class descriptorSet
         {
           public:
@@ -16,11 +19,9 @@ namespace Engine
             VkDescriptorPool getPool() const;
             VkDescriptorSetLayout getLayout() const;
             VkDescriptorSet getHandle() const;
-            descriptorSetID getID() const;
             ~descriptorSet();
 
           private:
-            descriptorSetID id;
             VkDescriptorPool pool{ nullptr };
             VkDescriptorSetLayout layout{ nullptr };
             VkDescriptorSet set{ nullptr };
