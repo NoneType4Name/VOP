@@ -6,12 +6,14 @@
 #    define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #    define STB_IMAGE_IMPLEMENTATION
 #    define RESOLUTION_TYPE uint16_t
-
-#    include <vector>
 #    include <array>
+#    include <vector>
 #    include <string>
 #    include <stdint.h>
+#    include <glm/glm.hpp>
+#    include <glm/gtx/hash.hpp>
 #    include "engine_export.hxx"
+#    include <glm/gtc/matrix_transform.hpp>
 
 namespace Engine
 {
@@ -60,6 +62,7 @@ namespace Engine
     typedef uint64_t modelID;
     typedef uint64_t shaderID;
     typedef uint64_t pipelineID;
+    typedef uint64_t descriptorSetID;
 
     enum modelType
     {
@@ -94,9 +97,12 @@ namespace Engine
         Settings settings{};
     };
 
-    // struct ENGINE_EXPORT DescriptorSetInfo
-    // {
-    // };
+    struct UniformObject
+    {
+        alignas( 16 ) glm::mat4 model;
+        alignas( 16 ) glm::mat4 view;
+        alignas( 16 ) glm::mat4 proj;
+    };
 
     struct ENGINE_EXPORT PipelineInfo
     {

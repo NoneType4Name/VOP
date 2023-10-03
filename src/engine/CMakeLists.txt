@@ -10,19 +10,6 @@ file(GLOB_RECURSE ENGINE_SOURCE_FILES
         "./${ENGINE_PLATFORM_INCLUDE}/*.cxx"
 )
 
-# list(PREPEND ENGINE_SOURCE_FILES ${ENGINE_PLATFORM_INCLUDE})
-
-# set( ENGINE_SOURCE_FILES
-    # ${ENGINE_PLATFORM_FILES_SROUCES}
-    # ./src/LayersAndExtensions.cxx
-    # ./src/debug.cxx
-    # ./src/RHI.cxx
-    # ./src/queue.cxx
-    # ./src/device.cxx
-    # ./src/engine.cxx
-    # )
-
-
 add_library(engine SHARED ${ENGINE_SOURCE_FILES})
 add_library(engine::engine ALIAS engine)
 

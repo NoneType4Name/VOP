@@ -21,7 +21,7 @@ namespace Engine
 
           private:
             pipelineID id;
-            VkDescriptorPool DescriptorPool{ nullptr };
+            descriptorSetID DescriptorSet_id{ 0 };
             VkDescriptorSetLayout DescriptorLayout{ nullptr };
             VkDescriptorSet DescriptorSet{ nullptr };
             VkPipelineLayout PipelineLayout{ nullptr };

@@ -1,8 +1,8 @@
 #pragma once
-#include <engine.hxx>
 #include <common/globals.hxx>
 #include <common/logging.hxx>
 #include <platform.hxx>
+#include <engine.hxx>
 
 namespace Engine
 {
