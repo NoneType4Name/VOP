@@ -8,7 +8,7 @@ namespace Engine
     {
         namespace
         {
-            std::unordered_map<descriptorSetID, descriptorSet> _descriptorSets{};
+            std::unordered_map<descriptorSetID, descriptorSet *> _descriptorSets{};
             descriptorSetID descriptorSet_id{ 0 };
             VkDescriptorPool _pool{ nullptr };
         } // namespace
@@ -17,7 +17,8 @@ namespace Engine
         {
             layoutBinds.assign( layouts.begin(), layouts.end() );
             if( pool )
-                create( pool );
+                init( pool );
+            _descriptorSets[ id ] = this;
         }
 
         VkDescriptorSetLayout descriptorSet::getLayout() const
@@ -46,7 +47,7 @@ namespace Engine
             return sizes;
         }
 
-        void descriptorSet::create( VkDescriptorPool pool )
+        void descriptorSet::init( VkDescriptorPool pool )
         {
             fromPool = pool;
             VkDescriptorSetLayoutCreateInfo layoutsSet{};
@@ -65,7 +66,6 @@ namespace Engine
 
         descriptorSet::~descriptorSet()
         {
-            vkFreeDescriptorSets( getDevice(), fromPool, 1, &set );
             vkDestroyDescriptorSetLayout( getDevice(), layout, ALLOCATION_CALLBACK );
         }
 
@@ -73,9 +73,9 @@ namespace Engine
         {
             uint8_t maxSets{ 0 };
             std::vector<VkDescriptorPoolSize> sizes;
-            for( auto size : _descriptorSets )
+            for( auto &size : _descriptorSets )
             {
-                for( auto sz : size.second.getSizes() )
+                for( auto &sz : size.second->getSizes() )
                 {
                     sizes.push_back( sz );
                     if( sz.descriptorCount > maxSets ) maxSets = sz.descriptorCount;
@@ -95,7 +95,24 @@ namespace Engine
             vkDestroyDescriptorPool( getDevice(), _pool, ALLOCATION_CALLBACK );
         }
 
-        const descriptorSet &getDescriptorSet( descriptorSetID id )
+        void createDescriptorSets()
+        {
+
+            for( auto &set : _descriptorSets )
+            {
+                set.second->init( _pool );
+            }
+        }
+
+        void destroyDescriptorSets()
+        {
+            for( auto &set : _descriptorSets )
+            {
+                delete set.second;
+            }
+        }
+
+        descriptorSet *getDescriptorSet( descriptorSetID id )
         {
             return _descriptorSets[ id ];
         }

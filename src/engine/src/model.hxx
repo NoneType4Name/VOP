@@ -42,7 +42,7 @@ namespace Engine
             // uint64_t texture_coordinate_offset{ 0 };
             // uint64_t normals_offset{ 0 };
         };
-        model &getModel( modelID const id );
+        model *getModel( modelID const id );
     } // namespace tools
 } // namespace Engine
 namespace std

@@ -27,7 +27,7 @@ namespace Engine
             VkPipelineLayout PipelineLayout{ nullptr };
             VkPipeline Pipeline{ nullptr };
         };
-        pipeline &getPipeline( pipelineID );
+        pipeline *getPipeline( pipelineID );
         void createPipelines();
         void destroyPipelines();
     } // namespace tools

@@ -38,7 +38,7 @@ namespace Engine
             devices.resize( 0 );
             if( types )
             {
-                for( auto dev : _all_devices )
+                for( auto &dev : _all_devices )
                 {
                     VkPhysicalDeviceMemoryProperties Mproperties{};
                     VkPhysicalDeviceProperties properties{};
@@ -66,7 +66,7 @@ namespace Engine
             devices.resize( 0 );
             if( types )
             {
-                for( auto dev : _all_devices )
+                for( auto &dev : _all_devices )
                 {
                     VkPhysicalDeviceMemoryProperties Mproperties{};
                     VkPhysicalDeviceProperties properties{};

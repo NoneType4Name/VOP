@@ -11,19 +11,19 @@ namespace Engine
         namespace
         {
             textureID _textureID{ 0 };
-            std::unordered_map<textureID, texture> _textures;
+            std::unordered_map<textureID, texture *> _textures;
         } // namespace
 
         texture::texture( const char *path ) : id{ ++_textureID }
         {
             mips.reserve( 1 );
             mips.push_back( stbi_load( path, &_x, &_y, &_c, STBI_rgb_alpha ) );
-            _textures[ id ] = *this;
+            _textures[ id ] = this;
         }
 
         texture::~texture()
         {
-            for( auto p : mips )
+            for( auto &p : mips )
                 stbi_image_free( p );
         }
 
@@ -52,7 +52,7 @@ namespace Engine
             return static_cast<uint32_t>( _c );
         }
 
-        const texture &getTexture( const textureID id )
+        texture *getTexture( const textureID id )
         {
             return _textures[ id ];
         }

@@ -24,7 +24,7 @@ namespace Engine
             const char *path{ nullptr };
         };
 
-        shader &getShader( shaderID id );
+        shader *getShader( shaderID id );
         void createShaderModules();
         void destroyShaderModules();
     } // namespace tools

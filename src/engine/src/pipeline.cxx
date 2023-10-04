@@ -11,19 +11,19 @@ namespace Engine
         namespace
         {
             pipelineID pipeline_id{ 0 };
-            std::unordered_map<pipelineID, pipeline> _pipelines{};
+            std::unordered_map<pipelineID, pipeline *> _pipelines{};
         } // namespace
 
         pipeline::pipeline( PipelineInfo info, descriptorSetID descriptorID ) : id{ ++pipeline_id }, DescriptorSet_id{ descriptorID }, info{ info }
         {
+            _pipelines[ id ] = this;
         }
 
-        pipeline::pipeline( PipelineInfo info )
+        pipeline::pipeline( PipelineInfo info ) : pipeline( info, ( new descriptorSet{
+                                                                        { { 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS, 1 },
+                                                                          { 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1 } } } )
+                                                                      ->getID() )
         {
-            auto descriptor = new descriptorSet{
-                { { 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS, 1 },
-                  { 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1 } } };
-            pipeline( info, descriptor->getID() );
         }
 
         const pipelineID pipeline::getID() const
@@ -40,8 +40,8 @@ namespace Engine
         {
             std::vector<VkPipelineShaderStageCreateInfo> ShaderStages;
             ShaderStages.reserve( info.shadersID.size() );
-            for( auto shader : info.shadersID )
-                ShaderStages.push_back( getShader( shader ).getInfo() );
+            for( auto &shader : info.shadersID )
+                ShaderStages.push_back( getShader( shader )->getInfo() );
             VkDynamicState dStates[]{ VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
             VkPipelineDynamicStateCreateInfo dStatescreateInfo{};
             dStatescreateInfo.sType             = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
@@ -118,7 +118,7 @@ namespace Engine
             colorBlending.blendConstants[ 1 ] = 0.0f; // Optional
             colorBlending.blendConstants[ 2 ] = 0.0f; // Optional
             colorBlending.blendConstants[ 3 ] = 0.0f; // Optional
-            auto descriptorLayout{ getDescriptorSet( DescriptorSet_id ).getLayout() };
+            auto descriptorLayout{ getDescriptorSet( DescriptorSet_id )->getLayout() };
             VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
             pipelineLayoutInfo.sType          = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
             pipelineLayoutInfo.setLayoutCount = 1;
@@ -148,9 +148,10 @@ namespace Engine
         pipeline::~pipeline()
         {
             vkDestroyPipeline( getDevice(), Pipeline, ALLOCATION_CALLBACK );
+            vkDestroyPipelineLayout( getDevice(), PipelineLayout, ALLOCATION_CALLBACK );
         }
 
-        pipeline &getPipeline( pipelineID )
+        pipeline *getPipeline( pipelineID )
         {
             return _pipelines[ pipeline_id ];
         }
@@ -158,17 +159,17 @@ namespace Engine
         void createPipelines()
         {
 
-            for( auto pipe : _pipelines )
+            for( auto &pipe : _pipelines )
             {
-                pipe.second.init();
+                pipe.second->init();
             }
         }
 
         void destroyPipelines()
         {
-            for( auto pipe : _pipelines )
+            for( auto &pipe : _pipelines )
             {
-                delete &pipe.second;
+                delete pipe.second;
             }
         }
     }; // namespace tools

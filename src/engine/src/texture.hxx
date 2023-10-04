@@ -26,6 +26,6 @@ namespace Engine
             std::vector<uint8_t *> mips;
         };
 
-        const texture &getTexture( const textureID id );
+        texture *getTexture( const textureID id );
     } // namespace tools
 } // namespace Engine

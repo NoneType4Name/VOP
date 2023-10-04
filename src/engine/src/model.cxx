@@ -9,7 +9,7 @@ namespace Engine
         namespace
         {
             modelID model_id{ 0 };
-            std::unordered_map<modelID, model> _models;
+            std::unordered_map<modelID, model *> _models;
 
         } // namespace
 
@@ -85,7 +85,7 @@ namespace Engine
                 }
             }
 
-            _models[ id ] = *this;
+            _models[ id ] = this;
         }
 
         const modelID model::getID() const
@@ -127,7 +127,7 @@ namespace Engine
         {
         }
 
-        model &getModel( const modelID id )
+        model *getModel( const modelID id )
         {
             return _models[ id ];
         }

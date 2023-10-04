@@ -18,7 +18,7 @@ namespace Engine
             VkDescriptorSet getHandle() const;
             descriptorSetID getID() const;
             std::vector<VkDescriptorPoolSize> getSizes() const;
-            void create( VkDescriptorPool pool );
+            void init( VkDescriptorPool pool );
             ~descriptorSet();
 
           private:
@@ -31,6 +31,8 @@ namespace Engine
 
         void createDescriptorPool();
         void destroyDescriptorPool();
-        const descriptorSet &getDescriptorSet( descriptorSetID id );
+        void createDescriptorSets();
+        void destroyDescriptorSets();
+        descriptorSet *getDescriptorSet( descriptorSetID id );
     } // namespace tools
 } // namespace Engine

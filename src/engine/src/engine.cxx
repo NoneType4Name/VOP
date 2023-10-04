@@ -30,6 +30,16 @@ namespace Engine
     {
         bool inited{ false };
         tools::descriptorSetID _defaultDescriptorSetID;
+        struct __init
+        {
+            __init()
+            {
+                _defaultDescriptorSetID = ( new tools::descriptorSet{
+                                                { { 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS },
+                                                  { 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT } } } )
+                                              ->getID();
+            }
+        } _;
     } // namespace
     std::vector<Device> GetGraphicDevices( uint8_t devicesTypeFlag )
     {
@@ -55,11 +65,8 @@ namespace Engine
         tools::createShaderModules();
         tools::createSwapchain();
         tools::createRenderPass();
-        _defaultDescriptorSetID = ( new tools::descriptorSet{
-                                        { { 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS, 1 },
-                                          { 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1 } } } )
-                                      ->getID();
         tools::createDescriptorPool();
+        tools::createDescriptorSets();
         tools::createPipelines();
         inited = true;
     }
@@ -67,7 +74,8 @@ namespace Engine
     void shutdown()
     {
         tools::destroyPipelines();
-        delete &tools::getDescriptorSet( _defaultDescriptorSetID );
+        tools::destroyDescriptorSets();
+        tools::destroyDescriptorPool();
         tools::destroyRenderPass();
         tools::destroySwapchain();
         tools::destroyShaderModules();
@@ -99,12 +107,12 @@ namespace Engine
 
     pipelineID CreatePipeline( PipelineInfo info )
     {
-        return ( new tools::pipeline{ info } )->getID();
+        return ( new tools::pipeline{ info, _defaultDescriptorSetID } )->getID();
     }
 
     void ModelBindTexture( modelID model, textureID texture )
     {
         CHECK_FOR_INIT;
-        tools::getModel( model ).setTexture( texture );
+        tools::getModel( model )->setTexture( texture );
     }
 } // namespace Engine

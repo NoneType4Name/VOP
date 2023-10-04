@@ -8,13 +8,13 @@ namespace Engine
         namespace
         {
             shaderID shader_id{ 0 };
-            std::unordered_map<shaderID, shader> _shaders{};
+            std::unordered_map<shaderID, shader *> _shaders{};
             std::unordered_map<const char *, VkShaderModule> _shaderModules{};
         } // namespace
 
         // void createGrapchiPipeline(){};
 
-        shader::shader( const char *path, const char *mainFuncName, ShaderStage stage ) : id{ ++shader_id }
+        shader::shader( const char *path, const char *mainFuncName, ShaderStage stage ) : id{ ++shader_id }, path{ path }
         {
             info.pName = mainFuncName;
             switch( stage )
@@ -24,11 +24,12 @@ namespace Engine
                     break;
                 case FRAGMENT_SHADER_TYPE:
                     info.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+                    break;
                 default:
                     info.stage = VK_SHADER_STAGE_ALL;
                     break;
             }
-            _shaders[ id ] = *this;
+            _shaders[ id ] = this;
         }
 
         const VkPipelineShaderStageCreateInfo &shader::getInfo() const
@@ -46,7 +47,7 @@ namespace Engine
             vkDestroyShaderModule( getDevice(), info.module, ALLOCATION_CALLBACK );
         }
 
-        shader &getShader( shaderID id )
+        shader *getShader( shaderID id )
         {
             return _shaders[ id ];
         }
@@ -77,17 +78,17 @@ namespace Engine
 
         void createShaderModules()
         {
-            for( auto module : _shaders )
+            for( auto &module : _shaders )
             {
-                module.second.init();
+                module.second->init();
             }
         }
 
         void destroyShaderModules()
         {
-            for( auto module : _shaders )
+            for( auto &module : _shaders )
             {
-                delete &module.second;
+                delete module.second;
             }
         }
 
