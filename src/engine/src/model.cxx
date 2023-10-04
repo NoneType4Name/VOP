@@ -18,12 +18,12 @@ namespace Engine
             return coordinate == other.coordinate && color == other.color && texture_coordinate == other.texture_coordinate;
         }
 
-        static inline VkVertexInputBindingDescription vertexInputBindingDescription()
+        VkVertexInputBindingDescription vertexInputBindingDescription()
         {
             return { 0, sizeof( vertex ), VK_VERTEX_INPUT_RATE_VERTEX };
         }
 
-        static std::array<VkVertexInputAttributeDescription, 3> vertexInputAttributeDescription()
+        std::array<VkVertexInputAttributeDescription, 3> vertexInputAttributeDescription()
         {
             std::array<VkVertexInputAttributeDescription, 3> VertexInputAttributeDescription{};
             VertexInputAttributeDescription[ 0 ].binding  = 0;

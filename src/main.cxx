@@ -43,18 +43,19 @@ int main()
     auto rectangle_texture{ Engine::CreateTexture( "./assets/textures/rectangle/model.png" ) };
     auto rectangle_model{ Engine::CreateModel( Engine::modelType::MODEL_TYPE_ENTITY, "./assets/models/rectangle/model.obj" ) };
     auto devices{ Engine::GetGraphicDevices( Engine::DISCRETE_GPU | Engine::INTEGRATED_GPU ) };
+    auto pipeline{ Engine::CreatePipeline(
+        { { Engine::CreateShader( "./assets/shaders/binary.vert.spv", "main", Engine::ShaderStage::VERTEX_SHADER_TYPE ),
+            Engine::CreateShader( "./assets/shaders/binary.frag.spv", "main", Engine::ShaderStage::FRAGMENT_SHADER_TYPE ) } } ) };
     Engine::AppCreateInfo App{};
-    App.width  = 0;
-    App.height = 0;
-    App.title  = "Quest App.";
-    App.device = devices.front();
-    // App.VertexShaderPath            = "./assets/shaders/binary.vert.spv";
-    // App.FragmentShaderPath          = "./assets/shaders/binary.frag.spv";
+    App.width                       = 0;
+    App.height                      = 0;
+    App.title                       = "Quest App.";
+    App.device                      = devices.front();
     App.settings.MultiSamplingCount = Engine::MultiSamplingCount::SAMPLE_COUNT_2_BIT;
 
     Engine::init( App );
-    // Engine::window::setKeyEventsCallback( []( int key, int scancode, int action, int mods )
-    //   { SPDLOG_DEBUG( "key pressed code: {}", std::to_string( key ) ); } );
+    Engine::window::setKeyEventsCallback( []( int key, int scancode, int action, int mods )
+                                          { SPDLOG_DEBUG( "key pressed code: {}", std::to_string( key ) ); } );
     while( !Engine::window::shouldClose() )
     {
         Engine::window::updateEvents();

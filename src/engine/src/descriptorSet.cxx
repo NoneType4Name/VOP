@@ -94,5 +94,10 @@ namespace Engine
         {
             vkDestroyDescriptorPool( getDevice(), _pool, ALLOCATION_CALLBACK );
         }
+
+        const descriptorSet &getDescriptorSet( descriptorSetID id )
+        {
+            return _descriptorSets[ id ];
+        }
     } // namespace tools
 } // namespace Engine

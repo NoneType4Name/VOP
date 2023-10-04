@@ -15,8 +15,8 @@ namespace Engine
             bool operator==( const vertex &other ) const;
         };
 
-        static inline VkVertexInputBindingDescription vertexInputBindingDescription();
-        static std::array<VkVertexInputAttributeDescription, 3> vertexInputAttributeDescription();
+        VkVertexInputBindingDescription vertexInputBindingDescription();
+        std::array<VkVertexInputAttributeDescription, 3> vertexInputAttributeDescription();
 
         class model
         {

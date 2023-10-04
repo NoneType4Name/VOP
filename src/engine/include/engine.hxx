@@ -62,7 +62,6 @@ namespace Engine
     typedef uint64_t modelID;
     typedef uint64_t shaderID;
     typedef uint64_t pipelineID;
-    typedef uint64_t descriptorSetID;
 
     enum modelType
     {
@@ -106,6 +105,7 @@ namespace Engine
 
     struct ENGINE_EXPORT PipelineInfo
     {
+        std::vector<shaderID> shadersID;
     };
 
     ENGINE_EXPORT void init( AppCreateInfo sAppCreateInfo );

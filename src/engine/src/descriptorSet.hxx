@@ -8,6 +8,7 @@ namespace Engine
 {
     namespace tools
     {
+        typedef uint64_t descriptorSetID;
         class descriptorSet
         {
           public:

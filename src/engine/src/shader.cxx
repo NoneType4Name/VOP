@@ -16,27 +16,7 @@ namespace Engine
 
         shader::shader( const char *path, const char *mainFuncName, ShaderStage stage ) : id{ ++shader_id }
         {
-            if( _shaderModules.count( path ) )
-                info.module = _shaderModules[ path ];
-            std::ifstream File{ path, std::fstream::ate | std::fstream::binary };
-            if( !File.is_open() )
-            {
-                SPDLOG_CRITICAL( "Failed to open shader: {}.", path );
-                throw std::runtime_error( std::format( "Failed to open shader: {}.", path ) );
-            }
-            size_t shBsize{ static_cast<size_t>( File.tellg() ) };
-            std::vector<char> Data( shBsize );
-            File.seekg( 0 );
-            File.read( Data.data(), shBsize );
-            File.close();
-            VkShaderModuleCreateInfo ShaderModuleCreateInfo{};
-            ShaderModuleCreateInfo.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-            ShaderModuleCreateInfo.codeSize = Data.size();
-            ShaderModuleCreateInfo.pCode    = reinterpret_cast<const uint32_t *>( Data.data() );
-            VkShaderModule shaderModule{};
-            CHECK_RESULT( vkCreateShaderModule( tools::getDevice(), &ShaderModuleCreateInfo, nullptr, &shaderModule ) );
-            info.module = _shaderModules[ path ] = shaderModule;
-            info.pName                           = mainFuncName;
+            info.pName = mainFuncName;
             switch( stage )
             {
                 case VERTEX_SHADER_TYPE:
@@ -69,6 +49,46 @@ namespace Engine
         shader &getShader( shaderID id )
         {
             return _shaders[ id ];
+        }
+
+        void shader::init()
+        {
+            if( _shaderModules.count( path ) )
+                info.module = _shaderModules[ path ];
+            std::ifstream File{ path, std::fstream::ate | std::fstream::binary };
+            if( !File.is_open() )
+            {
+                SPDLOG_CRITICAL( "Failed to open shader: {}.", path );
+                throw std::runtime_error( std::format( "Failed to open shader: {}.", path ) );
+            }
+            size_t shBsize{ static_cast<size_t>( File.tellg() ) };
+            std::vector<char> data( shBsize );
+            data.resize( shBsize );
+            File.seekg( 0 );
+            File.read( data.data(), shBsize );
+            File.close();
+            VkShaderModuleCreateInfo ShaderModuleCreateInfo{};
+            ShaderModuleCreateInfo.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+            ShaderModuleCreateInfo.codeSize = data.size();
+            ShaderModuleCreateInfo.pCode    = reinterpret_cast<const uint32_t *>( data.data() );
+            CHECK_RESULT( vkCreateShaderModule( tools::getDevice(), &ShaderModuleCreateInfo, nullptr, &info.module ) );
+            _shaderModules[ path ] = info.module;
+        }
+
+        void createShaderModules()
+        {
+            for( auto module : _shaders )
+            {
+                module.second.init();
+            }
+        }
+
+        void destroyShaderModules()
+        {
+            for( auto module : _shaders )
+            {
+                delete &module.second;
+            }
         }
 
     } // namespace tools

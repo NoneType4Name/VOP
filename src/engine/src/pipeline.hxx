@@ -3,29 +3,32 @@
 #include <common/logging.hxx>
 #include <platform.hxx>
 #include <shader.hxx>
+#include <descriptorSet.hxx>
 
 namespace Engine
 {
     namespace tools
     {
-        typedef uint64_t pipelineID;
-
         class pipeline
         {
           public:
             pipeline() = default;
-            pipeline( std::vector<shaderID> );
+            pipeline( PipelineInfo );
+            pipeline( PipelineInfo, descriptorSetID descriptorID );
             const pipelineID getID() const;
             VkPipeline getHandle() const;
+            void init();
             ~pipeline();
 
           private:
             pipelineID id;
             descriptorSetID DescriptorSet_id{ 0 };
-            VkDescriptorSetLayout DescriptorLayout{ nullptr };
-            VkDescriptorSet DescriptorSet{ nullptr };
+            PipelineInfo info;
             VkPipelineLayout PipelineLayout{ nullptr };
             VkPipeline Pipeline{ nullptr };
         };
+        pipeline &getPipeline( pipelineID );
+        void createPipelines();
+        void destroyPipelines();
     } // namespace tools
 } // namespace Engine

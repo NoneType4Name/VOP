@@ -3,33 +3,45 @@
 #include <model.hxx>
 #include <pipeline.hxx>
 #include <renderpass.hxx>
-#include <descriptorSet.hxx>
 
 namespace Engine
 {
     namespace tools
     {
-        pipeline::pipeline( std::vector<shaderID> shaders )
+        namespace
         {
-            // VkPipelineShaderStageCreateInfo VertexShaderStage{};
-            // VertexShaderStage.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-            // VertexShaderStage.stage  = VK_SHADER_STAGE_VERTEX_BIT;
-            // VertexShaderStage.module = _shaders[ AppSettings.VertexShaderPath ] ? _shaders[ AppSettings.VertexShaderPath ] : _shaders[ AppSettings.VertexShaderPath ] = tools::loadShader( device, AppSettings.VertexShaderPath );
-            // VertexShaderStage.pName  = "main";
+            pipelineID pipeline_id{ 0 };
+            std::unordered_map<pipelineID, pipeline> _pipelines{};
+        } // namespace
 
-            // VkPipelineShaderStageCreateInfo FragmentShaderStage{};
-            // FragmentShaderStage.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-            // FragmentShaderStage.stage  = VK_SHADER_STAGE_FRAGMENT_BIT;
-            // FragmentShaderStage.module = _shaders[ AppSettings.FragmentShaderPath ] ? _shaders[ AppSettings.FragmentShaderPath ] : _shaders[ AppSettings.FragmentShaderPath ] = tools::loadShader( device, AppSettings.FragmentShaderPath );
-            // FragmentShaderStage.pName  = "main";
+        pipeline::pipeline( PipelineInfo info, descriptorSetID descriptorID ) : id{ ++pipeline_id }, DescriptorSet_id{ descriptorID }, info{ info }
+        {
+        }
 
-            // VkPipelineShaderStageCreateInfo ShaderStage[]{ VertexShaderStage, FragmentShaderStage };
+        pipeline::pipeline( PipelineInfo info )
+        {
+            auto descriptor = new descriptorSet{
+                { { 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS, 1 },
+                  { 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1 } } };
+            pipeline( info, descriptor->getID() );
+        }
 
-            // auto descriptor = new descriptorSet{
-            //     { { 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS, 1 },
-            //       { 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1 } } };
-            // DescriptorSet_id = descriptor->getID();
+        const pipelineID pipeline::getID() const
+        {
+            return id;
+        }
 
+        VkPipeline pipeline::getHandle() const
+        {
+            return Pipeline;
+        }
+
+        void pipeline::init()
+        {
+            std::vector<VkPipelineShaderStageCreateInfo> ShaderStages;
+            ShaderStages.reserve( info.shadersID.size() );
+            for( auto shader : info.shadersID )
+                ShaderStages.push_back( getShader( shader ).getInfo() );
             VkDynamicState dStates[]{ VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
             VkPipelineDynamicStateCreateInfo dStatescreateInfo{};
             dStatescreateInfo.sType             = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
@@ -106,18 +118,18 @@ namespace Engine
             colorBlending.blendConstants[ 1 ] = 0.0f; // Optional
             colorBlending.blendConstants[ 2 ] = 0.0f; // Optional
             colorBlending.blendConstants[ 3 ] = 0.0f; // Optional
-
+            auto descriptorLayout{ getDescriptorSet( DescriptorSet_id ).getLayout() };
             VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
             pipelineLayoutInfo.sType          = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
             pipelineLayoutInfo.setLayoutCount = 1;
-            pipelineLayoutInfo.pSetLayouts    = &DescriptorLayout;
+            pipelineLayoutInfo.pSetLayouts    = &descriptorLayout;
 
             CHECK_RESULT( vkCreatePipelineLayout( getDevice(), &pipelineLayoutInfo, nullptr, &PipelineLayout ) );
 
             VkGraphicsPipelineCreateInfo GraphicPipeLineCreateInfo{};
             GraphicPipeLineCreateInfo.sType               = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-            GraphicPipeLineCreateInfo.stageCount          = sizeof( ShaderStage ) / sizeof( ShaderStage[ 0 ] );
-            GraphicPipeLineCreateInfo.pStages             = ShaderStage;
+            GraphicPipeLineCreateInfo.stageCount          = ShaderStages.size();
+            GraphicPipeLineCreateInfo.pStages             = ShaderStages.data();
             GraphicPipeLineCreateInfo.pVertexInputState   = &vertexInputCreateInfo;
             GraphicPipeLineCreateInfo.pInputAssemblyState = &inputAssemblyCreateInfo;
             GraphicPipeLineCreateInfo.pViewportState      = &viewportState;
@@ -130,22 +142,34 @@ namespace Engine
             GraphicPipeLineCreateInfo.renderPass          = getRenderPass();
             GraphicPipeLineCreateInfo.subpass             = 0;
 
-            CHECK_RESULT( vkCreateGraphicsPipelines( getDevice(), nullptr, 1, &GraphicPipeLineCreateInfo, nullptr, &Pipeline.first ) );
-        }
-
-        const pipelineID pipeline::getID() const
-        {
-            return id;
-        }
-
-        VkPipeline pipeline::getHandle() const
-        {
-            return Pipeline;
+            CHECK_RESULT( vkCreateGraphicsPipelines( getDevice(), nullptr, 1, &GraphicPipeLineCreateInfo, nullptr, &Pipeline ) );
         }
 
         pipeline::~pipeline()
         {
-            vkDestroyPipeline( getDevice(), ptr, ALLOCATION_CALLBACK );
+            vkDestroyPipeline( getDevice(), Pipeline, ALLOCATION_CALLBACK );
+        }
+
+        pipeline &getPipeline( pipelineID )
+        {
+            return _pipelines[ pipeline_id ];
+        }
+
+        void createPipelines()
+        {
+
+            for( auto pipe : _pipelines )
+            {
+                pipe.second.init();
+            }
+        }
+
+        void destroyPipelines()
+        {
+            for( auto pipe : _pipelines )
+            {
+                delete &pipe.second;
+            }
         }
     }; // namespace tools
 } // namespace Engine
