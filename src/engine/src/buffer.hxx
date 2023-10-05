@@ -29,6 +29,7 @@ namespace Engine
           public:
             commandBuffer( VkCommandPool commandPool, VkCommandBufferLevel level, queue queue );
             ~commandBuffer();
+            VkCommandBuffer getHandle() const;
             void begin();
             void submit();
             void end();

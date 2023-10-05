@@ -92,6 +92,11 @@ namespace Engine
             vkDestroyFence( tools::getDevice(), _fence, ALLOCATION_CALLBACK );
         }
 
+        VkCommandBuffer commandBuffer::getHandle() const
+        {
+            return _commandBuffer;
+        }
+
         void commandBuffer::begin()
         {
             if( began ) return;
