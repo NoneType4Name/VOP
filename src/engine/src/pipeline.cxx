@@ -149,6 +149,7 @@ namespace Engine
         {
             vkDestroyPipeline( getDevice(), Pipeline, ALLOCATION_CALLBACK );
             vkDestroyPipelineLayout( getDevice(), PipelineLayout, ALLOCATION_CALLBACK );
+            _pipelines[ id ] = nullptr;
         }
 
         pipeline *getPipeline( pipelineID )

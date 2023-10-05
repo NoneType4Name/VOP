@@ -170,6 +170,19 @@ namespace Engine
         {
             return tools::_queues;
         }
+
+        uint32_t memoryTypeIndex( uint32_t type, VkMemoryPropertyFlags properties )
+        {
+            VkPhysicalDeviceMemoryProperties memProp{};
+            vkGetPhysicalDeviceMemoryProperties( getPhysicalDevice(), &memProp );
+            for( uint32_t i{ 0 }; i < memProp.memoryTypeCount; i++ )
+            {
+                if( ( type & ( 1 << i ) ) && ( ( memProp.memoryTypes[ i ].propertyFlags & properties ) == properties ) ) return i;
+            }
+            SPDLOG_CRITICAL( "Failed to find suitable memory type, type: {}, properties: {}.", type, properties );
+            assert( 0 );
+            return -1;
+        }
     } // namespace tools
 
     PhysicalDevice::PhysicalDevice() = default;

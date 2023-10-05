@@ -32,5 +32,6 @@ namespace Engine
         void getSuitableDevices( std::vector<Device> &devices, uint8_t types );
         void getSuitableDevices( std::vector<PhysicalDevice> &devices );
         void getSuitableDevices( std::vector<PhysicalDevice> &devices, uint8_t types );
+        uint32_t memoryTypeIndex( uint32_t type, VkMemoryPropertyFlags properties );
     } // namespace tools
 } // namespace Engine

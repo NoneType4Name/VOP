@@ -45,6 +45,7 @@ namespace Engine
         shader::~shader()
         {
             vkDestroyShaderModule( getDevice(), info.module, ALLOCATION_CALLBACK );
+            _shaders[ id ] = nullptr;
         }
 
         shader *getShader( shaderID id )

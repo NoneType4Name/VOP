@@ -67,6 +67,7 @@ namespace Engine
         descriptorSet::~descriptorSet()
         {
             vkDestroyDescriptorSetLayout( getDevice(), layout, ALLOCATION_CALLBACK );
+            _descriptorSets[ id ] = nullptr;
         }
 
         void createDescriptorPool()

@@ -1,6 +1,7 @@
 #include <common/logging.hxx>
 #include <common/globals.hxx>
 #include <platform.hxx>
+#include <image.hxx>
 
 namespace Engine
 {
@@ -15,8 +16,7 @@ namespace Engine
 
         struct SwapchainImage
         {
-            VkImage image;
-            VkImageView view;
+            imageID image;
             VkSemaphore isAvailable;
             VkSemaphore isRendered;
         };

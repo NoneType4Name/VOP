@@ -125,6 +125,7 @@ namespace Engine
 
         model::~model()
         {
+            _models[ id ] = nullptr;
         }
 
         model *getModel( const modelID id )

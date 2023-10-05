@@ -124,23 +124,12 @@ namespace Engine
             std::vector<VkImage> imgs{ _c };
             _swapchainImages.resize( _c );
             vkGetSwapchainImagesKHR( tools::getDevice(), _swapchain, &_c, imgs.data() );
-            VkImageViewCreateInfo ImageViewCreateInfo           = {};
-            ImageViewCreateInfo.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-            ImageViewCreateInfo.format                          = _swapchainSurfaceFormat.format;
-            ImageViewCreateInfo.components                      = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
-            ImageViewCreateInfo.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-            ImageViewCreateInfo.subresourceRange.baseMipLevel   = 0;
-            ImageViewCreateInfo.subresourceRange.levelCount     = 1;
-            ImageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
-            ImageViewCreateInfo.subresourceRange.layerCount     = 1;
-            ImageViewCreateInfo.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
-            ImageViewCreateInfo.flags                           = 0;
             VkSemaphoreCreateInfo semaphoreInfo{};
             semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
             for( size_t i{ 0 }; i < imgs.size(); i++ )
             {
-                ImageViewCreateInfo.image = _swapchainImages[ i ].image = imgs[ i ];
-                CHECK_RESULT( vkCreateImageView( tools::getDevice(), &ImageViewCreateInfo, ALLOCATION_CALLBACK, &_swapchainImages[ i ].view ) );
+                _swapchainImages[ i ].image = ( new image( { SwapchainCreateInfo.imageExtent.width, SwapchainCreateInfo.imageExtent.height }, imgs[ i ], VK_IMAGE_ASPECT_COLOR_BIT, SwapchainCreateInfo.imageFormat, 1, SwapchainCreateInfo.imageArrayLayers ) )->getID();
+                // CHECK_RESULT( vkCreateImageView( tools::getDevice(), &ImageViewCreateInfo, ALLOCATION_CALLBACK, &_swapchainImages[ i ].view ) );
                 CHECK_RESULT( vkCreateSemaphore( tools::getDevice(), &semaphoreInfo, ALLOCATION_CALLBACK, &_swapchainImages[ i ].isAvailable ) );
                 CHECK_RESULT( vkCreateSemaphore( tools::getDevice(), &semaphoreInfo, ALLOCATION_CALLBACK, &_swapchainImages[ i ].isRendered ) );
             }
@@ -151,7 +140,7 @@ namespace Engine
             _imageIndex = 0;
             for( const auto &img : _swapchainImages )
             {
-                vkDestroyImageView( tools::getDevice(), img.view, ALLOCATION_CALLBACK );
+                delete getImage( img.image );
             }
             _swapchainSurfaceFormat.format = VK_FORMAT_MAX_ENUM;
             _swapchainSurfacePresentMode   = VK_PRESENT_MODE_MAX_ENUM_KHR;
@@ -197,21 +186,9 @@ namespace Engine
             std::vector<VkImage> imgs{ _c };
             _swapchainImages.resize( _c );
             vkGetSwapchainImagesKHR( tools::getDevice(), _swapchain, &_c, imgs.data() );
-            VkImageViewCreateInfo ImageViewCreateInfo           = {};
-            ImageViewCreateInfo.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-            ImageViewCreateInfo.format                          = _swapchainSurfaceFormat.format;
-            ImageViewCreateInfo.components                      = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
-            ImageViewCreateInfo.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-            ImageViewCreateInfo.subresourceRange.baseMipLevel   = 0;
-            ImageViewCreateInfo.subresourceRange.levelCount     = 1;
-            ImageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
-            ImageViewCreateInfo.subresourceRange.layerCount     = 1;
-            ImageViewCreateInfo.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
-            ImageViewCreateInfo.flags                           = 0;
             for( size_t i{ 0 }; i < imgs.size(); i++ )
             {
-                ImageViewCreateInfo.image = _swapchainImages[ i ].image = imgs[ i ];
-                CHECK_RESULT( vkCreateImageView( tools::getDevice(), &ImageViewCreateInfo, ALLOCATION_CALLBACK, &_swapchainImages[ i ].view ) );
+                _swapchainImages[ i ].image = ( new image( { SwapchainCreateInfo.imageExtent.width, SwapchainCreateInfo.imageExtent.height }, imgs[ i ], VK_IMAGE_ASPECT_COLOR_BIT, SwapchainCreateInfo.imageFormat, 1, SwapchainCreateInfo.imageArrayLayers ) )->getID();
             }
         }
 
@@ -224,7 +201,7 @@ namespace Engine
             {
                 vkDestroySemaphore( tools::getDevice(), img.isAvailable, ALLOCATION_CALLBACK );
                 vkDestroySemaphore( tools::getDevice(), img.isRendered, ALLOCATION_CALLBACK );
-                vkDestroyImageView( tools::getDevice(), img.view, ALLOCATION_CALLBACK );
+                delete getImage( img.image );
             }
             vkDestroySwapchainKHR( tools::getDevice(), _swapchain, ALLOCATION_CALLBACK );
         }
