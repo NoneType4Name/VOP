@@ -30,6 +30,9 @@ namespace Engine
             const uint64_t getVerteciesBufferOffset();
             void setIndeciesBufferOffset( const uint64_t offset );
             const uint64_t getIndeciesBufferOffset();
+            void setPosition( glm::vec3 positionVector ); // todo
+            void setScale( glm::mat4 scaleMatrix );       // todo
+            void setRotation( glm::mat4 rotateMatrix );   // todo
             ~model();
 
           private:
@@ -39,8 +42,9 @@ namespace Engine
             std::vector<uint32_t> indecies;
             uint64_t vertecies_offset{ 0 };
             uint64_t indecies_offset{ 0 };
-            // uint64_t texture_coordinate_offset{ 0 };
-            // uint64_t normals_offset{ 0 };
+            glm::vec3 position;
+            glm::mat4 rotation;
+            glm::mat4 scale;
         };
         model *getModel( modelID const id );
     } // namespace tools
