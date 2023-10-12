@@ -1,6 +1,7 @@
 #include <model.hxx>
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
+#include <pipeline.hxx>
 
 namespace Engine
 {
@@ -84,7 +85,7 @@ namespace Engine
                     indecies.push_back( uniqueVertices[ _vert ] );
                 }
             }
-
+            regConstantRange( { VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof( PushConstantLayout ) } );
             _models[ id ] = this;
         }
 
