@@ -11,18 +11,19 @@ namespace Engine
     {
         namespace
         {
-            textureID _textureID{ 0 };
+            textureID _textureID { 0 };
             std::unordered_map<textureID, texture *> _textures;
         } // namespace
 
-        texture::texture( const char *path ) : id{ ++_textureID }
+        texture::texture( const char *path ) :
+            id { ++_textureID }
         {
             mips.reserve( 1 );
             mips.push_back( stbi_load( path, &_x, &_y, &_c, STBI_rgb_alpha ) );
             mips.resize( static_cast<uint32_t>( std::floor( std::log2( ( _x > _y ) ? _x : _y ) ) ) + 1 );
-            if( getSampler( mips.size() ) == nullptr )
+            if ( getSampler( mips.size() ) == nullptr )
                 new sampler( mips.size() );
-            VkImageCreateInfo imgCI{};
+            VkImageCreateInfo imgCI {};
             imgCI.mipLevels = mips.size();
             img             = ( new image( _x, _y, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_IMAGE_TILING_OPTIMAL, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, VK_FORMAT_R8G8B8A8_SRGB, imgCI ) )->getID();
             _textures[ id ] = this;
@@ -35,7 +36,7 @@ namespace Engine
 
         void texture::generateMipMap( commandBuffer &cmdBuff )
         {
-            VkImageMemoryBarrier ImageMemoryBarrier{};
+            VkImageMemoryBarrier ImageMemoryBarrier {};
             ImageMemoryBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
             ImageMemoryBarrier.image                           = getImage( img )->getImage();
             ImageMemoryBarrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
@@ -44,10 +45,10 @@ namespace Engine
             ImageMemoryBarrier.subresourceRange.baseArrayLayer = 0;
             ImageMemoryBarrier.subresourceRange.layerCount     = 1;
             ImageMemoryBarrier.subresourceRange.levelCount     = 1;
-            int32_t w{ static_cast<int32_t>( _x ) };
-            int32_t h{ static_cast<int32_t>( _y ) };
+            int32_t w { static_cast<int32_t>( _x ) };
+            int32_t h { static_cast<int32_t>( _y ) };
 
-            for( uint32_t i{ 1 }; i < mips.size(); i++ )
+            for ( uint32_t i { 1 }; i < mips.size(); i++ )
             {
                 ImageMemoryBarrier.subresourceRange.baseMipLevel = i - 1;
                 ImageMemoryBarrier.oldLayout                     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
@@ -57,7 +58,7 @@ namespace Engine
 
                 vkCmdPipelineBarrier( cmdBuff.getHandle(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, 0, 0, 0, 1, &ImageMemoryBarrier );
 
-                VkImageBlit ImageBlit{};
+                VkImageBlit ImageBlit {};
                 ImageBlit.srcOffsets[ 0 ]               = { 0, 0, 0 };
                 ImageBlit.srcOffsets[ 1 ]               = { _x, _y, 1 };
                 ImageBlit.srcSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;

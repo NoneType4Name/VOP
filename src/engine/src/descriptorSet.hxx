@@ -22,17 +22,16 @@ namespace Engine
             ~descriptorSet();
 
           private:
-            descriptorSetID id{ 0 };
+            descriptorSetID id { 0 };
             std::vector<VkDescriptorSetLayoutBinding> layoutBinds;
-            VkDescriptorPool fromPool{ nullptr };
-            VkDescriptorSetLayout layout{ nullptr };
-            VkDescriptorSet set{ nullptr };
+            VkDescriptorPool fromPool { nullptr };
+            VkDescriptorSetLayout layout { nullptr };
+            VkDescriptorSet set { nullptr };
         };
 
         void createDescriptorPool();
         void destroyDescriptorPool();
-        void createDescriptorSets();
-        void destroyDescriptorSets();
+        void setupDescriptorSets();
         descriptorSet *getDescriptorSet( descriptorSetID id );
     } // namespace tools
 } // namespace Engine

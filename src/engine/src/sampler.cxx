@@ -8,13 +8,13 @@ namespace Engine
     {
         namespace
         {
-            std::unordered_map<uint32_t, sampler *> _samplers{};
+            std::unordered_map<uint32_t, sampler *> _samplers {};
         }
 
         sampler::sampler( uint32_t MipLevels )
         {
             mipLevels += MipLevels;
-            VkSamplerCreateInfo SamplerCreateInfo{};
+            VkSamplerCreateInfo SamplerCreateInfo {};
             SamplerCreateInfo.sType     = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
             SamplerCreateInfo.magFilter = VK_FILTER_LINEAR;
             SamplerCreateInfo.minFilter = VK_FILTER_LINEAR;

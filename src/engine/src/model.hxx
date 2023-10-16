@@ -36,12 +36,12 @@ namespace Engine
             ~model();
 
           private:
-            modelID id{ 0 };
-            textureID texture_id{ 0 };
+            modelID id { 0 };
+            textureID texture_id { 0 };
             std::vector<vertex> vertecies;
             std::vector<uint32_t> indecies;
-            uint64_t vertecies_offset{ 0 };
-            uint64_t indecies_offset{ 0 };
+            uint64_t vertecies_offset { 0 };
+            uint64_t indecies_offset { 0 };
             glm::vec3 position;
             glm::mat4 rotation;
             glm::mat4 scale;
@@ -51,7 +51,7 @@ namespace Engine
 } // namespace Engine
 namespace std
 {
-    template <>
+    template<>
     struct hash<Engine::tools::vertex>
     {
         size_t operator()( Engine::tools::vertex const &vertex ) const

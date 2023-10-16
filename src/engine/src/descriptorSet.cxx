@@ -8,15 +8,16 @@ namespace Engine
     {
         namespace
         {
-            std::unordered_map<descriptorSetID, descriptorSet *> _descriptorSets{};
-            descriptorSetID descriptorSet_id{ 0 };
-            VkDescriptorPool _pool{ nullptr };
+            std::unordered_map<descriptorSetID, descriptorSet *> _descriptorSets {};
+            descriptorSetID descriptorSet_id { 0 };
+            VkDescriptorPool _pool { nullptr };
         } // namespace
 
-        descriptorSet::descriptorSet( std::vector<VkDescriptorSetLayoutBinding> layouts, VkDescriptorPool pool ) : id{ ++descriptorSet_id }
+        descriptorSet::descriptorSet( std::vector<VkDescriptorSetLayoutBinding> layouts, VkDescriptorPool pool ) :
+            id { ++descriptorSet_id }
         {
             layoutBinds.assign( layouts.begin(), layouts.end() );
-            if( pool )
+            if ( pool )
                 init( pool );
             _descriptorSets[ id ] = this;
         }
@@ -40,7 +41,7 @@ namespace Engine
         {
             std::vector<VkDescriptorPoolSize> sizes;
             sizes.reserve( layoutBinds.size() );
-            for( auto l : layoutBinds )
+            for ( auto l : layoutBinds )
             {
                 sizes.push_back( { l.descriptorType, l.descriptorCount } );
             }
@@ -50,13 +51,13 @@ namespace Engine
         void descriptorSet::init( VkDescriptorPool pool )
         {
             fromPool = pool;
-            VkDescriptorSetLayoutCreateInfo layoutsSet{};
+            VkDescriptorSetLayoutCreateInfo layoutsSet {};
             layoutsSet.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
             layoutsSet.bindingCount = layoutBinds.size();
             layoutsSet.pBindings    = layoutBinds.data();
             vkCreateDescriptorSetLayout( getDevice(), &layoutsSet, ALLOCATION_CALLBACK, &layout );
 
-            VkDescriptorSetAllocateInfo descriptorSetAllocateInfo{};
+            VkDescriptorSetAllocateInfo descriptorSetAllocateInfo {};
             descriptorSetAllocateInfo.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
             descriptorSetAllocateInfo.descriptorSetCount = 1;
             descriptorSetAllocateInfo.pSetLayouts        = &layout;
@@ -72,18 +73,18 @@ namespace Engine
 
         void createDescriptorPool()
         {
-            uint8_t maxSets{ 0 };
+            uint8_t maxSets { 0 };
             std::vector<VkDescriptorPoolSize> sizes;
-            for( auto &size : _descriptorSets )
+            for ( auto &size : _descriptorSets )
             {
-                for( auto &sz : size.second->getSizes() )
+                for ( auto &sz : size.second->getSizes() )
                 {
                     sizes.push_back( sz );
-                    if( sz.descriptorCount > maxSets ) maxSets = sz.descriptorCount;
+                    if ( sz.descriptorCount > maxSets ) maxSets = sz.descriptorCount;
                 }
             }
 
-            VkDescriptorPoolCreateInfo poolCreateInfo{};
+            VkDescriptorPoolCreateInfo poolCreateInfo {};
             poolCreateInfo.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
             poolCreateInfo.poolSizeCount = sizes.size();
             poolCreateInfo.pPoolSizes    = sizes.data();
@@ -96,10 +97,9 @@ namespace Engine
             vkDestroyDescriptorPool( getDevice(), _pool, ALLOCATION_CALLBACK );
         }
 
-        void createDescriptorSets()
+        void setupDescriptorSets()
         {
-
-            for( auto &set : _descriptorSets )
+            for ( auto &set : _descriptorSets )
             {
                 set.second->init( _pool );
             }
@@ -107,7 +107,7 @@ namespace Engine
 
         void destroyDescriptorSets()
         {
-            for( auto &set : _descriptorSets )
+            for ( auto &set : _descriptorSets )
             {
                 delete set.second;
             }

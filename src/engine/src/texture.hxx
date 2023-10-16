@@ -25,10 +25,10 @@ namespace Engine
             const uint32_t getChanels() const;
 
           private:
-            textureID id{ 0 };
-            int _x, _y, _c{ 0 };
+            textureID id { 0 };
+            int _x, _y, _c { 0 };
             std::vector<uint8_t *> mips;
-            imageID img{ 0 };
+            imageID img { 0 };
         };
 
         texture *getTexture( const textureID id );

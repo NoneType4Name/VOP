@@ -28,13 +28,13 @@ namespace Engine
 {
     namespace
     {
-        bool inited{ false };
+        bool inited { false };
         tools::descriptorSetID _defaultDescriptorSetID;
         struct __init
         {
             __init()
             {
-                _defaultDescriptorSetID = ( new tools::descriptorSet{
+                _defaultDescriptorSetID = ( new tools::descriptorSet {
                                                 { { 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS },
                                                   { 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT } } } )
                                               ->getID();
@@ -43,14 +43,14 @@ namespace Engine
     } // namespace
     std::vector<Device> GetGraphicDevices( uint8_t devicesTypeFlag )
     {
-        std::vector<Device> devices{};
+        std::vector<Device> devices {};
         tools::getSuitableDevices( devices, devicesTypeFlag );
         return devices;
     }
 
     void GetActiveGrapchicDevice( Device &device )
     {
-        VkPhysicalDeviceProperties pr{};
+        VkPhysicalDeviceProperties pr {};
         vkGetPhysicalDeviceProperties( tools::getPhysicalDevice(), &pr );
         device.name = pr.deviceName;
         device.ptr  = &device;
@@ -66,7 +66,7 @@ namespace Engine
         tools::createSwapchain();
         tools::createRenderPass();
         tools::createDescriptorPool();
-        tools::createDescriptorSets();
+        tools::setupDescriptorSets();
         tools::createPipelines();
         inited = true;
     }
@@ -102,12 +102,12 @@ namespace Engine
 
     shaderID CreateShader( const char *path, const char *mainFuncName, ShaderStage stage )
     {
-        return ( new tools::shader{ path, mainFuncName, stage } )->getID();
+        return ( new tools::shader { path, mainFuncName, stage } )->getID();
     }
 
     pipelineID CreatePipeline( PipelineInfo info )
     {
-        return ( new tools::pipeline{ info, _defaultDescriptorSetID } )->getID();
+        return ( new tools::pipeline { info, _defaultDescriptorSetID } )->getID();
     }
 
     void ModelBindTexture( modelID model, textureID texture )

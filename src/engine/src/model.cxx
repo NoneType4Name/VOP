@@ -8,7 +8,7 @@ namespace Engine
     {
         namespace
         {
-            modelID model_id{ 0 };
+            modelID model_id { 0 };
             std::unordered_map<modelID, model *> _models;
 
         } // namespace
@@ -25,7 +25,7 @@ namespace Engine
 
         std::array<VkVertexInputAttributeDescription, 3> vertexInputAttributeDescription()
         {
-            std::array<VkVertexInputAttributeDescription, 3> VertexInputAttributeDescription{};
+            std::array<VkVertexInputAttributeDescription, 3> VertexInputAttributeDescription {};
             VertexInputAttributeDescription[ 0 ].binding  = 0;
             VertexInputAttributeDescription[ 0 ].location = 0;
             VertexInputAttributeDescription[ 0 ].format   = VK_FORMAT_R32G32B32_SFLOAT;
@@ -43,28 +43,29 @@ namespace Engine
             return VertexInputAttributeDescription;
         }
 
-        model::model( const char *path ) : id{ ++model_id }
+        model::model( const char *path ) :
+            id { ++model_id }
         {
             tinyobj::attrib_t attrib;
             std::vector<tinyobj::shape_t> shapes;
             std::vector<tinyobj::material_t> materials;
             std::string warn, err;
-            if( !tinyobj::LoadObj( &attrib, &shapes, &materials, &warn, &err, path ) )
+            if ( !tinyobj::LoadObj( &attrib, &shapes, &materials, &warn, &err, path ) )
             {
                 SPDLOG_CRITICAL( "Failed to Load model {}:\nwarning:\t{}\nerror:\t{}.", path, warn, err );
                 assert( 1 );
             }
-            if( warn.length() )
+            if ( warn.length() )
                 SPDLOG_WARN( "Warn with load model {}:{}", path, warn );
-            if( err.length() )
+            if ( err.length() )
                 SPDLOG_ERROR( "Error with load model {}:{}", path, err );
-            std::unordered_map<vertex, uint64_t> uniqueVertices{};
+            std::unordered_map<vertex, uint64_t> uniqueVertices {};
 
-            for( const auto &shape : shapes )
+            for ( const auto &shape : shapes )
             {
-                for( const auto &index : shape.mesh.indices )
+                for ( const auto &index : shape.mesh.indices )
                 {
-                    vertex _vert{};
+                    vertex _vert {};
 
                     _vert.coordinate = {
                         attrib.vertices[ 3 * index.vertex_index + 0 ],
@@ -76,10 +77,10 @@ namespace Engine
                         1.0f - attrib.texcoords[ 2 * index.texcoord_index + 1 ] };
 
                     _vert.color = { 1.0f, 1.0f, 1.0f, 1.f };
-                    if( !uniqueVertices.count( _vert ) )
+                    if ( !uniqueVertices.count( _vert ) )
                     {
                         uniqueVertices[ _vert ] = vertecies.size();
-                        vertecies.push_back( _vert ); // todo}
+                        vertecies.push_back( _vert ); // todo
                     }
                     indecies.push_back( uniqueVertices[ _vert ] );
                 }

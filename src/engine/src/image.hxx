@@ -22,10 +22,10 @@ namespace Engine
             ~image();
 
           private:
-            imageID id{ 0 };
-            VkImage handler{ nullptr };
-            VkImageView view{ nullptr };
-            VkDeviceMemory memory{ nullptr };
+            imageID id { 0 };
+            VkImage handler { nullptr };
+            VkImageView view { nullptr };
+            VkDeviceMemory memory { nullptr };
         };
         image *getImage( imageID id );
     } // namespace tools

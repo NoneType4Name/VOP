@@ -16,8 +16,8 @@ namespace Engine
             uint32_t getMIPlevels() const;
 
           private:
-            uint32_t mipLevels{ 1 };
-            VkSampler handle{ nullptr };
+            uint32_t mipLevels { 1 };
+            VkSampler handle { nullptr };
         };
 
         sampler *getSampler( uint32_t levels );
