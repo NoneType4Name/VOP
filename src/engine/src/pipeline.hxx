@@ -9,12 +9,13 @@ namespace Engine
 {
     namespace tools
     {
+        void regConstantRange( VkPushConstantRange range );
         class pipeline
         {
           public:
             pipeline() = default;
-            pipeline( PipelineInfo );
-            pipeline( PipelineInfo, descriptorSetID descriptorID );
+            pipeline( PipelineInfo createInfo );
+            pipeline( PipelineInfo createInfo, descriptorSetID descriptorID );
             const pipelineID getID() const;
             VkPipeline getHandle() const;
             void init();

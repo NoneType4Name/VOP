@@ -17,6 +17,10 @@ namespace Engine
 
         VkVertexInputBindingDescription vertexInputBindingDescription();
         std::array<VkVertexInputAttributeDescription, 3> vertexInputAttributeDescription();
+        struct PushConstantLayout
+        {
+            glm::mat4 tranfromation;
+        };
 
         class model
         {

@@ -12,7 +12,13 @@ namespace Engine
         {
             pipelineID pipeline_id{ 0 };
             std::unordered_map<pipelineID, pipeline *> _pipelines{};
+            std::vector<VkPushConstantRange> _const_ranges{};
         } // namespace
+
+        void regConstantRange( VkPushConstantRange range )
+        {
+            _const_ranges.push_back( range );
+        }
 
         pipeline::pipeline( PipelineInfo info, descriptorSetID descriptorID ) : id{ ++pipeline_id }, DescriptorSet_id{ descriptorID }, info{ info }
         {
@@ -120,9 +126,11 @@ namespace Engine
             colorBlending.blendConstants[ 3 ] = 0.0f; // Optional
             auto descriptorLayout{ getDescriptorSet( DescriptorSet_id )->getLayout() };
             VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-            pipelineLayoutInfo.sType          = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-            pipelineLayoutInfo.setLayoutCount = 1;
-            pipelineLayoutInfo.pSetLayouts    = &descriptorLayout;
+            pipelineLayoutInfo.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+            pipelineLayoutInfo.setLayoutCount         = 1;
+            pipelineLayoutInfo.pSetLayouts            = &descriptorLayout;
+            pipelineLayoutInfo.pushConstantRangeCount = _const_ranges.size();
+            pipelineLayoutInfo.pPushConstantRanges    = _const_ranges.data();
 
             CHECK_RESULT( vkCreatePipelineLayout( getDevice(), &pipelineLayoutInfo, nullptr, &PipelineLayout ) );
 
