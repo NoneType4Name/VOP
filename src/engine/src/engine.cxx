@@ -29,17 +29,17 @@ namespace Engine
     namespace
     {
         bool inited { false };
-        tools::descriptorSetID _defaultDescriptorSetID;
-        struct __init
-        {
-            __init()
-            {
-                _defaultDescriptorSetID = ( new tools::descriptorSet {
-                                                { { 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS },
-                                                  { 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT } } } )
-                                              ->getID();
-            }
-        } _;
+        // tools::descriptorSetID _defaultDescriptorSetID;
+        // struct __init
+        // {
+        //     __init()
+        //     {
+        //         _defaultDescriptorSetID = ( new tools::descriptorSet {
+        //                                         { { 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS },
+        //                                           { 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT } } } )
+        //                                       ->getID();
+        //     }
+        // } _;
     } // namespace
     std::vector<Device> GetGraphicDevices( uint8_t devicesTypeFlag )
     {

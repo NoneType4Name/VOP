@@ -14,8 +14,7 @@ namespace Engine
         {
           public:
             pipeline() = default;
-            pipeline( PipelineInfo createInfo );
-            pipeline( PipelineInfo createInfo, descriptorSetID descriptorID );
+            pipeline( PipelineInfo createInfo, std::vector<descriptorSet> descriptorID );
             const pipelineID getID() const;
             VkPipeline getHandle() const;
             void init();
@@ -23,10 +22,10 @@ namespace Engine
 
           private:
             pipelineID id;
-            descriptorSetID DescriptorSet_id{ 0 };
+            std::vector<descriptorSet> descriptorSets;
             PipelineInfo info;
-            VkPipelineLayout PipelineLayout{ nullptr };
-            VkPipeline Pipeline{ nullptr };
+            VkPipelineLayout PipelineLayout { nullptr };
+            VkPipeline Pipeline { nullptr };
         };
         pipeline *getPipeline( pipelineID );
         void createPipelines();

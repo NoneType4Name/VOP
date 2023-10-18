@@ -10,9 +10,9 @@ namespace Engine
     {
         namespace
         {
-            pipelineID pipeline_id{ 0 };
-            std::unordered_map<pipelineID, pipeline *> _pipelines{};
-            std::vector<VkPushConstantRange> _const_ranges{};
+            pipelineID pipeline_id { 0 };
+            std::unordered_map<pipelineID, pipeline *> _pipelines {};
+            std::vector<VkPushConstantRange> _const_ranges {};
         } // namespace
 
         void regConstantRange( VkPushConstantRange range )
@@ -20,16 +20,10 @@ namespace Engine
             _const_ranges.push_back( range );
         }
 
-        pipeline::pipeline( PipelineInfo info, descriptorSetID descriptorID ) : id{ ++pipeline_id }, DescriptorSet_id{ descriptorID }, info{ info }
+        pipeline::pipeline( PipelineInfo info, std::vector<descriptorSet> descriptors ) :
+            id { ++pipeline_id }, descriptorSets { descriptors }, info { info }
         {
             _pipelines[ id ] = this;
-        }
-
-        pipeline::pipeline( PipelineInfo info ) : pipeline( info, ( new descriptorSet{
-                                                                        { { 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS, 1 },
-                                                                          { 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1 } } } )
-                                                                      ->getID() )
-        {
         }
 
         const pipelineID pipeline::getID() const
@@ -46,34 +40,34 @@ namespace Engine
         {
             std::vector<VkPipelineShaderStageCreateInfo> ShaderStages;
             ShaderStages.reserve( info.shadersID.size() );
-            for( auto &shader : info.shadersID )
+            for ( auto &shader : info.shadersID )
                 ShaderStages.push_back( getShader( shader )->getInfo() );
-            VkDynamicState dStates[]{ VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
-            VkPipelineDynamicStateCreateInfo dStatescreateInfo{};
+            VkDynamicState dStates[] { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+            VkPipelineDynamicStateCreateInfo dStatescreateInfo {};
             dStatescreateInfo.sType             = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
             dStatescreateInfo.dynamicStateCount = sizeof( dStates ) / sizeof( dStates[ 0 ] );
             dStatescreateInfo.pDynamicStates    = dStates;
 
             auto bindingDescription    = vertexInputBindingDescription();
             auto attributeDescriptions = vertexInputAttributeDescription();
-            VkPipelineVertexInputStateCreateInfo vertexInputCreateInfo{};
+            VkPipelineVertexInputStateCreateInfo vertexInputCreateInfo {};
             vertexInputCreateInfo.sType                           = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
             vertexInputCreateInfo.vertexBindingDescriptionCount   = 1;
             vertexInputCreateInfo.pVertexBindingDescriptions      = &bindingDescription;
             vertexInputCreateInfo.vertexAttributeDescriptionCount = attributeDescriptions.size();
             vertexInputCreateInfo.pVertexAttributeDescriptions    = attributeDescriptions.data();
 
-            VkPipelineInputAssemblyStateCreateInfo inputAssemblyCreateInfo{};
+            VkPipelineInputAssemblyStateCreateInfo inputAssemblyCreateInfo {};
             inputAssemblyCreateInfo.sType                  = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
             inputAssemblyCreateInfo.primitiveRestartEnable = VK_FALSE;
             inputAssemblyCreateInfo.topology               = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
-            VkPipelineViewportStateCreateInfo viewportState{};
+            VkPipelineViewportStateCreateInfo viewportState {};
             viewportState.sType         = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
             viewportState.viewportCount = 1;
             viewportState.scissorCount  = 1;
 
-            VkPipelineRasterizationStateCreateInfo Rasterizer{};
+            VkPipelineRasterizationStateCreateInfo Rasterizer {};
             Rasterizer.sType                   = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
             Rasterizer.depthClampEnable        = VK_FALSE;
             Rasterizer.rasterizerDiscardEnable = VK_FALSE;
@@ -83,14 +77,14 @@ namespace Engine
             Rasterizer.frontFace               = VK_FRONT_FACE_COUNTER_CLOCKWISE;
             Rasterizer.depthBiasEnable         = VK_FALSE;
 
-            VkPipelineMultisampleStateCreateInfo Multisampling{};
+            VkPipelineMultisampleStateCreateInfo Multisampling {};
             Multisampling.sType                = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
             Multisampling.sampleShadingEnable  = VK_FALSE;
             Multisampling.rasterizationSamples = static_cast<VkSampleCountFlagBits>( getSettings().settings.MultiSamplingCount );
             Multisampling.sampleShadingEnable  = VK_TRUE;
             Multisampling.minSampleShading     = .4f;
 
-            VkPipelineDepthStencilStateCreateInfo DepthStencilStateCreateInfo{};
+            VkPipelineDepthStencilStateCreateInfo DepthStencilStateCreateInfo {};
             DepthStencilStateCreateInfo.sType            = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
             DepthStencilStateCreateInfo.depthTestEnable  = VK_TRUE;
             DepthStencilStateCreateInfo.depthWriteEnable = VK_TRUE;
@@ -104,7 +98,7 @@ namespace Engine
             // DepthStencilStateCreateInfo.front             = {};
             // DepthStencilStateCreateInfo.back              = {};
 
-            VkPipelineColorBlendAttachmentState colorBlendAttachment{};
+            VkPipelineColorBlendAttachmentState colorBlendAttachment {};
             colorBlendAttachment.colorWriteMask      = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
             colorBlendAttachment.blendEnable         = VK_FALSE;
             colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;  // Optional
@@ -114,7 +108,7 @@ namespace Engine
             colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
             colorBlendAttachment.alphaBlendOp        = VK_BLEND_OP_ADD;      // Optional
 
-            VkPipelineColorBlendStateCreateInfo colorBlending{};
+            VkPipelineColorBlendStateCreateInfo colorBlending {};
             colorBlending.sType               = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
             colorBlending.logicOpEnable       = VK_FALSE;
             colorBlending.logicOp             = VK_LOGIC_OP_COPY; // Optional
@@ -124,17 +118,17 @@ namespace Engine
             colorBlending.blendConstants[ 1 ] = 0.0f; // Optional
             colorBlending.blendConstants[ 2 ] = 0.0f; // Optional
             colorBlending.blendConstants[ 3 ] = 0.0f; // Optional
-            auto descriptorLayout{ getDescriptorSet( DescriptorSet_id )->getLayout() };
-            VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+            std::vector<VkDescriptorSetLayout> descriptorLayout { getDescriptorSet( DescriptorSet_id )->getLayout() };
+            VkPipelineLayoutCreateInfo pipelineLayoutInfo {};
             pipelineLayoutInfo.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
             pipelineLayoutInfo.setLayoutCount         = 1;
-            pipelineLayoutInfo.pSetLayouts            = &descriptorLayout;
+            pipelineLayoutInfo.pSetLayouts            = descriptorLayout.data();
             pipelineLayoutInfo.pushConstantRangeCount = _const_ranges.size();
             pipelineLayoutInfo.pPushConstantRanges    = _const_ranges.data();
 
             CHECK_RESULT( vkCreatePipelineLayout( getDevice(), &pipelineLayoutInfo, nullptr, &PipelineLayout ) );
 
-            VkGraphicsPipelineCreateInfo GraphicPipeLineCreateInfo{};
+            VkGraphicsPipelineCreateInfo GraphicPipeLineCreateInfo {};
             GraphicPipeLineCreateInfo.sType               = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
             GraphicPipeLineCreateInfo.stageCount          = ShaderStages.size();
             GraphicPipeLineCreateInfo.pStages             = ShaderStages.data();
@@ -167,8 +161,7 @@ namespace Engine
 
         void createPipelines()
         {
-
-            for( auto &pipe : _pipelines )
+            for ( auto &pipe : _pipelines )
             {
                 pipe.second->init();
             }
@@ -176,7 +169,7 @@ namespace Engine
 
         void destroyPipelines()
         {
-            for( auto &pipe : _pipelines )
+            for ( auto &pipe : _pipelines )
             {
                 delete pipe.second;
             }
