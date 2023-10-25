@@ -10,8 +10,11 @@ namespace Engine
         class buffer
         {
           public:
+            buffer() = default;
             buffer( VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertiesFlag, VkDeviceSize size, void *data = nullptr );
             ~buffer();
+            void init( VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertiesFlag, VkDeviceSize size, void *data = nullptr );
+            void init();
             const VkBuffer getHandle();
             const VkDeviceMemory getMemoryHandle();
             VkResult map( VkDeviceSize offset, VkDeviceSize size );
@@ -19,8 +22,8 @@ namespace Engine
             void unmap();
 
           private:
-            void *_mapped{ nullptr };
-            VkDeviceMemory _memory{ nullptr };
+            void *_mapped { nullptr };
+            VkDeviceMemory _memory { nullptr };
             VkBuffer _buffer;
         };
 
@@ -35,11 +38,11 @@ namespace Engine
             void end();
 
           private:
-            VkCommandPool _commandPool{ nullptr };
-            VkCommandBuffer _commandBuffer{ nullptr };
+            VkCommandPool _commandPool { nullptr };
+            VkCommandBuffer _commandBuffer { nullptr };
             queue _queue;
-            VkFence _fence{ nullptr };
-            bool began{ 0 };
+            VkFence _fence { nullptr };
+            bool began { 0 };
         };
     } // namespace tools
 } // namespace Engine

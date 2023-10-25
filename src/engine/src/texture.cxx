@@ -13,6 +13,10 @@ namespace Engine
         {
             textureID _textureID { 0 };
             std::unordered_map<textureID, texture *> _textures;
+            struct DescriptorData
+            {
+                buffer *uniformBuffer { nullptr };
+            };
         } // namespace
 
         texture::texture( const char *path ) :
@@ -87,6 +91,14 @@ namespace Engine
             ImageMemoryBarrier.dstAccessMask                 = VK_ACCESS_SHADER_READ_BIT;
 
             vkCmdPipelineBarrier( cmdBuff.getHandle(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, 0, 0, 0, 1, &ImageMemoryBarrier );
+        }
+
+        void init()
+        {
+        }
+
+        void setupDescriptorSet()
+        {
         }
 
         uint32_t texture::getMIPlevels()

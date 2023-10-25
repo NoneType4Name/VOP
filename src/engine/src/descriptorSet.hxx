@@ -33,5 +33,7 @@ namespace Engine
         void destroyDescriptorPool();
         void setupDescriptorSets();
         descriptorSet *getDescriptorSet( descriptorSetID id );
+        size_t getDescriptorSets( std::vector<descriptorSet *> &descriptorSets );
+
     } // namespace tools
 } // namespace Engine

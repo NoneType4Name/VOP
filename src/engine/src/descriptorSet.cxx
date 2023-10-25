@@ -117,5 +117,15 @@ namespace Engine
         {
             return _descriptorSets[ id ];
         }
+
+        size_t getDescriptorSets( std::vector<descriptorSet *> &descriptorSets )
+        {
+            descriptorSets.reserve( _descriptorSets.size() );
+            for ( auto &pair : _descriptorSets )
+            {
+                descriptorSets.push_back( pair.second );
+            }
+            return descriptorSets.size();
+        }
     } // namespace tools
 } // namespace Engine

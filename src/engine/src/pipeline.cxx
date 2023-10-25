@@ -118,7 +118,11 @@ namespace Engine
             colorBlending.blendConstants[ 1 ] = 0.0f; // Optional
             colorBlending.blendConstants[ 2 ] = 0.0f; // Optional
             colorBlending.blendConstants[ 3 ] = 0.0f; // Optional
-            std::vector<VkDescriptorSetLayout> descriptorLayout { getDescriptorSet( DescriptorSet_id )->getLayout() };
+            std::vector<VkDescriptorSetLayout> descriptorLayout {};
+            std::vector<descriptorSet *> descriptorSets {};
+            descriptorLayout.reserve( getDescriptorSets( descriptorSets ) );
+            for ( auto descriptor : descriptorSets )
+                descriptorLayout.push_back( descriptor->getLayout() );
             VkPipelineLayoutCreateInfo pipelineLayoutInfo {};
             pipelineLayoutInfo.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
             pipelineLayoutInfo.setLayoutCount         = 1;
