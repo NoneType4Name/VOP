@@ -20,8 +20,8 @@ namespace Engine
             _const_ranges.push_back( range );
         }
 
-        pipeline::pipeline( PipelineInfo info, std::vector<descriptorSet> descriptors ) :
-            id { ++pipeline_id }, descriptorSets { descriptors }, info { info }
+        pipeline::pipeline( PipelineInfo info ) :
+            id { ++pipeline_id }, info { info }
         {
             _pipelines[ id ] = this;
         }

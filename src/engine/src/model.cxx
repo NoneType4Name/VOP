@@ -2,6 +2,9 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
 #include <pipeline.hxx>
+#include <buffer.hxx>
+#include <texture.hxx>
+#include <sampler.hxx>
 
 namespace Engine
 {
@@ -13,6 +16,16 @@ namespace Engine
             std::unordered_map<modelID, model *> _models;
 
         } // namespace
+
+        struct DefaultDescriptorData
+        {
+            buffer UniformObjectBuffer;
+        };
+
+        struct DefaultUniformObject
+        {
+            glm::mat4 model;
+        };
 
         bool vertex::operator==( const vertex &other ) const
         {
@@ -123,6 +136,48 @@ namespace Engine
         const uint64_t model::getIndeciesBufferOffset()
         {
             return indecies_offset;
+        }
+
+        void model::setupDescriptorSet()
+        {
+            descriptorSet_id = ( new tools::descriptorSet {
+                                     { { 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS },
+                                       { 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT } } } )
+                                   ->getID();
+        }
+
+        void model::init()
+        {
+            DefaultDescriptorData *pDescriptorSet { static_cast<DefaultDescriptorData *>( descriptorSetStructure ) };
+            pDescriptorSet->UniformObjectBuffer.init( VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, sizeof( DefaultDescriptorData ) );
+
+            VkDescriptorBufferInfo DescriptorBufferInfo {};
+            DescriptorBufferInfo.buffer = pDescriptorSet->UniformObjectBuffer.getHandle();
+            DescriptorBufferInfo.offset = 0;
+            DescriptorBufferInfo.range  = sizeof( DefaultDescriptorData );
+
+            VkWriteDescriptorSet WriteUBDescriptorSet {};
+            WriteUBDescriptorSet.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            WriteUBDescriptorSet.dstSet          = getDescriptorSet( descriptorSet_id )->getHandle();
+            WriteUBDescriptorSet.dstBinding      = 0;
+            WriteUBDescriptorSet.dstArrayElement = 0;
+            WriteUBDescriptorSet.descriptorCount = 1;
+            WriteUBDescriptorSet.descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            WriteUBDescriptorSet.pBufferInfo     = &DescriptorBufferInfo;
+
+            VkDescriptorImageInfo DescriptorImageInfo {};
+            DescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            DescriptorImageInfo.imageView   = getImage( getTexture( texture_id )->getImageID() )->getImageView();  // TODO: As normal class method
+            DescriptorImageInfo.sampler     = getSampler( getTexture( texture_id )->getMIPlevels() )->getHandle(); // TODO: As normal class method
+
+            VkWriteDescriptorSet WriteSamplerDescriptorSet {};
+            WriteSamplerDescriptorSet.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            WriteSamplerDescriptorSet.dstSet          = getDescriptorSet( descriptorSet_id )->getHandle();
+            WriteSamplerDescriptorSet.dstBinding      = 1;
+            WriteSamplerDescriptorSet.dstArrayElement = 0;
+            WriteSamplerDescriptorSet.descriptorCount = 1;
+            WriteSamplerDescriptorSet.descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            WriteSamplerDescriptorSet.pImageInfo      = &DescriptorImageInfo;
         }
 
         model::~model()

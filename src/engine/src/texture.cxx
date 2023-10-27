@@ -13,10 +13,6 @@ namespace Engine
         {
             textureID _textureID { 0 };
             std::unordered_map<textureID, texture *> _textures;
-            struct DescriptorData
-            {
-                buffer *uniformBuffer { nullptr };
-            };
         } // namespace
 
         texture::texture( const char *path ) :
@@ -34,6 +30,7 @@ namespace Engine
         }
 
         texture::~texture()
+
         {
             delete getImage( img );
         }
@@ -93,11 +90,7 @@ namespace Engine
             vkCmdPipelineBarrier( cmdBuff.getHandle(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, 0, 0, 0, 1, &ImageMemoryBarrier );
         }
 
-        void init()
-        {
-        }
-
-        void setupDescriptorSet()
+        void texture::init()
         {
         }
 
@@ -111,9 +104,14 @@ namespace Engine
             return id;
         }
 
-        const uint8_t *texture::getHandle( const size_t mip_level ) const
+        const uint8_t *texture::getData( const size_t mip_level ) const
         {
             return mips[ mip_level ];
+        }
+
+        imageID texture::getImageID() const
+        {
+            return img;
         }
 
         const uint32_t texture::getWidth() const

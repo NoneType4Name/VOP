@@ -14,6 +14,20 @@ namespace Engine
         sampler::sampler( uint32_t MipLevels )
         {
             mipLevels += MipLevels;
+        }
+
+        sampler::~sampler()
+        {
+            vkDestroySampler( getDevice(), handle, ALLOCATION_CALLBACK );
+            _samplers.erase( mipLevels );
+        }
+
+        VkSampler sampler::getHandle() const
+        {
+            return handle;
+        }
+        void sampler::init()
+        {
             VkSamplerCreateInfo SamplerCreateInfo {};
             SamplerCreateInfo.sType     = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
             SamplerCreateInfo.magFilter = VK_FILTER_LINEAR;
@@ -38,20 +52,21 @@ namespace Engine
             CHECK_RESULT( vkCreateSampler( getDevice(), &SamplerCreateInfo, ALLOCATION_CALLBACK, &handle ) );
         }
 
-        sampler::~sampler()
-        {
-            vkDestroySampler( getDevice(), handle, ALLOCATION_CALLBACK );
-            _samplers.erase( mipLevels );
-        }
-
-        uint32_t sampler::getMIPlevels() const
-        {
-            return mipLevels;
-        }
-
         sampler *getSampler( uint32_t levels )
         {
             return _samplers[ levels ];
+        }
+
+        void createSamplers()
+        {
+            for ( auto &s : _samplers )
+                s.second->init();
+        }
+
+        void destroySamplers()
+        {
+            for ( auto &s : _samplers )
+                delete s.second;
         }
     } // namespace tools
 } // namespace Engine

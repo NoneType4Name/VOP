@@ -12,7 +12,6 @@ namespace Engine
         class descriptorSet
         {
           public:
-            descriptorSet() = default;
             descriptorSet( std::vector<VkDescriptorSetLayoutBinding> layouts, VkDescriptorPool pool = nullptr );
             VkDescriptorSetLayout getLayout() const;
             VkDescriptorSet getHandle() const;
@@ -31,7 +30,6 @@ namespace Engine
 
         void createDescriptorPool();
         void destroyDescriptorPool();
-        void setupDescriptorSets();
         descriptorSet *getDescriptorSet( descriptorSetID id );
         size_t getDescriptorSets( std::vector<descriptorSet *> &descriptorSets );
 

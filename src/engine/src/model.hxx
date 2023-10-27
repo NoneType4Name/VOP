@@ -1,6 +1,7 @@
 #include <common/globals.hxx>
 #include <common/logging.hxx>
 #include <platform.hxx>
+#include <descriptorSet.hxx>
 #include <engine.hxx>
 
 namespace Engine
@@ -34,13 +35,17 @@ namespace Engine
             const uint64_t getVerteciesBufferOffset();
             void setIndeciesBufferOffset( const uint64_t offset );
             const uint64_t getIndeciesBufferOffset();
+            void init();
             void setPosition( glm::vec3 positionVector ); // todo
             void setScale( glm::mat4 scaleMatrix );       // todo
             void setRotation( glm::mat4 rotateMatrix );   // todo
+            virtual void setupDescriptorSet();
             ~model();
 
           private:
             modelID id { 0 };
+            descriptorSetID descriptorSet_id { 0 };
+            void *descriptorSetStructure { nullptr };
             textureID texture_id { 0 };
             std::vector<vertex> vertecies;
             std::vector<uint32_t> indecies;

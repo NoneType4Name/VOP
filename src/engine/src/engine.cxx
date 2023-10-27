@@ -8,6 +8,7 @@
 #include <renderpass.hxx>
 #include <descriptorSet.hxx>
 #include <pipeline.hxx>
+#include <sampler.hxx>
 
 #define CHECK_FOR_INIT assert( !inited )
 
@@ -29,17 +30,6 @@ namespace Engine
     namespace
     {
         bool inited { false };
-        // tools::descriptorSetID _defaultDescriptorSetID;
-        // struct __init
-        // {
-        //     __init()
-        //     {
-        //         _defaultDescriptorSetID = ( new tools::descriptorSet {
-        //                                         { { 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_ALL_GRAPHICS },
-        //                                           { 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT } } } )
-        //                                       ->getID();
-        //     }
-        // } _;
     } // namespace
     std::vector<Device> GetGraphicDevices( uint8_t devicesTypeFlag )
     {
@@ -65,8 +55,8 @@ namespace Engine
         tools::createShaderModules();
         tools::createSwapchain();
         tools::createRenderPass();
+        tools::createSamplers();
         tools::createDescriptorPool();
-        tools::setupDescriptorSets();
         tools::createPipelines();
         inited = true;
     }
@@ -74,7 +64,6 @@ namespace Engine
     void shutdown()
     {
         tools::destroyPipelines();
-        tools::destroyDescriptorSets();
         tools::destroyDescriptorPool();
         tools::destroyRenderPass();
         tools::destroySwapchain();
@@ -107,7 +96,7 @@ namespace Engine
 
     pipelineID CreatePipeline( PipelineInfo info )
     {
-        return ( new tools::pipeline { info, _defaultDescriptorSetID } )->getID();
+        return ( new tools::pipeline { info } )->getID();
     }
 
     void ModelBindTexture( modelID model, textureID texture )

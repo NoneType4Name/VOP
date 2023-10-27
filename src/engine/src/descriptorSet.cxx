@@ -90,27 +90,19 @@ namespace Engine
             poolCreateInfo.pPoolSizes    = sizes.data();
             poolCreateInfo.maxSets       = maxSets;
             vkCreateDescriptorPool( getDevice(), &poolCreateInfo, ALLOCATION_CALLBACK, &_pool );
-        }
-
-        void destroyDescriptorPool()
-        {
-            vkDestroyDescriptorPool( getDevice(), _pool, ALLOCATION_CALLBACK );
-        }
-
-        void setupDescriptorSets()
-        {
             for ( auto &set : _descriptorSets )
             {
                 set.second->init( _pool );
             }
         }
 
-        void destroyDescriptorSets()
+        void destroyDescriptorPool()
         {
             for ( auto &set : _descriptorSets )
             {
                 delete set.second;
             }
+            vkDestroyDescriptorPool( getDevice(), _pool, ALLOCATION_CALLBACK );
         }
 
         descriptorSet *getDescriptorSet( descriptorSetID id )

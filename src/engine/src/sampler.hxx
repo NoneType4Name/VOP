@@ -12,8 +12,9 @@ namespace Engine
           public:
             sampler() = default;
             sampler( uint32_t mipLevels );
+            void init();
             ~sampler();
-            uint32_t getMIPlevels() const;
+            VkSampler getHandle() const;
 
           private:
             uint32_t mipLevels { 1 };
@@ -21,5 +22,8 @@ namespace Engine
         };
 
         sampler *getSampler( uint32_t levels );
+        void createSamplers();
+        void destroySamplers();
+
     } // namespace tools
 } // namespace Engine

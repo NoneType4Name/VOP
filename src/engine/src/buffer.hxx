@@ -1,3 +1,4 @@
+#pragma once
 #include <common/globals.hxx>
 #include <common/logging.hxx>
 #include <platform.hxx>
@@ -11,10 +12,9 @@ namespace Engine
         {
           public:
             buffer() = default;
-            buffer( VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertiesFlag, VkDeviceSize size, void *data = nullptr );
+            buffer( VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertiesFlag, VkDeviceSize size );
             ~buffer();
-            void init( VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertiesFlag, VkDeviceSize size, void *data = nullptr );
-            void init();
+            void init( VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertiesFlag, VkDeviceSize size );
             const VkBuffer getHandle();
             const VkDeviceMemory getMemoryHandle();
             VkResult map( VkDeviceSize offset, VkDeviceSize size );

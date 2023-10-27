@@ -5,7 +5,7 @@ namespace Engine
 {
     namespace tools
     {
-        buffer::buffer( VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertiesFlag, VkDeviceSize size, void *data )
+        buffer::buffer( VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertiesFlag, VkDeviceSize size )
         {
             init( usageFlags, memoryPropertiesFlag, size );
         }
@@ -18,7 +18,7 @@ namespace Engine
             vkDestroyBuffer( tools::getDevice(), _buffer, ALLOCATION_CALLBACK );
         }
 
-        void buffer::init( VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertiesFlag, VkDeviceSize size, void *data )
+        void buffer::init( VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertiesFlag, VkDeviceSize size )
         {
             VkBufferCreateInfo BufferCreateInfo {};
             BufferCreateInfo.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -44,10 +44,6 @@ namespace Engine
             CHECK_RESULT( vkBindBufferMemory( tools::getDevice(), _buffer, _memory, 0 ) ); // allocate todo?
         }
 
-        void buffer::init()
-        {
-        }
-
         const VkBuffer buffer::getHandle()
         {
             return _buffer;
@@ -60,6 +56,8 @@ namespace Engine
 
         VkResult buffer::map( VkDeviceSize offset, VkDeviceSize size )
         {
+            if ( _memory == nullptr )
+                SPDLOG_CRITICAL( "Failed to map memory." );
             if ( _mapped != nullptr )
                 return VK_SUCCESS;
             return vkMapMemory( tools::getDevice(), _memory, offset, size, 0, &_mapped );
@@ -67,6 +65,8 @@ namespace Engine
 
         void buffer::copy( void *data, VkDeviceSize size )
         {
+            if ( _memory == nullptr )
+                SPDLOG_CRITICAL( "Failed to copy memory." );
             if ( _mapped == nullptr )
                 return;
             memcpy( _mapped, data, size );
@@ -74,6 +74,8 @@ namespace Engine
 
         void buffer::unmap()
         {
+            if ( _memory == nullptr )
+                SPDLOG_CRITICAL( "Failed to unmap memory." );
             if ( _mapped == nullptr )
                 return;
             vkUnmapMemory( tools::getDevice(), _memory );
@@ -108,6 +110,8 @@ namespace Engine
 
         void commandBuffer::begin()
         {
+            if ( _commandBuffer == nullptr )
+                SPDLOG_CRITICAL( "Failed to begin command buffer." );
             if ( began ) return;
             VkCommandBufferBeginInfo CommandBufferBeginInfo {};
             CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -129,6 +133,8 @@ namespace Engine
 
         void commandBuffer::end()
         {
+            if ( _commandBuffer == nullptr )
+                SPDLOG_CRITICAL( "Failed to end command buffer." );
             if ( began )
                 vkEndCommandBuffer( _commandBuffer );
         }

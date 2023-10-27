@@ -25,8 +25,8 @@ namespace Engine
             void operator=( uint32_t right );
 
           private:
-            VkQueue _queue{ nullptr };
-            uint32_t _queueIndex{ 0 };
+            VkQueue _queue { nullptr };
+            uint32_t _queueIndex { 0 };
             std::optional<uint32_t> _familyIndex;
         };
 
@@ -47,7 +47,7 @@ namespace Engine
             std::unordered_map<uint32_t, std::pair<uint32_t, std::vector<float>>> &getUniqueIndeciesCount();
 
           private:
-            std::unordered_map<uint32_t, std::pair<uint32_t, std::vector<float>>> _unique{};
+            std::unordered_map<uint32_t, std::pair<uint32_t, std::vector<float>>> _unique {};
         };
 
         VkDeviceQueueCreateInfo queueCreateInfo( uint32_t index, uint32_t count, const float *priority );
