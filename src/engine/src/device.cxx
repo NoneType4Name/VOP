@@ -3,22 +3,27 @@
 
 namespace Engine
 {
+    namespace
+    {
+        std::unordered_map<deviceID, device> _devices {};
+    }
+
     namespace tools
     {
         namespace
         {
             std::vector<VkExtensionProperties> _extensions;
-            VkPhysicalDevice _phDevice{ nullptr };
-            VkDevice _device{ nullptr };
-            Queues _queues;
-            std::vector<VkPhysicalDevice> _allDevices{};
+            VkPhysicalDevice _phDevice { nullptr };
+            VkDevice _device { nullptr };
+            queueSet _queues;
+            std::vector<VkPhysicalDevice> _allDevices {};
         } // namespace
 
         const std::vector<VkPhysicalDevice> getDevices()
         {
-            if( _allDevices.empty() )
+            if ( _allDevices.empty() )
             {
-                uint32_t _c{ 0 };
+                uint32_t _c { 0 };
                 vkEnumeratePhysicalDevices( getInstance(), &_c, nullptr );
                 _allDevices.resize( _c );
                 vkEnumeratePhysicalDevices( getInstance(), &_c, _allDevices.data() );
@@ -33,20 +38,20 @@ namespace Engine
 
         void getSuitableDevices( std::vector<PhysicalDevice> &devices, uint8_t types )
         {
-            auto _all_devices{ tools::getDevices() };
+            auto _all_devices { tools::getDevices() };
             devices.reserve( _all_devices.size() );
             devices.resize( 0 );
-            if( types )
+            if ( types )
             {
-                for( auto &dev : _all_devices )
+                for ( auto &dev : _all_devices )
                 {
-                    VkPhysicalDeviceMemoryProperties Mproperties{};
-                    VkPhysicalDeviceProperties properties{};
-                    VkPhysicalDeviceFeatures features{};
+                    VkPhysicalDeviceMemoryProperties Mproperties {};
+                    VkPhysicalDeviceProperties properties {};
+                    VkPhysicalDeviceFeatures features {};
                     vkGetPhysicalDeviceMemoryProperties( dev, &Mproperties );
                     vkGetPhysicalDeviceProperties( dev, &properties );
                     vkGetPhysicalDeviceFeatures( dev, &features );
-                    if( ( ( static_cast<VkPhysicalDeviceType>( types ) & properties.deviceType ) == properties.deviceType ) )
+                    if ( ( ( static_cast<VkPhysicalDeviceType>( types ) & properties.deviceType ) == properties.deviceType ) )
                     {
                         devices.push_back( { properties.deviceName, dev } );
                     }
@@ -61,20 +66,20 @@ namespace Engine
 
         void getSuitableDevices( std::vector<Device> &devices, uint8_t types )
         {
-            auto _all_devices{ tools::getDevices() };
+            auto _all_devices { tools::getDevices() };
             devices.reserve( _all_devices.size() );
             devices.resize( 0 );
-            if( types )
+            if ( types )
             {
-                for( auto &dev : _all_devices )
+                for ( auto &dev : _all_devices )
                 {
-                    VkPhysicalDeviceMemoryProperties Mproperties{};
-                    VkPhysicalDeviceProperties properties{};
-                    VkPhysicalDeviceFeatures features{};
+                    VkPhysicalDeviceMemoryProperties Mproperties {};
+                    VkPhysicalDeviceProperties properties {};
+                    VkPhysicalDeviceFeatures features {};
                     vkGetPhysicalDeviceMemoryProperties( dev, &Mproperties );
                     vkGetPhysicalDeviceProperties( dev, &properties );
                     vkGetPhysicalDeviceFeatures( dev, &features );
-                    if( ( ( static_cast<VkPhysicalDeviceType>( types ) & properties.deviceType ) == properties.deviceType ) )
+                    if ( ( ( static_cast<VkPhysicalDeviceType>( types ) & properties.deviceType ) == properties.deviceType ) )
                     {
                         devices.push_back( { properties.deviceName, dev } );
                     }
@@ -84,22 +89,22 @@ namespace Engine
 
         bool isDeviceSupportExtensions( std::vector<const char *> extensions )
         {
-            uint32_t _c{ 0 };
+            uint32_t _c { 0 };
             vkEnumerateDeviceExtensionProperties( _phDevice, nullptr, &_c, nullptr );
-            std::vector<VkExtensionProperties> AvailableExtNames{ _c };
+            std::vector<VkExtensionProperties> AvailableExtNames { _c };
             vkEnumerateDeviceExtensionProperties( _phDevice, nullptr, &_c, AvailableExtNames.data() );
-            std::set<std::string> tmpRequeredDeviceExts{ extensions.begin(), extensions.end() };
-            for( const auto &ext : AvailableExtNames )
+            std::set<std::string> tmpRequeredDeviceExts { extensions.begin(), extensions.end() };
+            for ( const auto &ext : AvailableExtNames )
             {
                 tmpRequeredDeviceExts.erase( ext.extensionName );
             }
 
-            if( tmpRequeredDeviceExts.size() )
+            if ( tmpRequeredDeviceExts.size() )
             {
-                std::string e{ "Not avilable device extensions:\n" };
-                for( const auto &ext : tmpRequeredDeviceExts )
+                std::string e { "Not avilable device extensions:\n" };
+                for ( const auto &ext : tmpRequeredDeviceExts )
                 {
-                    auto s{ std::format( "\t{}\n", ext ) };
+                    auto s { std::format( "\t{}\n", ext ) };
                 }
                 SPDLOG_CRITICAL( e );
             }
@@ -110,36 +115,36 @@ namespace Engine
         void createDevice( VkPhysicalDevice phDevice )
         {
             _phDevice = phDevice;
-            uint32_t _c{ 0 };
+            uint32_t _c { 0 };
             vkGetPhysicalDeviceQueueFamilyProperties( _phDevice, &_c, nullptr );
-            std::vector<VkQueueFamilyProperties> queueFamilyProperties{ _c };
+            std::vector<VkQueueFamilyProperties> queueFamilyProperties { _c };
             vkGetPhysicalDeviceQueueFamilyProperties( _phDevice, &_c, queueFamilyProperties.data() );
             _queues = getIndecies( _phDevice );
             std::vector<VkDeviceQueueCreateInfo> QueuesCreateInfo( _queues.getUniqueIndeciesCount().size() );
             std::vector<float> _priorities( _queues.getUniqueIndeciesCount().size() );
             _c = 0;
-            for( const auto &index : _queues.getUniqueIndeciesCount() )
+            for ( const auto &index : _queues.getUniqueIndeciesCount() )
                 QueuesCreateInfo[ _c++ ] = queueCreateInfo( index.first, index.second.first, index.second.second.data() );
 
-            VkPhysicalDeviceFeatures enabledFeatures{};
+            VkPhysicalDeviceFeatures enabledFeatures {};
             enabledFeatures.samplerAnisotropy = VK_TRUE;
             enabledFeatures.sampleRateShading = VK_TRUE;
 
-            VkPhysicalDeviceDescriptorIndexingFeaturesEXT PhysicalDeviceDescriptorIndexingFeatures{};
+            VkPhysicalDeviceDescriptorIndexingFeaturesEXT PhysicalDeviceDescriptorIndexingFeatures {};
             PhysicalDeviceDescriptorIndexingFeatures.sType                                     = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
             PhysicalDeviceDescriptorIndexingFeatures.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
             PhysicalDeviceDescriptorIndexingFeatures.runtimeDescriptorArray                    = VK_TRUE;
             PhysicalDeviceDescriptorIndexingFeatures.descriptorBindingVariableDescriptorCount  = VK_TRUE;
 
-            VkPhysicalDeviceFeatures2 physicalDeviceFeatures{};
+            VkPhysicalDeviceFeatures2 physicalDeviceFeatures {};
             physicalDeviceFeatures.sType    = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
             physicalDeviceFeatures.pNext    = &PhysicalDeviceDescriptorIndexingFeatures;
             physicalDeviceFeatures.features = enabledFeatures;
 
-            std::vector<const char *> Extensions{};
+            std::vector<const char *> Extensions {};
             getDeviceExtensions( Extensions );
             assert( isDeviceSupportExtensions( Extensions ) );
-            VkDeviceCreateInfo createInfo{};
+            VkDeviceCreateInfo createInfo {};
             createInfo.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
             createInfo.pNext                   = &physicalDeviceFeatures;
             createInfo.queueCreateInfoCount    = static_cast<uint32_t>( QueuesCreateInfo.size() );
@@ -166,24 +171,28 @@ namespace Engine
             return _phDevice;
         }
 
-        tools::Queues getQueues()
+        tools::queueSet getQueues()
         {
             return tools::_queues;
         }
 
         uint32_t memoryTypeIndex( uint32_t type, VkMemoryPropertyFlags properties )
         {
-            VkPhysicalDeviceMemoryProperties memProp{};
+            VkPhysicalDeviceMemoryProperties memProp {};
             vkGetPhysicalDeviceMemoryProperties( getPhysicalDevice(), &memProp );
-            for( uint32_t i{ 0 }; i < memProp.memoryTypeCount; i++ )
+            for ( uint32_t i { 0 }; i < memProp.memoryTypeCount; i++ )
             {
-                if( ( type & ( 1 << i ) ) && ( ( memProp.memoryTypes[ i ].propertyFlags & properties ) == properties ) ) return i;
+                if ( ( type & ( 1 << i ) ) && ( ( memProp.memoryTypes[ i ].propertyFlags & properties ) == properties ) ) return i;
             }
             SPDLOG_CRITICAL( "Failed to find suitable memory type, type: {}, properties: {}.", type, properties );
             assert( 0 );
             return -1;
         }
     } // namespace tools
+
+    size_t GetDevicesName( std::unordered_map<deviceID, const char *> &devices, PhysicalDeviceType requeredDeviceType )
+    {
+    }
 
     PhysicalDevice::PhysicalDevice() = default;
     PhysicalDevice::PhysicalDevice( const char *name, VkPhysicalDevice handle )

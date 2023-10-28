@@ -1,6 +1,8 @@
 #include <engine.hxx>
 #include <map>
-#include <RHI.hxx>
+#include <EHI.hxx>
+// #include <RHI.hxx>
+#include <surface.hxx>
 #include <device.hxx>
 #include <swapchain.hxx>
 #include <texture.hxx>
@@ -10,7 +12,7 @@
 #include <pipeline.hxx>
 #include <sampler.hxx>
 
-#define CHECK_FOR_INIT assert( !inited )
+#define CHECK_FOR_INIT assert( inited )
 
 namespace
 {
@@ -18,19 +20,63 @@ namespace
     {
         __init()
         {
+            glfwSetErrorCallback( []( int code, const char *data )
+                                  { SPDLOG_CRITICAL( "GLFW ERROR {}: {}", code, data ); } );
             assert( glfwInit() );
-            Engine::tools::createInstance();
-            Engine::tools::setupDebugLayerCallback();
         }
     } _;
 } // namespace
 
 namespace Engine
 {
-    namespace
+    Instance::Instance( const char *appName, uint32_t appVersion )
     {
-        bool inited { false };
-    } // namespace
+        VkApplicationInfo ApplicationInfo {};
+        ApplicationInfo.sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+        ApplicationInfo.engineVersion      = ENGINE_VERSION;
+        ApplicationInfo.pEngineName        = "NoneTypeName's Engine";
+        ApplicationInfo.apiVersion         = VK_API_VERSION_1_0;
+        ApplicationInfo.pApplicationName   = appName;
+        ApplicationInfo.applicationVersion = appVersion;
+
+        std::vector<const char *> Extensions, Layers;
+        std::vector<VkValidationFeatureEnableEXT> Validation;
+        setupExtensions( Extensions );
+        setupLayers( Layers );
+        data->setValidationFeatures( Validation );
+        data->setExtensions( Extensions );
+        data->setLayers( Extensions );
+        Extensions.clear();
+        Layers.clear();
+        Validation.clear();
+        assert( data->supportExtensions() );
+        assert( data->supportLayers() );
+
+        VkValidationFeaturesEXT ValidationFeatures {};
+        ValidationFeatures.sType                         = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
+        ValidationFeatures.enabledValidationFeatureCount = data->validationFeatures.size();
+        ValidationFeatures.pEnabledValidationFeatures    = data->validationFeatures.data();
+
+        VkInstanceCreateInfo InstanceCreateInfo {};
+        InstanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+        // #ifdef ENGINE_DEBUG
+        InstanceCreateInfo.pNext = &ValidationFeatures;
+        // #endif
+        InstanceCreateInfo.enabledLayerCount       = Layers.size();
+        InstanceCreateInfo.ppEnabledLayerNames     = Layers.size() ? Layers.data() : nullptr;
+        InstanceCreateInfo.enabledExtensionCount   = Extensions.size();
+        InstanceCreateInfo.ppEnabledExtensionNames = Extensions.size() ? Extensions.data() : nullptr;
+        InstanceCreateInfo.pApplicationInfo        = &ApplicationInfo;
+        CHECK_RESULT( vkCreateInstance( &InstanceCreateInfo, ALLOCATION_CALLBACK, &data->handle ) );
+        data->setupDebugLayerCallback();
+    }
+
+    Instance::~Instance()
+    {
+        data->destroyDebugLayerCallback();
+        vkDestroyInstance( data->handle, ALLOCATION_CALLBACK );
+    }
+
     std::vector<Device> GetGraphicDevices( uint8_t devicesTypeFlag )
     {
         std::vector<Device> devices {};

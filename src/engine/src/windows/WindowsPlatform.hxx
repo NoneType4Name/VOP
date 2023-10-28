@@ -11,15 +11,6 @@
 #include <GLFW/glfw3native.h>
 #include <vulkan/vk_enum_string_helper.h>
 
-namespace Engine
-{
-    namespace tools
-    {
-        void createSurface( VkInstance instance );
-        void createWindow( RESOLUTION_TYPE width, RESOLUTION_TYPE height, const char *title );
-        void destroySurface();
-        void destroyWindow();
-        const VkSurfaceKHR getSurface();
-        GLFWwindow *getWindow();
-    } // namespace tools
-} // namespace Engine
+// namespace Engine
+// {
+// } // namespace Engine

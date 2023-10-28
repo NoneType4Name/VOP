@@ -1,5 +1,4 @@
 #include <descriptorSet.hxx>
-#include <RHI.hxx>
 #include <device.hxx>
 
 namespace Engine
