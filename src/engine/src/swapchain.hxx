@@ -21,11 +21,11 @@ namespace Engine
             VkSemaphore isRendered;
         };
 
-        void createSwapchain();
-        void reCreateSwapchain();
-        void destroySwapchain();
-        uint32_t AcquireImageIndex( VkSemaphore &semaphore );
-        void swapchainPresent( VkSemaphore *semaphore );
+        // void createSwapchain();
+        // void reCreateSwapchain();
+        // void destroySwapchain();
+        // uint32_t AcquireImageIndex( VkSemaphore &semaphore );
+        // void swapchainPresent( VkSemaphore *semaphore );
         SwapchainProperties getSwapchainProperties();
         VkSurfaceFormatKHR getSwapchainSurfaceFormat();
         VkPresentModeKHR getSwapchainSurfacePresentMode();

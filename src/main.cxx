@@ -22,7 +22,7 @@ namespace
                 spdlog::set_pattern( "[%H:%M:%S.%e] [%^%l%$] %v" );
                 SPDLOG_DEBUG( "--- Start logging ---" );
             }
-            catch( const std::exception &logInitE )
+            catch ( const std::exception &logInitE )
             {
                 std::cerr << "Logger initialize error:\t" << logInitE.what() << "\n.";
                 exit( EXIT_FAILURE );
@@ -37,29 +37,46 @@ namespace
     } _;
 } // namespace
 
+namespace Game
+{
+    // class GraphicEngine : public Engine::instance
+    // {
+    //     using Engine::instance::instance;
+    //     // using Engine::instance::~instance;
+    // };
+} // namespace Game
+
 int main()
 {
+    // Game::GraphicEngine engine { "test app", 1 };
+    Engine::types::instance engine { new Engine::instance { "d", 0 } };
+    const std::vector<Engine::types::DeviceDescription> &devices = engine->GetDevices();
+    Engine::window::types::window window { engine->CreateWindow( 0, 0, "window#1" ) };
+    Engine::types::device device { engine->CreateDevice( devices[ 0 ] ) };
+    Engine::types::link link { engine->CreateLink( window, device ) };
+    // Engine::types::Device
+    // engine.InitDevice( devices[ 0 ] );
     // auto rectangle{ Engine::CreateModel( Engine::modelType::MODEL_TYPE_ENTITY, "./assets/models/rectangle/model.obj" ) };
-    auto rectangle_texture{ Engine::CreateTexture( "./assets/textures/rectangle/model.png" ) };
-    auto rectangle_model{ Engine::CreateModel( Engine::modelType::MODEL_TYPE_ENTITY, "./assets/models/rectangle/model.obj" ) };
-    auto devices{ Engine::GetGraphicDevices( Engine::DISCRETE_GPU | Engine::INTEGRATED_GPU ) };
-    auto pipeline{ Engine::CreatePipeline(
-        { { Engine::CreateShader( "./assets/shaders/binary.vert.spv", "main", Engine::ShaderStage::VERTEX_SHADER_TYPE ),
-            Engine::CreateShader( "./assets/shaders/binary.frag.spv", "main", Engine::ShaderStage::FRAGMENT_SHADER_TYPE ) } } ) };
-    Engine::AppCreateInfo App{};
-    App.width                       = 0;
-    App.height                      = 0;
-    App.title                       = "Quest App.";
-    App.device                      = devices.front();
-    App.settings.MultiSamplingCount = Engine::MultiSamplingCount::SAMPLE_COUNT_2_BIT;
+    // auto rectangle_texture { Engine::CreateTexture( "./assets/textures/rectangle/model.png" ) };
+    // auto rectangle_model { Engine::CreateModel( Engine::modelType::MODEL_TYPE_ENTITY, "./assets/models/rectangle/model.obj" ) };
+    // auto devices { Engine::GetGraphicDevices( Engine::DISCRETE_GPU | Engine::INTEGRATED_GPU ) };
+    // auto pipeline { Engine::CreatePipeline(
+    //     { { Engine::CreateShader( "./assets/shaders/binary.vert.spv", "main", Engine::ShaderStage::VERTEX_SHADER_TYPE ),
+    //         Engine::CreateShader( "./assets/shaders/binary.frag.spv", "main", Engine::ShaderStage::FRAGMENT_SHADER_TYPE ) } } ) };
+    // Engine::AppCreateInfo App {};
+    // App.width                       = 0;
+    // App.height                      = 0;
+    // App.title                       = "Quest App.";
+    // App.device                      = devices.front();
+    // App.settings.MultiSamplingCount = Engine::MultiSamplingCount::SAMPLE_COUNT_2_BIT;
 
-    Engine::init( App );
-    Engine::window::setKeyEventsCallback( []( int key, int scancode, int action, int mods )
-                                          { SPDLOG_DEBUG( "key pressed code: {}", std::to_string( key ) ); } );
-    while( !Engine::window::shouldClose() )
-    {
-        Engine::window::updateEvents();
-    }
-    Engine::shutdown();
+    // Engine::init( App );
+    // Engine::window::setKeyEventsCallback( []( int key, int scancode, int action, int mods )
+    //                                       { SPDLOG_DEBUG( "key pressed code: {}", std::to_string( key ) ); } );
+    // while ( !Engine::window::shouldClose() )
+    // {
+    //     Engine::window::updateEvents();
+    // }
+    // Engine::shutdown();
     return 0;
 }

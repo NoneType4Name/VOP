@@ -811,7 +811,7 @@ namespace Engine
 //             0,
 //             &dpy,
 //             &window };
-//         Result = vkCreateXlibSurfaceKHR( Instance, &XlibSurfaceCreateInfoKHR, nullptr, &Screen )
+//         Result = vkCreateXlibSurfaceKHR( instance, &XlibSurfaceCreateInfoKHR, nullptr, &Screen )
 #endif
 
         if( Result != VK_SUCCESS )

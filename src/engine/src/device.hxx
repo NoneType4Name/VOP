@@ -21,39 +21,9 @@ namespace Engine
     //     VkPhysicalDevice _handle { nullptr };
     // };
 
-    class device
-    {
-      private:
-        class data;
-        std::vector<std::shared_ptr<window::window>> windows;
-        deviceID id;
-        // renderpassID renderpass_id;
-        std::vector<pipelineID> pipelineIDs;
-        tools::queueSet _queuesSet;
-
-      public:
-        device() = default;
-        device( VkPhysicalDevice physicalDevice );
-        deviceID getID() const;
-        // renderpassID getRenderpassID() const;
-        tools::queueSet &getQueueSet() const;
-        std::unique_ptr<data> data;
-    };
-
-    size_t GetDevicesName( std::unordered_map<deviceID, const char *> &devices, PhysicalDeviceType requeredDeviceType = PhysicalDeviceType::OTHER );
-
     namespace tools
     {
-        const std::vector<VkPhysicalDevice> getDevices();
-        void createDevice( VkPhysicalDevice phDevice );
-        void destroyDevice();
-        const VkDevice getDevice();
-        const VkPhysicalDevice getPhysicalDevice();
-        queueSet getQueues();
-        void getSuitableDevices( std::vector<Device> &devices );
-        void getSuitableDevices( std::vector<Device> &devices, uint8_t types );
-        void getSuitableDevices( std::vector<PhysicalDevice> &devices );
-        void getSuitableDevices( std::vector<PhysicalDevice> &devices, uint8_t types );
-        uint32_t memoryTypeIndex( uint32_t type, VkMemoryPropertyFlags properties );
+        inline DeviceType VkDevTypeToEngineDevType( VkPhysicalDeviceType type );
+        uint32_t requeredMemoryTypeIndex( device device, uint32_t type, VkMemoryPropertyFlags properties );
     } // namespace tools
 } // namespace Engine

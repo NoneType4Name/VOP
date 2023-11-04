@@ -6,6 +6,11 @@
 #    define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #    define STB_IMAGE_IMPLEMENTATION
 #    define RESOLUTION_TYPE uint16_t
+#    define DEFINE_HANDLE( object ) \
+        namespace types             \
+        {                           \
+            typedef object *object; \
+        }
 #    include <array>
 #    include <memory>
 #    include <vector>
@@ -18,6 +23,7 @@
 
 namespace Engine
 {
+    class instance;
     namespace window
     {
         struct ENGINE_EXPORT resolution
@@ -29,11 +35,13 @@ namespace Engine
         typedef void ( *ResizeCallback )( int width, int height );
         typedef void ( *KeyEventCallBack )( int key, int scancode, int action, int mods );
 
-        class window
+        class ENGINE_EXPORT window
         {
+          private:
+            class data;
+
           public:
-            window() = default;
-            window( RESOLUTION_TYPE width, RESOLUTION_TYPE height, const char *title );
+            window( RESOLUTION_TYPE width, RESOLUTION_TYPE height, const char *title, Engine::instance *instance );
             resolution getResolution();
             resolution getDisplayResolution();
             void cenralize();
@@ -44,22 +52,38 @@ namespace Engine
             void setKeyEventsCallback( KeyEventCallBack callback );
             void updateEvents();
             bool shouldClose();
+            const std::unique_ptr<data> data;
+            ;
             ~window();
-
-          private:
-            class data;
-            std::unique_ptr<data> data;
         };
-
+        DEFINE_HANDLE( window );
     } // namespace window
 
     enum DeviceType
     {
         OTHER          = 0x0ui8,
-        INTEGRATED_GPU = 0x1ui8,
-        DISCRETE_GPU   = 0x2ui8,
-        VIRTUAL_GPU    = 0x4ui8,
-        CPU            = 0x8ui8
+        CPU            = 0x1ui8,
+        VIRTUAL_GPU    = 0x2ui8,
+        INTEGRATED_GPU = 0x3ui8,
+        DISCRETE_GPU   = 0x4ui8,
+    };
+
+    // typedef uint64_t deviceID;
+    typedef uint64_t textureID;
+    typedef uint64_t modelID;
+    typedef uint64_t shaderID;
+    typedef uint64_t pipelineID;
+
+    enum ShaderStage
+    {
+        ALL_SHADER_TYPE,
+        VERTEX_SHADER_TYPE,
+        FRAGMENT_SHADER_TYPE
+    };
+
+    struct ENGINE_EXPORT PipelineInfo
+    {
+        std::vector<shaderID> shadersID;
     };
 
     struct DeviceDescription
@@ -71,39 +95,57 @@ namespace Engine
         const char *name;
         DeviceType type;
         uint32_t grade;
-        std::unique_ptr<data> data;
+        const std::unique_ptr<data> data;
+        ;
     };
+    DEFINE_HANDLE( DeviceDescription );
 
-    typedef uint64_t deviceID;
-    typedef uint64_t textureID;
-    typedef uint64_t modelID;
-    typedef uint64_t shaderID;
-    typedef uint64_t pipelineID;
-
-    enum ShaderStage
-    {
-        NONE_SHADER_TYPE,
-        VERTEX_SHADER_TYPE,
-        FRAGMENT_SHADER_TYPE
-    };
-
-    struct ENGINE_EXPORT PipelineInfo
-    {
-        std::vector<shaderID> shadersID;
-    };
-
-    class ENGINE_EXPORT Instance
+    class device
     {
       private:
         class data;
 
       public:
-        Instance( const char *appName = nullptr, uint32_t appVersion = 0 );
-        ~Instance();
-        virtual void setupExtensions( std::vector<const char *> &rExtensions );
-        virtual void setupLayers( std::vector<const char *> &rLayers );
-        std::unique_ptr<data> data;
+        !todo : class contain all childs;
+        device( types::DeviceDescription description );
+        const std::unique_ptr<data> data;
+        ;
+        ~device();
     };
+    DEFINE_HANDLE( device );
+
+    class ENGINE_EXPORT link
+    {
+      private:
+        class data;
+
+      public:
+        link( window::types::window window, types::device device );
+        ~link();
+        const std::unique_ptr<data> data;
+        ;
+    };
+
+    DEFINE_HANDLE( link );
+
+    class ENGINE_EXPORT instance
+    {
+      private:
+        class data;
+
+      public:
+        instance( const char *appName = nullptr, uint32_t appVersion = 0 );
+        void init();
+        const std::vector<types::DeviceDescription> &GetDevices() const;
+        window::types::window CreateWindow( RESOLUTION_TYPE width, RESOLUTION_TYPE height, std::string title );
+        window::types::window CreateWindow( RESOLUTION_TYPE width, RESOLUTION_TYPE height, const char *title );
+        types::device CreateDevice( types::DeviceDescription description );
+        types::link CreateLink( window::types::window window, types::device device );
+        const std::unique_ptr<data> data;
+        ;
+        ~instance();
+    };
+    DEFINE_HANDLE( instance );
 
     // ENGINE_EXPORT void init( AppCreateInfo sAppCreateInfo );
     // ENGINE_EXPORT void shutdown();

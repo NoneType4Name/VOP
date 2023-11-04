@@ -1,3 +1,4 @@
+#include <EHI.hxx>
 #include <queue.hxx>
 namespace Engine
 {
@@ -5,6 +6,13 @@ namespace Engine
     {
         queue::queue( VkDevice device, uint32_t familyIndex, uint32_t queueIndex )
         {
+            init( device, familyIndex, queueIndex );
+        }
+
+        queue::queue( uint32_t familyIndex, uint32_t queueIndex )
+        {
+            _familyIndex = familyIndex;
+            _queueIndex  = queueIndex;
         }
 
         void queue::init( VkDevice device )
@@ -29,10 +37,10 @@ namespace Engine
             _queueIndex = index;
         }
 
-        void queue::setHandle( VkQueue queue )
-        {
-            _queue = queue;
-        }
+        // void queue::setHandle( VkQueue queue )
+        // {
+        //     _queue = queue;
+        // }
 
         const VkQueue queue::getHandle() const
         {
@@ -41,14 +49,21 @@ namespace Engine
 
         const uint32_t queue::getFamilyIndex() const
         {
-            if ( _familyIndex.has_value() )
-                return _familyIndex.value();
-            SPDLOG_CRITICAL( "Queue hasn't value." );
-            return -1;
+            if ( !_familyIndex.has_value() )
+            {
+                SPDLOG_CRITICAL( "Queue hasn't value." );
+                return -1;
+            }
+            return _familyIndex.value();
         }
 
         const uint32_t queue::getQueueIndex() const
         {
+            if ( !_familyIndex.has_value() )
+            {
+                SPDLOG_CRITICAL( "Queue hasn't value." );
+                return -1;
+            }
             return _queueIndex;
         }
 
@@ -60,6 +75,12 @@ namespace Engine
         void queue::operator=( uint32_t right )
         {
             setFamilyIndex( right );
+        }
+
+        void queue::operator=( std::array<uint32_t, 2> right )
+        {
+            setFamilyIndex( right[ 0 ] );
+            setQueueIndex( right[ 1 ] );
         }
 
         void queueSet::operator=( std::initializer_list<uint32_t> right )
@@ -74,7 +95,7 @@ namespace Engine
             return *reinterpret_cast<tools::queue *>( reinterpret_cast<char *>( this ) + sizeof( tools::queue ) * index );
         }
 
-        std::unordered_map<uint32_t, std::pair<uint32_t, std::vector<float>>> &queueSet::getUniqueIndeciesCount()
+        std::unordered_map<uint32_t, std::pair<uint32_t, std::vector<float>>> &queueSet::getUniqueIndecies()
         {
             if ( _unique.empty() )
                 for ( uint32_t i { 0 }; i < count(); i++ )
@@ -104,50 +125,6 @@ namespace Engine
             {
                 ( ( queue * ) ( ( ( uint8_t * ) this ) + sizeof( queue ) * i ) )->init( device );
             }
-        }
-
-        tools::queueSet getIndecies( VkPhysicalDevice device )
-        {
-            tools::queueSet _indecies;
-            uint32_t _c { 0 };
-            vkGetPhysicalDeviceQueueFamilyProperties( device, &_c, nullptr );
-            std::vector<VkQueueFamilyProperties> QueueFamilies( _c );
-            vkGetPhysicalDeviceQueueFamilyProperties( device, &_c, QueueFamilies.data() );
-            if ( _c - 1 )
-            {
-                for ( uint32_t i { 0 }; i < QueueFamilies.size(); i++ )
-                {
-                    VkBool32 presentSupport { false };
-                    vkGetPhysicalDeviceSurfaceSupportKHR( device, i, tools::getSurface(), &presentSupport );
-                    if ( !_indecies.graphic.inited() && QueueFamilies[ i ].queueFlags & VK_QUEUE_GRAPHICS_BIT )
-                    {
-                        _indecies.graphic = i;
-                    }
-                    if ( !_indecies.present.inited() && presentSupport )
-                        _indecies.present = i;
-                    else if ( !_indecies.transfer.inited() && QueueFamilies[ i ].queueFlags & VK_QUEUE_TRANSFER_BIT )
-                        _indecies.transfer = i;
-                    // else if( !_indecies.compute.has_value() && QueueFamilies[ i ].queueFlags & VK_QUEUE_COMPUTE_BIT )
-                    //     _indecies.compute = _c;
-                    else
-                        break;
-                }
-            }
-            else
-            {
-                VkBool32 presentSupport { false };
-                vkGetPhysicalDeviceSurfaceSupportKHR( device, 0, tools::getSurface(), &presentSupport );
-                if ( QueueFamilies[ 0 ].queueFlags & ( VK_QUEUE_TRANSFER_BIT | VK_QUEUE_GRAPHICS_BIT ) && presentSupport )
-                {
-                    _indecies = { 0, 0, 0 };
-                }
-            }
-            return _indecies;
-        }
-
-        VkDeviceQueueCreateInfo queueCreateInfo( uint32_t index, uint32_t count, const float *priority )
-        {
-            return { VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO, 0, 0, index, count, priority };
         }
     } // namespace tools
 } // namespace Engine

@@ -2,22 +2,37 @@
 #include <common/logging.hxx>
 #include <platform.hxx>
 #include <surface.hxx>
+#include <EHI.hxx>
 #include <engine.hxx>
 
 namespace Engine
 {
     namespace window
     {
-        window::window( RESOLUTION_TYPE width, RESOLUTION_TYPE height, const char *title )
+        void window::data::setupNextChain( const void *&pNext )
+        {
+            pNext = nullptr;
+        }
+
+        void window::data::setupFlags( VkWin32SurfaceCreateFlagsKHR flags )
+        {
+            flags = 0;
+        }
+
+        window::window( RESOLUTION_TYPE width, RESOLUTION_TYPE height, const char *title, instance *instance )
         {
             resolution displayRes { getDisplayResolution() };
             glfwWindowHint( GLFW_CLIENT_API, GLFW_NO_API );
             glfwWindowHint( GLFW_RESIZABLE, GLFW_FALSE );
             data->window = glfwCreateWindow( width ? width : displayRes.width, height ? height : displayRes.height, title, nullptr, nullptr );
-            window::setTitle( title );
-            window::setWindowResolution( width, height );
-            window::cenralize();
             glfwSetWindowUserPointer( data->window, this );
+            const void *next;
+            VkWin32SurfaceCreateFlagsKHR flags;
+            data->setupNextChain( next );
+            data->setupFlags( flags );
+            data->createSurface( instance->data->handle, &next, flags );
+            cenralize();
+            setWindowResolution( width, height );
         }
 
         resolution window::getResolution()
@@ -51,7 +66,7 @@ namespace Engine
 
         void window::setWindowResolution( RESOLUTION_TYPE width, RESOLUTION_TYPE height )
         {
-            resolution displayRes { window::getDisplayResolution() };
+            resolution displayRes { getDisplayResolution() };
             if ( width + height )
             {
                 glfwSetWindowAttrib( data->window, GLFW_RESIZABLE, GLFW_TRUE );

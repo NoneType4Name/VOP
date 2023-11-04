@@ -1,12 +1,11 @@
 #include <platform.hxx>
 #include <EHI.hxx>
+#include <device.hxx>
 
 namespace Engine
 {
     namespace tools
     {
-        std::vector<VkValidationFeatureEnableEXT> DefaultValidationFeatures {
-            VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT };
         std::vector<std::string> DefaultInstanceLayers {
 #ifdef PLATFORM_WINDOWS
             "VK_LAYER_KHRONOS_validation"
@@ -21,22 +20,22 @@ namespace Engine
         std::vector<std::string> DefaultDeviceExtensions {
 #ifdef PLATFORM_WINDOWS
             VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-            VK_KHR_MAINTENANCE3_EXTENSION_NAME,
-            VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME
+            VK_KHR_MAINTENANCE3_EXTENSION_NAME
 #endif
         };
 
     } // namespace tools
 
-    void Instance::setupExtensions( std::vector<const char *> &rExtensions ) {}
-    void Instance::setupLayers( std::vector<const char *> &rLayers ) {}
+    void instance::data::setupExtensions( std::vector<const char *> &rExtensions ) {}
+    void instance::data::setupLayers( std::vector<const char *> &rLayers ) {}
 
-    void getDeviceExtensions( std::vector<std::string> &deviceExtensions )
+    void device::data::setExtensions( std::vector<const char *> &rExtensions )
     {
-        deviceExtensions.insert( deviceExtensions.end(), tools::DefaultDeviceExtensions.begin(), tools::DefaultDeviceExtensions.end() );
+        extensions.insert( extensions.end(), rExtensions.begin(), rExtensions.end() );
+        extensions.insert( extensions.end(), tools::DefaultDeviceExtensions.begin(), tools::DefaultDeviceExtensions.end() );
     }
 
-    void Instance::data::setLayers( std::vector<const char *> nLayers )
+    void instance::data::setLayers( std::vector<const char *> nLayers )
     {
         layers.insert( layers.end(), nLayers.begin(), nLayers.end() );
         // #ifdef ENGINE_DEBUG
@@ -44,16 +43,19 @@ namespace Engine
         // #endif
     }
 
-    void Instance::data::setValidationFeatures( std::vector<VkValidationFeatureEnableEXT> &rVFeatures )
+    void instance::data::setupNextChain( const void *&pNext )
     {
-        validationFeatures.insert( validationFeatures.end(), rVFeatures.begin(), rVFeatures.end() );
-        validationFeatures.insert( validationFeatures.end(), tools::DefaultValidationFeatures.begin(), tools::DefaultValidationFeatures.end() );
-        uint32_t _c;
-        const char **req_exts { glfwGetRequiredInstanceExtensions( &_c ) };
-        extensions.insert( extensions.end(), &req_exts[ 0 ], &req_exts[ _c ] );
+        VkValidationFeatureEnableEXT enabled[] { VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT };
+        VkValidationFeaturesEXT ValidationFeatures {};
+        pNext                                             = &ValidationFeatures;
+        ValidationFeatures.sType                          = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
+        ValidationFeatures.enabledValidationFeatureCount  = sizeof( enabled ) / sizeof( enabled[ 0 ] );
+        ValidationFeatures.pEnabledValidationFeatures     = enabled;
+        ValidationFeatures.disabledValidationFeatureCount = 0;
+        ValidationFeatures.pDisabledValidationFeatures    = nullptr;
     }
 
-    void Instance::data::setExtensions( std::vector<const char *> nExtensions )
+    void instance::data::setExtensions( std::vector<const char *> nExtensions )
     {
         extensions.insert( extensions.end(), nExtensions.begin(), nExtensions.end() );
         extensions.insert( extensions.end(), tools::DefaultInstanceExtensions.begin(), tools::DefaultInstanceExtensions.end() );
@@ -62,7 +64,7 @@ namespace Engine
         extensions.insert( extensions.end(), &req_exts[ 0 ], &req_exts[ _c ] );
     }
 
-    bool Instance::data::supportLayers()
+    bool instance::data::supportLayers()
     {
         uint32_t _c { 0 };
         vkEnumerateInstanceLayerProperties( &_c, nullptr );
@@ -86,7 +88,7 @@ namespace Engine
         return tmpRequeredDeviceL.empty();
     }
 
-    bool Instance::data::supportExtensions()
+    bool instance::data::supportExtensions()
     {
         uint32_t _c { 0 };
         vkEnumerateInstanceExtensionProperties( nullptr, &_c, nullptr );
@@ -105,6 +107,31 @@ namespace Engine
             {
                 auto s { std::format( "\t{}\n", ext ) };
                 e += s;
+            }
+            SPDLOG_CRITICAL( e );
+        }
+
+        return tmpRequeredDeviceExts.empty();
+    }
+
+    bool device::data::supportExtensions()
+    {
+        uint32_t _c { 0 };
+        vkEnumerateDeviceExtensionProperties( phDevice, nullptr, &_c, nullptr );
+        std::vector<VkExtensionProperties> AvailableExtNames { _c };
+        vkEnumerateDeviceExtensionProperties( phDevice, nullptr, &_c, AvailableExtNames.data() );
+        std::set<std::string> tmpRequeredDeviceExts { extensions.begin(), extensions.end() };
+        for ( const auto &ext : AvailableExtNames )
+        {
+            tmpRequeredDeviceExts.erase( ext.extensionName );
+        }
+
+        if ( tmpRequeredDeviceExts.size() )
+        {
+            std::string e { "Not avilable device extensions:\n" };
+            for ( const auto &ext : tmpRequeredDeviceExts )
+            {
+                auto s { std::format( "\t{}\n", ext ) };
             }
             SPDLOG_CRITICAL( e );
         }

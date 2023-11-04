@@ -12,9 +12,9 @@ namespace Engine
           public:
             queue() = default;
             queue( VkDevice device, uint32_t familyIndex, uint32_t queueIndex );
-            ~queue() = default;
-            void init( VkDevice device, uint32_t familyIndex, uint32_t queueIndex );
+            queue( uint32_t familyIndex, uint32_t queueIndex );
             void init( VkDevice device );
+            void init( VkDevice device, uint32_t familyIndex, uint32_t queueIndex );
             void setHandle( VkQueue queue );
             void setFamilyIndex( uint32_t index );
             void setQueueIndex( uint32_t index );
@@ -23,6 +23,8 @@ namespace Engine
             const uint32_t getQueueIndex() const;
             const bool inited() const;
             void operator=( uint32_t right );
+            void operator=( std::array<uint32_t, 2> right );
+            ~queue() = default;
 
           private:
             VkQueue _queue { nullptr };
@@ -39,11 +41,14 @@ namespace Engine
             // tools::queue compute;
 
             queueSet() = default;
+            // virtual void setupQueues();
+            virtual void setupNextChain( const void *&pNext );
+            virtual void setupFlags( VkDeviceQueueCreateFlags &flag );
             void init( VkDevice device );
             const size_t count() const;
             void operator=( std::initializer_list<uint32_t> right );
             queue operator[]( size_t index );
-            std::unordered_map<uint32_t, std::pair<uint32_t, std::vector<float>>> &getUniqueIndeciesCount();
+            std::unordered_map<uint32_t, std::pair<uint32_t, std::vector<float>>> &getUniqueIndecies();
             ~queueSet() = default;
 
           private:

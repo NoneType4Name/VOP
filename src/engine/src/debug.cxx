@@ -47,7 +47,7 @@ namespace Engine
         }
     } // namespace
 
-    void Instance::data::setupDebugLayerCallback()
+    void instance::data::setupDebugLayerCallback()
     {
         // VkValidationFeatureEnableEXT enabled[]{ VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT };
         // VkValidationFeaturesEXT ValidationFeatures{};
@@ -74,7 +74,7 @@ namespace Engine
         }
     }
 
-    void Instance::data::destroyDebugLayerCallback()
+    void instance::data::destroyDebugLayerCallback()
     {
         if ( debugMessenger != VK_NULL_HANDLE )
         {
