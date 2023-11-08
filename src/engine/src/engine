@@ -5,19 +5,19 @@
 
 namespace Engine
 {
-    AppCreateInfo AppSettings{};
+    AppCreateInfo AppSettings {};
 
     namespace
     {
-        const std::vector<const char *> ValidationLayers{ "VK_LAYER_KHRONOS_validation" };
-        const std::vector<const char *> RequeredDeviceExts{ VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME, VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME };
-        uint16_t _width{ 800ui16 };
-        uint16_t _height{ 600ui16 };
+        const std::vector<const char *> ValidationLayers { "VK_LAYER_KHRONOS_validation" };
+        const std::vector<const char *> RequeredDeviceExts { VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME, VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME };
+        uint16_t _width { 800ui16 };
+        uint16_t _height { 600ui16 };
         uint16_t DisplayWidth;
         uint16_t DisplayHeight;
         std::string _title;
-        GLFWwindow *_window{ nullptr };
-        GLFWmonitor *_monitor{ nullptr };
+        GLFWwindow *_window { nullptr };
+        GLFWmonitor *_monitor { nullptr };
         VkInstance _instance;
         VkSurfaceKHR _surface;
 
@@ -29,7 +29,7 @@ namespace Engine
           public:
             tools::physicalDevice *physicalDevice;
             VkDevice device;
-            std::pair<VkRenderPass, bool> renderpass{ nullptr, false };
+            std::pair<VkRenderPass, bool> renderpass { nullptr, false };
             std::vector<VkImage> Images;
             std::vector<VkImageView> ImagesViews;
             std::vector<VkFramebuffer> ImageFrameBuffers;
@@ -45,13 +45,13 @@ namespace Engine
             VkBuffer VertexIndeciesBuffer;
             VkDeviceMemory VertexIndeciesBufferMemory;
 
-            VkPhysicalDeviceFeatures enabledFeatures{};
+            VkPhysicalDeviceFeatures enabledFeatures {};
 
             VkDescriptorSetLayout DescriptorsSetLayout;
             VkDescriptorPool DescriptorPool;
             VkDescriptorSet DescriptorSet;
-            std::pair<VkPipelineLayout, bool> PipelineLayout{ nullptr, false };
-            std::pair<VkPipeline, bool> Pipeline{ nullptr, false };
+            std::pair<VkPipelineLayout, bool> PipelineLayout { nullptr, false };
+            std::pair<VkPipeline, bool> Pipeline { nullptr, false };
             VkCommandPool GrapchicCommandPool;
             VkCommandPool PresentCommandPool;
             VkCommandPool TransferCommandPool;
@@ -75,7 +75,7 @@ namespace Engine
             logicalDevice( tools::physicalDevice &pDevice )
             {
                 physicalDevice = &pDevice;
-                std::unordered_map<uint32_t, float> QueueFamiliesPriority{
+                std::unordered_map<uint32_t, float> QueueFamiliesPriority {
                     { physicalDevice->Indecies.graphic.value(), 1.0f },
                     { physicalDevice->Indecies.present.value(), 1.0f },
                     { physicalDevice->Indecies.transfer.value(), 1.0f },
@@ -84,18 +84,18 @@ namespace Engine
                 std::vector<VkDeviceQueueCreateInfo> QueuesCreateInfo;
                 QueuesCreateInfo.reserve( QueueFamiliesPriority.size() );
 
-                for( auto &QueueFamily : QueueFamiliesPriority )
+                for ( auto &QueueFamily : QueueFamiliesPriority )
                     QueuesCreateInfo.push_back( tools::queueCreateInfo( QueueFamily.first, 1, &QueueFamily.second ) );
                 enabledFeatures.samplerAnisotropy = VK_TRUE;
                 enabledFeatures.sampleRateShading = VK_TRUE;
 
-                VkPhysicalDeviceDescriptorIndexingFeaturesEXT PhysicalDeviceDescriptorIndexingFeatures{};
+                VkPhysicalDeviceDescriptorIndexingFeaturesEXT PhysicalDeviceDescriptorIndexingFeatures {};
                 PhysicalDeviceDescriptorIndexingFeatures.sType                                     = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
                 PhysicalDeviceDescriptorIndexingFeatures.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
                 PhysicalDeviceDescriptorIndexingFeatures.runtimeDescriptorArray                    = VK_TRUE;
                 PhysicalDeviceDescriptorIndexingFeatures.descriptorBindingVariableDescriptorCount  = VK_TRUE;
 
-                VkDeviceCreateInfo createInfo{};
+                VkDeviceCreateInfo createInfo {};
                 createInfo.sType                = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
                 createInfo.pNext                = &PhysicalDeviceDescriptorIndexingFeatures;
                 createInfo.queueCreateInfoCount = static_cast<uint32_t>( QueuesCreateInfo.size() );
@@ -111,28 +111,28 @@ namespace Engine
                 createInfo.enabledLayerCount = 0;
 #endif
                 VkResult Result = vkCreateDevice( physicalDevice->device, &createInfo, nullptr, &device );
-                if( Result != VK_SUCCESS )
+                if ( Result != VK_SUCCESS )
                     SPDLOG_CRITICAL( "Failed to Create logical Device, error: {}", string_VkResult( Result ) );
 
-                std::vector<VkDescriptorSetLayoutBinding> DescriptorSetLayoutBinding{
+                std::vector<VkDescriptorSetLayoutBinding> DescriptorSetLayoutBinding {
                     tools::descriptorSetLayoutBinding( VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS, 0 ),
                     tools::descriptorSetLayoutBinding( VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1, 2 ),
                 };
                 Result = vkCreateDescriptorSetLayout( device, &DescriptorSetLayoutBindingCI, nullptr, &DescriptorsSetLayout );
-                auto DescriptorSetLayoutBindingCI{ tools::descriptorSetLayoutCreateInfo( DescriptorSetLayoutBinding ) };
-                std::vector<VkDescriptorPoolSize> poolSizes{
+                auto DescriptorSetLayoutBindingCI { tools::descriptorSetLayoutCreateInfo( DescriptorSetLayoutBinding ) };
+                std::vector<VkDescriptorPoolSize> poolSizes {
                     { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 },
                     { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 } };
-                auto DescriptorPoolCreateInfo{ tools::descriptorPoolCreateInfo(
+                auto DescriptorPoolCreateInfo { tools::descriptorPoolCreateInfo(
                     poolSizes,
                     2 ) };
                 Result = vkCreateDescriptorPool( device, &DescriptorPoolCreateInfo, nullptr, &DescriptorPool );
 
-                auto DescriptorSetAllocateInfo{ tools::descriptorSetAllocateInfo( DescriptorPool, &DescriptorsSetLayout, 1 ) };
+                auto DescriptorSetAllocateInfo { tools::descriptorSetAllocateInfo( DescriptorPool, &DescriptorsSetLayout, 1 ) };
                 // DescriptorSets.resize( _MaxFramesInFlight );
-                auto GrapchiCommandPoolCreateInfo{ tools::commandPoolCreateInfo( VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT, physicalDevice->Indecies.graphic.value() ) };
-                auto PresentCommandPoolCreateInfo{ tools::commandPoolCreateInfo( VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT, physicalDevice->Indecies.present.value() ) };
-                auto TransferCommandPoolCreateInfo{ tools::commandPoolCreateInfo( VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT, physicalDevice->Indecies.transfer.value() ) };
+                auto GrapchiCommandPoolCreateInfo { tools::commandPoolCreateInfo( VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT, physicalDevice->Indecies.graphic.value() ) };
+                auto PresentCommandPoolCreateInfo { tools::commandPoolCreateInfo( VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT, physicalDevice->Indecies.present.value() ) };
+                auto TransferCommandPoolCreateInfo { tools::commandPoolCreateInfo( VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT, physicalDevice->Indecies.transfer.value() ) };
                 Result = vkCreateCommandPool( device, &GrapchiCommandPoolCreateInfo, nullptr, &GrapchicCommandPool );
                 Result = vkCreateCommandPool( device, &PresentCommandPoolCreateInfo, nullptr, &PresentCommandPool );
                 Result = vkCreateCommandPool( device, &TransferCommandPoolCreateInfo, nullptr, &TransferCommandPool );
@@ -143,12 +143,12 @@ namespace Engine
                 ImageAvailableSemaphores.resize( physicalDevice->swapchain.Capabilities.maxImageCount );
                 RenderFinishedSemaphores.resize( physicalDevice->swapchain.Capabilities.maxImageCount );
                 WaitFrames.resize( physicalDevice->swapchain.Capabilities.maxImageCount );
-                auto semaphoreInfo{ tools::semaphoreCreateInfo() };
-                auto FenceInfo{ tools::fenceCreateInfo( VK_FENCE_CREATE_SIGNALED_BIT ) };
+                auto semaphoreInfo { tools::semaphoreCreateInfo() };
+                auto FenceInfo { tools::fenceCreateInfo( VK_FENCE_CREATE_SIGNALED_BIT ) };
 
-                auto BufferCreateInfo{ tools::bufferCreateInfo( VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof( tools::uniformrObject ) ) };
+                auto BufferCreateInfo { tools::bufferCreateInfo( VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof( tools::uniformrObject ) ) };
 
-                for( uint32_t i{ 0 }; i < physicalDevice->swapchain.Capabilities.maxImageCount; i++ )
+                for ( uint32_t i { 0 }; i < physicalDevice->swapchain.Capabilities.maxImageCount; i++ )
                 {
                     Result = vkCreateBuffer( device, &BufferCreateInfo, nullptr, &UniformBuffers[ i ] );
                     VkMemoryRequirements Requirements;
@@ -170,7 +170,7 @@ namespace Engine
 
             ~logicalDevice()
             {
-                for( auto sh : _shaders )
+                for ( auto sh : _shaders )
                 {
                     vkDestroyShaderModule( device, sh.second, nullptr );
                 }
@@ -185,7 +185,7 @@ namespace Engine
                 vkDestroyImage( device, ColorImage, nullptr );
                 vkDestroyImageView( device, ColorImageView, nullptr );
                 vkFreeMemory( device, ColorImageMemory, nullptr );
-                for( uint32_t i{ 0 }; i < physicalDevice->swapchain.Capabilities.maxImageCount; i++ )
+                for ( uint32_t i { 0 }; i < physicalDevice->swapchain.Capabilities.maxImageCount; i++ )
                 {
                     vkDestroyBuffer( device, UniformBuffers[ i ], nullptr );
                     vkFreeMemory( device, UniformBuffersMemory[ i ], nullptr );
@@ -193,7 +193,7 @@ namespace Engine
                     vkDestroySemaphore( device, RenderFinishedSemaphores[ i ], nullptr );
                     vkDestroyFence( device, WaitFrames[ i ], nullptr );
                 }
-                for( uint32_t i{ 0 }; i < Images.size(); i++ )
+                for ( uint32_t i { 0 }; i < Images.size(); i++ )
                 {
                     // vkDestroyImage( device, Images[ i ], nullptr );
                     vkDestroyFramebuffer( device, ImageFrameBuffers[ i ], nullptr );
@@ -213,39 +213,39 @@ namespace Engine
 
             void CreateRender()
             {
-                if( physicalDevice->swapchain.Format.format == VK_FORMAT_UNDEFINED )
+                if ( physicalDevice->swapchain.Format.format == VK_FORMAT_UNDEFINED )
                 {
-                    VkSurfaceFormatKHR SurfaceFormat{ physicalDevice->swapchain.AviliableFormats[ 0 ] };
-                    for( const auto &format : physicalDevice->swapchain.AviliableFormats )
+                    VkSurfaceFormatKHR SurfaceFormat { physicalDevice->swapchain.AviliableFormats[ 0 ] };
+                    for ( const auto &format : physicalDevice->swapchain.AviliableFormats )
                     {
-                        if( format.format == VK_FORMAT_B8G8R8A8_SRGB && format.colorSpace == VK_COLORSPACE_SRGB_NONLINEAR_KHR ) SurfaceFormat = format;
+                        if ( format.format == VK_FORMAT_B8G8R8A8_SRGB && format.colorSpace == VK_COLORSPACE_SRGB_NONLINEAR_KHR ) SurfaceFormat = format;
                         break;
                     }
                     physicalDevice->swapchain.Format = SurfaceFormat;
 
-                    VkPresentModeKHR SurfacePresentMode{ VK_PRESENT_MODE_FIFO_KHR };
-                    for( const auto &mode : physicalDevice->swapchain.AviliablePresentModes )
+                    VkPresentModeKHR SurfacePresentMode { VK_PRESENT_MODE_FIFO_KHR };
+                    for ( const auto &mode : physicalDevice->swapchain.AviliablePresentModes )
                     {
-                        if( mode == VK_PRESENT_MODE_MAILBOX_KHR ) SurfacePresentMode = mode;
+                        if ( mode == VK_PRESENT_MODE_MAILBOX_KHR ) SurfacePresentMode = mode;
                         break;
                     }
                     physicalDevice->swapchain.PresentMode = SurfacePresentMode;
 
-                    for( auto format : std::vector<VkFormat>{ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT } )
+                    for ( auto format : std::vector<VkFormat> { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT } )
                     {
-                        VkFormatProperties FormatProperties{};
+                        VkFormatProperties FormatProperties {};
                         vkGetPhysicalDeviceFormatProperties( physicalDevice->device, format, &FormatProperties );
-                        if( ( FormatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT ) == VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT )
+                        if ( ( FormatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT ) == VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT )
                         {
                             DepthImageFormat = format;
                             break;
                         }
                     }
                 }
-                if( renderpass.second )
+                if ( renderpass.second )
                 {
                     vkDestroyImage( device, ColorImage, nullptr );
-                    for( uint32_t i{ 0 }; i < Images.size(); i++ )
+                    for ( uint32_t i { 0 }; i < Images.size(); i++ )
                     {
                         vkDestroyImage( device, Images[ i ], nullptr );
                         vkDestroyBuffer( device, UniformBuffers[ i ], nullptr );
@@ -256,7 +256,7 @@ namespace Engine
                     vkDestroyImage( device, DepthImage, nullptr );
                 }
 
-                VkAttachmentDescription ColorAttachment{};
+                VkAttachmentDescription ColorAttachment {};
                 ColorAttachment.format         = physicalDevice->swapchain.Format.format;
                 ColorAttachment.samples        = static_cast<VkSampleCountFlagBits>( AppSettings.sSettings.MultiSamplingCount );
                 ColorAttachment.loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -266,7 +266,7 @@ namespace Engine
                 ColorAttachment.initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
                 ColorAttachment.finalLayout    = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-                VkAttachmentDescription ColorAttachmentResolve{};
+                VkAttachmentDescription ColorAttachmentResolve {};
                 ColorAttachmentResolve.format         = physicalDevice->swapchain.Format.format;
                 ColorAttachmentResolve.samples        = VK_SAMPLE_COUNT_1_BIT;
                 ColorAttachmentResolve.loadOp         = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -276,7 +276,7 @@ namespace Engine
                 ColorAttachmentResolve.initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
                 ColorAttachmentResolve.finalLayout    = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
-                VkAttachmentDescription DepthAttachment{};
+                VkAttachmentDescription DepthAttachment {};
                 DepthAttachment.format         = DepthImageFormat;
                 DepthAttachment.samples        = static_cast<VkSampleCountFlagBits>( AppSettings.sSettings.MultiSamplingCount );
                 DepthAttachment.loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -286,26 +286,26 @@ namespace Engine
                 DepthAttachment.initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
                 DepthAttachment.finalLayout    = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-                VkAttachmentReference ColorAttachmentRef{};
+                VkAttachmentReference ColorAttachmentRef {};
                 ColorAttachmentRef.attachment = 0;
                 ColorAttachmentRef.layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-                VkAttachmentReference DepthAttachmentRef{};
+                VkAttachmentReference DepthAttachmentRef {};
                 DepthAttachmentRef.attachment = 1;
                 DepthAttachmentRef.layout     = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-                VkAttachmentReference ColorAttachmentResolveRef{};
+                VkAttachmentReference ColorAttachmentResolveRef {};
                 ColorAttachmentResolveRef.attachment = 2;
                 ColorAttachmentResolveRef.layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-                VkSubpassDescription subpass{};
+                VkSubpassDescription subpass {};
                 subpass.pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
                 subpass.colorAttachmentCount    = 1;
                 subpass.pColorAttachments       = &ColorAttachmentRef;
                 subpass.pResolveAttachments     = &ColorAttachmentResolveRef;
                 subpass.pDepthStencilAttachment = &DepthAttachmentRef;
 
-                VkSubpassDependency dependency{};
+                VkSubpassDependency dependency {};
                 dependency.srcSubpass    = VK_SUBPASS_EXTERNAL;
                 dependency.dstSubpass    = 0;
                 dependency.srcStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
@@ -313,9 +313,9 @@ namespace Engine
                 dependency.dstStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
                 dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
-                VkAttachmentDescription Attachments[]{ ColorAttachment, DepthAttachment, ColorAttachmentResolve };
+                VkAttachmentDescription Attachments[] { ColorAttachment, DepthAttachment, ColorAttachmentResolve };
 
-                VkRenderPassCreateInfo renderPassInfo{};
+                VkRenderPassCreateInfo renderPassInfo {};
                 renderPassInfo.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
                 renderPassInfo.attachmentCount = sizeof( Attachments ) / sizeof( Attachments[ 0 ] );
                 renderPassInfo.pAttachments    = Attachments;
@@ -323,10 +323,10 @@ namespace Engine
                 renderPassInfo.pSubpasses      = &subpass;
                 renderPassInfo.dependencyCount = 1;
                 renderPassInfo.pDependencies   = &dependency;
-                VkResult Result{ vkCreateRenderPass( device, &renderPassInfo, nullptr, &renderpass.first ) };
+                VkResult Result { vkCreateRenderPass( device, &renderPassInfo, nullptr, &renderpass.first ) };
 
                 // Renderpass
-                VkSwapchainCreateInfoKHR SwapchainCreateInfo{};
+                VkSwapchainCreateInfoKHR SwapchainCreateInfo {};
                 SwapchainCreateInfo.sType            = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
                 SwapchainCreateInfo.surface          = _surface;
                 SwapchainCreateInfo.minImageCount    = physicalDevice->swapchain.Capabilities.minImageCount;
@@ -336,8 +336,8 @@ namespace Engine
                 SwapchainCreateInfo.imageExtent      = physicalDevice->swapchain.Capabilities.currentExtent;
                 SwapchainCreateInfo.imageArrayLayers = 1;
                 SwapchainCreateInfo.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-                uint32_t physicalDeviceIndicesValue[]{ physicalDevice->Indecies.graphic.value(), physicalDevice->Indecies.present.value() };
-                if( physicalDevice->Indecies.graphic != physicalDevice->Indecies.present )
+                uint32_t physicalDeviceIndicesValue[] { physicalDevice->Indecies.graphic.value(), physicalDevice->Indecies.present.value() };
+                if ( physicalDevice->Indecies.graphic != physicalDevice->Indecies.present )
                 {
                     SwapchainCreateInfo.imageSharingMode      = VK_SHARING_MODE_CONCURRENT;
                     SwapchainCreateInfo.queueFamilyIndexCount = 2;
@@ -350,7 +350,7 @@ namespace Engine
                 SwapchainCreateInfo.preTransform   = physicalDevice->swapchain.Capabilities.currentTransform;
                 SwapchainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
                 SwapchainCreateInfo.clipped        = VK_TRUE;
-                if( physicalDevice->swapchain.SwapchainInit )
+                if ( physicalDevice->swapchain.SwapchainInit )
                     SwapchainCreateInfo.oldSwapchain = physicalDevice->swapchain.Swapchain;
                 else
                 {
@@ -366,47 +366,47 @@ namespace Engine
                 vkGetSwapchainImagesKHR( device, physicalDevice->swapchain.Swapchain, &c, Images.data() );
 
                 // Pipeline
-                VkPipelineShaderStageCreateInfo VertexShaderStage{};
+                VkPipelineShaderStageCreateInfo VertexShaderStage {};
                 VertexShaderStage.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
                 VertexShaderStage.stage  = VK_SHADER_STAGE_VERTEX_BIT;
                 VertexShaderStage.module = _shaders[ AppSettings.VertexShaderPath ] ? _shaders[ AppSettings.VertexShaderPath ] : _shaders[ AppSettings.VertexShaderPath ] = tools::loadShader( device, AppSettings.VertexShaderPath );
                 VertexShaderStage.pName  = "main";
 
-                VkPipelineShaderStageCreateInfo FragmentShaderStage{};
+                VkPipelineShaderStageCreateInfo FragmentShaderStage {};
                 FragmentShaderStage.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
                 FragmentShaderStage.stage  = VK_SHADER_STAGE_FRAGMENT_BIT;
                 FragmentShaderStage.module = _shaders[ AppSettings.FragmentShaderPath ] ? _shaders[ AppSettings.FragmentShaderPath ] : _shaders[ AppSettings.FragmentShaderPath ] = tools::loadShader( device, AppSettings.FragmentShaderPath );
                 FragmentShaderStage.pName  = "main";
 
-                VkPipelineShaderStageCreateInfo ShaderStage[]{ VertexShaderStage, FragmentShaderStage };
+                VkPipelineShaderStageCreateInfo ShaderStage[] { VertexShaderStage, FragmentShaderStage };
 
-                VkDynamicState dStates[]{ VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+                VkDynamicState dStates[] { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
 
-                VkPipelineDynamicStateCreateInfo dStatescreateInfo{};
+                VkPipelineDynamicStateCreateInfo dStatescreateInfo {};
                 dStatescreateInfo.sType             = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
                 dStatescreateInfo.dynamicStateCount = sizeof( dStates ) / sizeof( dStates[ 0 ] );
                 dStatescreateInfo.pDynamicStates    = dStates;
 
                 auto bindingDescription    = tools::getVertexBindingDescription();
                 auto attributeDescriptions = tools::getVertexAttributeDescription();
-                VkPipelineVertexInputStateCreateInfo vertexInputCreateInfo{};
+                VkPipelineVertexInputStateCreateInfo vertexInputCreateInfo {};
                 vertexInputCreateInfo.sType                           = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
                 vertexInputCreateInfo.vertexBindingDescriptionCount   = 1;
                 vertexInputCreateInfo.vertexAttributeDescriptionCount = attributeDescriptions.size();
                 vertexInputCreateInfo.pVertexBindingDescriptions      = &bindingDescription;
                 vertexInputCreateInfo.pVertexAttributeDescriptions    = attributeDescriptions.data();
 
-                VkPipelineInputAssemblyStateCreateInfo inputAssemblyCreateInfo{};
+                VkPipelineInputAssemblyStateCreateInfo inputAssemblyCreateInfo {};
                 inputAssemblyCreateInfo.sType                  = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
                 inputAssemblyCreateInfo.primitiveRestartEnable = VK_FALSE;
                 inputAssemblyCreateInfo.topology               = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
-                VkPipelineViewportStateCreateInfo viewportState{};
+                VkPipelineViewportStateCreateInfo viewportState {};
                 viewportState.sType         = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
                 viewportState.viewportCount = 1;
                 viewportState.scissorCount  = 1;
 
-                VkPipelineRasterizationStateCreateInfo Rasterizer{};
+                VkPipelineRasterizationStateCreateInfo Rasterizer {};
                 Rasterizer.sType                   = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
                 Rasterizer.depthClampEnable        = VK_FALSE;
                 Rasterizer.rasterizerDiscardEnable = VK_FALSE;
@@ -416,14 +416,14 @@ namespace Engine
                 Rasterizer.frontFace               = VK_FRONT_FACE_COUNTER_CLOCKWISE;
                 Rasterizer.depthBiasEnable         = VK_FALSE;
 
-                VkPipelineMultisampleStateCreateInfo Multisampling{};
+                VkPipelineMultisampleStateCreateInfo Multisampling {};
                 Multisampling.sType                = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
                 Multisampling.sampleShadingEnable  = VK_FALSE;
                 Multisampling.rasterizationSamples = static_cast<VkSampleCountFlagBits>( AppSettings.sSettings.MultiSamplingCount );
                 Multisampling.sampleShadingEnable  = VK_TRUE;
                 Multisampling.minSampleShading     = .4f;
 
-                VkPipelineDepthStencilStateCreateInfo DepthStencilStateCreateInfo{};
+                VkPipelineDepthStencilStateCreateInfo DepthStencilStateCreateInfo {};
                 DepthStencilStateCreateInfo.sType            = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
                 DepthStencilStateCreateInfo.depthTestEnable  = VK_TRUE;
                 DepthStencilStateCreateInfo.depthWriteEnable = VK_TRUE;
@@ -437,7 +437,7 @@ namespace Engine
                 // DepthStencilStateCreateInfo.front             = {};
                 // DepthStencilStateCreateInfo.back              = {};
 
-                VkPipelineColorBlendAttachmentState colorBlendAttachment{};
+                VkPipelineColorBlendAttachmentState colorBlendAttachment {};
                 colorBlendAttachment.colorWriteMask      = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
                 colorBlendAttachment.blendEnable         = VK_FALSE;
                 colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;  // Optional
@@ -447,7 +447,7 @@ namespace Engine
                 colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
                 colorBlendAttachment.alphaBlendOp        = VK_BLEND_OP_ADD;      // Optional
 
-                VkPipelineColorBlendStateCreateInfo colorBlending{};
+                VkPipelineColorBlendStateCreateInfo colorBlending {};
                 colorBlending.sType               = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
                 colorBlending.logicOpEnable       = VK_FALSE;
                 colorBlending.logicOp             = VK_LOGIC_OP_COPY; // Optional
@@ -458,7 +458,7 @@ namespace Engine
                 colorBlending.blendConstants[ 2 ] = 0.0f; // Optional
                 colorBlending.blendConstants[ 3 ] = 0.0f; // Optional
 
-                VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+                VkPipelineLayoutCreateInfo pipelineLayoutInfo {};
                 pipelineLayoutInfo.sType          = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
                 pipelineLayoutInfo.setLayoutCount = 1;
                 pipelineLayoutInfo.pSetLayouts    = &DescriptorsSetLayout;
@@ -467,7 +467,7 @@ namespace Engine
                 vkDestroyPipelineLayout( device, PipelineLayout.first, nullptr );
                 Result = vkCreatePipelineLayout( device, &pipelineLayoutInfo, nullptr, &PipelineLayout.first );
 
-                VkGraphicsPipelineCreateInfo GraphicPipeLineCreateInfo{};
+                VkGraphicsPipelineCreateInfo GraphicPipeLineCreateInfo {};
                 GraphicPipeLineCreateInfo.sType               = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
                 GraphicPipeLineCreateInfo.stageCount          = sizeof( ShaderStage ) / sizeof( ShaderStage[ 0 ] );
                 GraphicPipeLineCreateInfo.pStages             = ShaderStage;
@@ -485,13 +485,13 @@ namespace Engine
 
                 Result = vkCreateGraphicsPipelines( device, nullptr, 1, &GraphicPipeLineCreateInfo, nullptr, &Pipeline.first );
 
-                VkImageCreateInfo ColorImageCreateInfo{};
+                VkImageCreateInfo ColorImageCreateInfo {};
                 ColorImageCreateInfo.samples = static_cast<VkSampleCountFlagBits>( AppSettings.sSettings.MultiSamplingCount );
                 ColorImageCreateInfo.format  = physicalDevice->swapchain.Format.format;
 
                 tools::createImage( device, physicalDevice->swapchain.Capabilities.currentExtent.width, physicalDevice->swapchain.Capabilities.currentExtent.height, VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_TILING_OPTIMAL, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ColorImageCreateInfo, ColorImage, ColorImageMemory, 0, physicalDevice->memoryProperties );
 
-                VkImageViewCreateInfo ImageViewCreateInfo{};
+                VkImageViewCreateInfo ImageViewCreateInfo {};
                 ImageViewCreateInfo.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
                 ImageViewCreateInfo.image                           = ColorImage;
                 ImageViewCreateInfo.format                          = physicalDevice->swapchain.Format.format;
@@ -504,7 +504,7 @@ namespace Engine
 
                 Result = vkCreateImageView( device, &ImageViewCreateInfo, nullptr, &ColorImageView );
 
-                VkImageCreateInfo DepthImageCreateInfo{};
+                VkImageCreateInfo DepthImageCreateInfo {};
                 DepthImageCreateInfo.format  = DepthImageFormat;
                 DepthImageCreateInfo.samples = static_cast<VkSampleCountFlagBits>( AppSettings.sSettings.MultiSamplingCount );
 
@@ -514,9 +514,9 @@ namespace Engine
                 ImageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
                 Result                                          = vkCreateImageView( device, &ImageViewCreateInfo, nullptr, &DepthImageView );
 
-                VkPipelineStageFlags DepthSrcStageMask{ VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT };
-                VkPipelineStageFlags DepthDstStageMask{ VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT };
-                VkImageMemoryBarrier DepthImageMemoryBarrier{};
+                VkPipelineStageFlags DepthSrcStageMask { VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT };
+                VkPipelineStageFlags DepthDstStageMask { VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT };
+                VkImageMemoryBarrier DepthImageMemoryBarrier {};
                 DepthImageMemoryBarrier.sType                       = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
                 DepthImageMemoryBarrier.image                       = DepthImage;
                 DepthImageMemoryBarrier.oldLayout                   = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -526,14 +526,14 @@ namespace Engine
                 DepthImageMemoryBarrier.srcAccessMask               = 0;
                 DepthImageMemoryBarrier.dstAccessMask               = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
                 DepthImageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-                if( DepthImageFormat == VK_FORMAT_D32_SFLOAT_S8_UINT || DepthImageFormat == VK_FORMAT_D24_UNORM_S8_UINT )
+                if ( DepthImageFormat == VK_FORMAT_D32_SFLOAT_S8_UINT || DepthImageFormat == VK_FORMAT_D24_UNORM_S8_UINT )
                     DepthImageMemoryBarrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
                 DepthImageMemoryBarrier.subresourceRange.layerCount     = 1;
                 DepthImageMemoryBarrier.subresourceRange.baseArrayLayer = 0;
                 DepthImageMemoryBarrier.subresourceRange.levelCount     = 1;
                 DepthImageMemoryBarrier.subresourceRange.baseMipLevel   = 0;
 
-                auto command_buffer{ tools::beginSingleTimeCommand( device, GrapchicCommandPool ) };
+                auto command_buffer { tools::beginSingleTimeCommand( device, GrapchicCommandPool ) };
 
                 vkCmdPipelineBarrier( command_buffer, DepthSrcStageMask, DepthDstStageMask, VK_DEPENDENCY_BY_REGION_BIT, 0, 0, 0, 0, 1, &DepthImageMemoryBarrier );
 
@@ -546,13 +546,13 @@ namespace Engine
                 ImageViewCreateInfo.viewType                    = VK_IMAGE_VIEW_TYPE_2D;
                 ImageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 
-                for( size_t i{ 0 }; i < ImagesViews.size(); i++ )
+                for ( size_t i { 0 }; i < ImagesViews.size(); i++ )
                 {
                     ImageViewCreateInfo.image = Images[ i ];
                     Result                    = vkCreateImageView( device, &ImageViewCreateInfo, nullptr, &ImagesViews[ i ] );
 
-                    VkImageView Attachments[]{ ColorImageView, DepthImageView, ImagesViews[ i ] };
-                    VkFramebufferCreateInfo FrameBufferCreateInfo{};
+                    VkImageView Attachments[] { ColorImageView, DepthImageView, ImagesViews[ i ] };
+                    VkFramebufferCreateInfo FrameBufferCreateInfo {};
                     FrameBufferCreateInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
                     FrameBufferCreateInfo.renderPass      = renderpass.first;
                     FrameBufferCreateInfo.attachmentCount = sizeof( Attachments ) / sizeof( Attachments[ 0 ] );
@@ -571,8 +571,8 @@ namespace Engine
 
         logicalDevice *_selectedLogicalDevice;
         std::vector<tools::physicalDevice> _avilablePhysicalDevices;
-        KeyEventCallBack _KeyEventCallBack{ nullptr };
-        SettingCallBack _uSettingsCallBack{ nullptr };
+        KeyEventCallBack _KeyEventCallBack { nullptr };
+        SettingCallBack _uSettingsCallBack { nullptr };
 
         struct _
         {
@@ -586,7 +586,7 @@ namespace Engine
 
         void _getScreenResolution( uint16_t &width, uint16_t &height )
         {
-            if( _monitor == nullptr )
+            if ( _monitor == nullptr )
                 _monitor = glfwGetPrimaryMonitor();
             else
                 _monitor = glfwGetWindowMonitor( _window );
@@ -604,23 +604,23 @@ namespace Engine
         tools::queueFamilyIndices _physicalDeviceGetIndecies( VkPhysicalDevice _dev )
         {
             tools::queueFamilyIndices _indices;
-            uint32_t _c{ 0 };
+            uint32_t _c { 0 };
             vkGetPhysicalDeviceQueueFamilyProperties( _dev, &_c, nullptr );
             std::vector<VkQueueFamilyProperties> QueueFamilies( _c );
             vkGetPhysicalDeviceQueueFamilyProperties( _dev, &_c, QueueFamilies.data() );
-            if( _c - 1 )
+            if ( _c - 1 )
             {
                 _c = 0;
-                for( const auto &queueF : QueueFamilies )
+                for ( const auto &queueF : QueueFamilies )
                 {
-                    VkBool32 presentSupport{ false };
+                    VkBool32 presentSupport { false };
                     vkGetPhysicalDeviceSurfaceSupportKHR( _dev, _c, _surface, &presentSupport );
-                    if( !_indices.graphic.has_value() && queueF.queueFlags & VK_QUEUE_GRAPHICS_BIT )
+                    if ( !_indices.graphic.has_value() && queueF.queueFlags & VK_QUEUE_GRAPHICS_BIT )
                     {
                         _indices.graphic = _c;
                     }
-                    if( !_indices.present.has_value() && presentSupport ) _indices.present = _c;
-                    else if( !_indices.transfer.has_value() && queueF.queueFlags & VK_QUEUE_TRANSFER_BIT )
+                    if ( !_indices.present.has_value() && presentSupport ) _indices.present = _c;
+                    else if ( !_indices.transfer.has_value() && queueF.queueFlags & VK_QUEUE_TRANSFER_BIT )
                         _indices.transfer = _c;
                     // else if( !_indices.compute.has_value() && queueF.queueFlags & VK_QUEUE_COMPUTE_BIT )
                     //     _indices.compute = index;
@@ -631,9 +631,9 @@ namespace Engine
             }
             else
             {
-                VkBool32 presentSupport{ false };
+                VkBool32 presentSupport { false };
                 vkGetPhysicalDeviceSurfaceSupportKHR( _dev, 0, _surface, &presentSupport );
-                if( QueueFamilies[ 0 ].queueFlags & ( VK_QUEUE_TRANSFER_BIT | VK_QUEUE_GRAPHICS_BIT ) && presentSupport )
+                if ( QueueFamilies[ 0 ].queueFlags & ( VK_QUEUE_TRANSFER_BIT | VK_QUEUE_GRAPHICS_BIT ) && presentSupport )
                 {
                     _indices = { 0, 0, 0 };
                 }
@@ -665,7 +665,7 @@ namespace Engine
         {
             // VulkanInstance *Vulkan = static_cast<VulkanInstance *>( UserData ); // Not used.
             std::string StrMessageType;
-            switch( MessageType )
+            switch ( MessageType )
             {
                 case VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT:
                     StrMessageType = "GeneralError";
@@ -681,7 +681,7 @@ namespace Engine
                     StrMessageType = string_VkDebugUtilsMessageTypeFlagsEXT( MessageType );
                     break;
             }
-            switch( static_cast<uint32_t>( MessageLevel ) )
+            switch ( static_cast<uint32_t>( MessageLevel ) )
             {
                 case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
                     SPDLOG_DEBUG( std::format( "{} message: {}", ( MessageType == VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT ? "" : format( "Type: {}, ", StrMessageType ) ), CallbackData->pMessage ) );
@@ -707,7 +707,7 @@ namespace Engine
         AppSettings = sAppCreateInfo;
         spdlog::set_level( DEBUG ? spdlog::level::trace : spdlog::level::critical );
         spdlog::set_pattern( "[%H:%M:%S.%e] [%^%l%$] %v" );
-        if( glfwInit() )
+        if ( glfwInit() )
         {
             SPDLOG_DEBUG( "GLFW{} inititialized.", glfwGetVersionString() );
             glfwSetErrorCallback( []( int code, const char *data )
@@ -728,49 +728,49 @@ namespace Engine
         glfwSetWindowSizeCallback( _window, WindwoResizeCallback );
         CentralizeWindow();
 
-        VkInstanceCreateInfo InstanceCreateInfo{};
+        VkInstanceCreateInfo InstanceCreateInfo {};
         InstanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-        uint32_t glfwExtensionsCount{ 0 };
+        uint32_t glfwExtensionsCount { 0 };
         const char **glfwExtensions = glfwGetRequiredInstanceExtensions( &glfwExtensionsCount );
         std::vector<const char *> glfwExtensionsVector( glfwExtensions, glfwExtensions + glfwExtensionsCount );
 
 #ifdef _DEBUG
         uint32_t _c;
         vkEnumerateInstanceLayerProperties( &_c, nullptr );
-        std::vector<VkLayerProperties> AviableLayers{ _c };
+        std::vector<VkLayerProperties> AviableLayers { _c };
         vkEnumerateInstanceLayerProperties( &_c, AviableLayers.data() );
-        size_t c{ ValidationLayers.size() };
-        std::vector<const char *> NotAvilableLayers{ ValidationLayers.begin(), ValidationLayers.end() };
-        for( size_t i{ 0 }; i < c; i++ )
+        size_t c { ValidationLayers.size() };
+        std::vector<const char *> NotAvilableLayers { ValidationLayers.begin(), ValidationLayers.end() };
+        for ( size_t i { 0 }; i < c; i++ )
         {
-            for( uint32_t _i{ 0 }; _i < _c; _i++ )
-                if( !strcmp( NotAvilableLayers[ c - 1 - i ], AviableLayers[ _i ].layerName ) )
+            for ( uint32_t _i { 0 }; _i < _c; _i++ )
+                if ( !strcmp( NotAvilableLayers[ c - 1 - i ], AviableLayers[ _i ].layerName ) )
                 {
                     NotAvilableLayers.erase( NotAvilableLayers.end() - i - 1 );
                     break;
                 }
-            if( NotAvilableLayers.empty() )
+            if ( NotAvilableLayers.empty() )
                 break;
         }
-        if( !NotAvilableLayers.empty() )
+        if ( !NotAvilableLayers.empty() )
         {
             std::string Err = std::format( "Not finded validation layers: {}:\n", std::to_string( NotAvilableLayers.size() ) );
-            for( const auto VL : NotAvilableLayers )
+            for ( const auto VL : NotAvilableLayers )
             {
                 Err += std::format( "\t {}\n", VL );
             }
             SPDLOG_CRITICAL( Err );
         }
 
-        VkValidationFeatureEnableEXT enabled[]{ VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT };
-        VkValidationFeaturesEXT ValidationFeatures{};
+        VkValidationFeatureEnableEXT enabled[] { VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT };
+        VkValidationFeaturesEXT ValidationFeatures {};
         ValidationFeatures.sType                          = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
         ValidationFeatures.enabledValidationFeatureCount  = sizeof( enabled ) / sizeof( enabled[ 0 ] );
         ValidationFeatures.pEnabledValidationFeatures     = enabled;
         ValidationFeatures.disabledValidationFeatureCount = 0;
         ValidationFeatures.pDisabledValidationFeatures    = nullptr;
 
-        VkDebugUtilsMessengerCreateInfoEXT DebugUtilsMessengerCreateInfoEXT{};
+        VkDebugUtilsMessengerCreateInfoEXT DebugUtilsMessengerCreateInfoEXT {};
         InstanceCreateInfo.pNext                         = &DebugUtilsMessengerCreateInfoEXT;
         DebugUtilsMessengerCreateInfoEXT.sType           = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
         DebugUtilsMessengerCreateInfoEXT.pNext           = &ValidationFeatures;
@@ -785,18 +785,18 @@ namespace Engine
 #endif
         InstanceCreateInfo.enabledExtensionCount   = glfwExtensionsVector.size();
         InstanceCreateInfo.ppEnabledExtensionNames = glfwExtensionsVector.data();
-        VkApplicationInfo ApplicationInfo{};
+        VkApplicationInfo ApplicationInfo {};
         InstanceCreateInfo.pApplicationInfo = &ApplicationInfo;
         ApplicationInfo.sType               = VK_STRUCTURE_TYPE_APPLICATION_INFO;
         ApplicationInfo.engineVersion       = 0;
         ApplicationInfo.apiVersion          = VK_API_VERSION_1_0;
-        auto app_name{ "Grapchic engine of " + _title };
+        auto app_name { "Grapchic engine of " + _title };
         ApplicationInfo.pApplicationName   = app_name.c_str();
         ApplicationInfo.applicationVersion = ENGINE_VERSION;
-        VkResult Result{ vkCreateInstance( &InstanceCreateInfo, nullptr, &_instance ) };
+        VkResult Result { vkCreateInstance( &InstanceCreateInfo, nullptr, &_instance ) };
 
 #if defined( _WIN32 )
-        VkWin32SurfaceCreateInfoKHR Win32SurfaceCreateInfo{
+        VkWin32SurfaceCreateInfoKHR Win32SurfaceCreateInfo {
             VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR,
             nullptr,
             0,
@@ -814,7 +814,7 @@ namespace Engine
 //         Result = vkCreateXlibSurfaceKHR( instance, &XlibSurfaceCreateInfoKHR, nullptr, &Screen )
 #endif
 
-        if( Result != VK_SUCCESS )
+        if ( Result != VK_SUCCESS )
         {
             SPDLOG_CRITICAL( "Failed to Create surface, error" );
         }
@@ -823,13 +823,13 @@ namespace Engine
         _avilablePhysicalDevices.reserve( _c );
         _avilablePhysicalDevices.clear();
         vkEnumeratePhysicalDevices( _instance, &_c, _avilableDevices.data() );
-        for( auto device : _avilableDevices )
+        for ( auto device : _avilableDevices )
         {
-            uint16_t mark{ 0 };
+            uint16_t mark { 0 };
             tools::swapChain swpchnprprts;
-            VkPhysicalDeviceMemoryProperties PhysicalDeviceMemoryProperties{};
-            VkPhysicalDeviceProperties PhysicalDeviceProperties{};
-            VkPhysicalDeviceFeatures PhysicalDeviceFeatures{};
+            VkPhysicalDeviceMemoryProperties PhysicalDeviceMemoryProperties {};
+            VkPhysicalDeviceProperties PhysicalDeviceProperties {};
+            VkPhysicalDeviceFeatures PhysicalDeviceFeatures {};
             vkGetPhysicalDeviceProperties( device, &PhysicalDeviceProperties );
             vkGetPhysicalDeviceFeatures( device, &PhysicalDeviceFeatures );
             vkGetPhysicalDeviceMemoryProperties( device, &PhysicalDeviceMemoryProperties );
@@ -838,11 +838,11 @@ namespace Engine
             //     mark = 5 - PhysicalDeviceProperties.deviceType;
 
             vkGetPhysicalDeviceSurfaceCapabilitiesKHR( device, _surface, &swpchnprprts.Capabilities );
-            uint32_t formatsCount{ 0 };
+            uint32_t formatsCount { 0 };
             vkGetPhysicalDeviceSurfaceFormatsKHR( device, _surface, &formatsCount, nullptr );
             swpchnprprts.AviliableFormats.resize( formatsCount );
             vkGetPhysicalDeviceSurfaceFormatsKHR( device, _surface, &formatsCount, swpchnprprts.AviliableFormats.data() );
-            uint32_t PresentModesCount{ 0 };
+            uint32_t PresentModesCount { 0 };
             vkGetPhysicalDeviceSurfacePresentModesKHR( device, _surface, &PresentModesCount, nullptr );
             swpchnprprts.AviliablePresentModes.resize( PresentModesCount );
             vkGetPhysicalDeviceSurfacePresentModesKHR( device, _surface, &PresentModesCount, swpchnprprts.AviliablePresentModes.data() );
@@ -861,9 +861,9 @@ namespace Engine
 
     void SetGraphicDevice( GrapchicPhysicalDevice device )
     {
-        for( auto dev : _avilablePhysicalDevices )
+        for ( auto dev : _avilablePhysicalDevices )
         {
-            if( dev.properties.deviceID == device.deviceID )
+            if ( dev.properties.deviceID == device.deviceID )
             {
                 delete _selectedLogicalDevice;
                 _selectedLogicalDevice = new logicalDevice( dev );
@@ -880,7 +880,7 @@ namespace Engine
     std::vector<GrapchicPhysicalDevice> GetGraphicDevices()
     {
         std::vector<GrapchicPhysicalDevice> _devices;
-        for( const auto &_dev : _avilablePhysicalDevices )
+        for ( const auto &_dev : _avilablePhysicalDevices )
         {
             _devices.push_back( { _dev.properties.deviceName,
                                   GrapchiDeviceType( _dev.properties.deviceType ),
@@ -901,19 +901,18 @@ namespace Engine
     void SetWindowResolution( uint16_t width, uint16_t height )
     {
         _getScreenResolution( DisplayWidth, DisplayHeight );
-        if( width + height )
+        if ( width + height )
         {
             glfwSetWindowAttrib( _window, GLFW_RESIZABLE, GLFW_TRUE );
             glfwSetWindowAttrib( _window, GLFW_DECORATED, GLFW_TRUE );
         }
         else
         {
-
             glfwSetWindowAttrib( _window, GLFW_RESIZABLE, GLFW_FALSE );
             glfwSetWindowAttrib( _window, GLFW_DECORATED, GLFW_FALSE );
         }
-        if( !width ) width = DisplayWidth;
-        if( !height ) height = DisplayHeight;
+        if ( !width ) width = DisplayWidth;
+        if ( !height ) height = DisplayHeight;
         _width  = width;
         _height = height;
         glfwSetWindowSize( _window, static_cast<int>( width ), static_cast<int>( height ) );
@@ -936,7 +935,7 @@ namespace Engine
 
     KeyEventCallBack SetKeyEventsCallback( KeyEventCallBack Callback )
     {
-        KeyEventCallBack prvsClbck{ _KeyEventCallBack };
+        KeyEventCallBack prvsClbck { _KeyEventCallBack };
         glfwSetKeyCallback( _window, _KeyCallbackManager );
         _KeyEventCallBack = Callback;
         return _KeyEventCallBack;

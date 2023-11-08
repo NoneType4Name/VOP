@@ -104,24 +104,29 @@ namespace Engine
         vkDestroyDevice( data->device, ALLOCATION_CALLBACK );
     }
 
-    const std::vector<types::DeviceDescription> &instance::GetDevices() const
+    const std::vector<types::DeviceDescription> instance::GetDevices() const
     {
-        if ( !data->deviceDescriptions.size() )
-            return data->deviceDescriptions;
-        uint32_t _c;
-        std::vector<VkPhysicalDevice> devices;
-        CHECK_RESULT( vkEnumeratePhysicalDevices( data->handle, &_c, nullptr ) );
-        devices.resize( _c );
-        data->deviceDescriptions.resize( _c );
-        CHECK_RESULT( vkEnumeratePhysicalDevices( data->handle, &_c, devices.data() ) );
-        for ( uint32_t c { 0 }; c < devices.size(); c++ )
+        if ( data->deviceDescriptions.empty() )
         {
-            data->deviceDescriptions[ c ]->data->init( devices[ c ] );
-            data->deviceDescriptions[ c ]->name  = data->deviceDescriptions[ c ]->data->properties.deviceName;
-            data->deviceDescriptions[ c ]->type  = tools::VkDevTypeToEngineDevType( data->deviceDescriptions[ c ]->data->properties.deviceType );
-            data->deviceDescriptions[ c ]->grade = data->deviceDescriptions[ c ]->data->queueFamilyProperties.size() + data->deviceDescriptions[ c ]->type;
+            uint32_t _c;
+            std::vector<VkPhysicalDevice> devices;
+            CHECK_RESULT( vkEnumeratePhysicalDevices( data->handle, &_c, nullptr ) );
+            devices.resize( _c );
+            data->deviceDescriptions.resize( _c );
+            CHECK_RESULT( vkEnumeratePhysicalDevices( data->handle, &_c, devices.data() ) );
+            for ( uint32_t c { 0 }; c < devices.size(); c++ )
+            {
+                data->deviceDescriptions[ c ]->data->init( devices[ c ] );
+                data->deviceDescriptions[ c ]->name  = data->deviceDescriptions[ c ]->data->properties.deviceName;
+                data->deviceDescriptions[ c ]->type  = tools::VkDevTypeToEngineDevType( data->deviceDescriptions[ c ]->data->properties.deviceType );
+                data->deviceDescriptions[ c ]->grade = data->deviceDescriptions[ c ]->data->queueFamilyProperties.size() + data->deviceDescriptions[ c ]->type;
+            }
         }
-        return data->deviceDescriptions;
+        std::vector<types::DeviceDescription> ret;
+        ret.reserve( data->deviceDescriptions.size() );
+        for ( auto &dscrpt : data->deviceDescriptions )
+            ret.push_back( dscrpt.get() );
+        return ret;
     }
 
     namespace tools

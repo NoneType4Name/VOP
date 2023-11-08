@@ -136,7 +136,7 @@ namespace Engine
       public:
         instance( const char *appName = nullptr, uint32_t appVersion = 0 );
         void init();
-        const std::vector<types::DeviceDescription> &GetDevices() const;
+        const std::vector<types::DeviceDescription> GetDevices() const;
         window::types::window CreateWindow( RESOLUTION_TYPE width, RESOLUTION_TYPE height, std::string title );
         window::types::window CreateWindow( RESOLUTION_TYPE width, RESOLUTION_TYPE height, const char *title );
         types::device CreateDevice( types::DeviceDescription description );
