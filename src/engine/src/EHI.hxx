@@ -27,8 +27,6 @@ namespace Engine
 
     struct instance::data
     {
-      public:
-        void setupDeviceDescriptions();
         void setupDebugLayerCallback();
         void destroyDebugLayerCallback();
         void setLayers( std::vector<const char *> layers );
@@ -44,14 +42,13 @@ namespace Engine
         std::vector<std::unique_ptr<link>> links;
         std::vector<std::string> layers;
         std::vector<std::string> extensions;
-        VkDebugUtilsMessengerEXT debugMessenger;
-        VkInstance handle;
+        VkDebugUtilsMessengerEXT debugMessenger { nullptr };
+        VkInstance handle { nullptr };
         ~data();
     };
 
     struct DeviceDescription::data
     {
-      public:
         data() = default;
         void init( VkPhysicalDevice device );
         std::vector<VkQueueFamilyProperties> queueFamilyProperties;
@@ -59,12 +56,10 @@ namespace Engine
         VkPhysicalDeviceProperties properties {};
         VkPhysicalDeviceFeatures features {};
         VkPhysicalDevice phDevice { nullptr };
-        ~data() = default;
     };
 
     struct device::data
     {
-      public:
         virtual void setupNextChain( const void *&nextChainData );
         virtual void setupExtensions( std::vector<const char *> &deviceExtensions );
         virtual void setupQueueSet( tools::queueSet &queues, std::vector<VkQueueFamilyProperties> avilavleQueues );
@@ -80,11 +75,35 @@ namespace Engine
         tools::queueSet queuesSet;
     };
 
-    class link::data
+    struct link::data
     {
-        virtual void setup##();
+        struct properties_T
+        {
+            VkSurfaceCapabilitiesKHR Capabilities;
+            std::vector<VkSurfaceFormatKHR> Format;
+            std::vector<VkPresentModeKHR> PresentModes;
+        };
+
+        struct image_T
+        {
+            types::image image;
+            VkSemaphore isAvailable { nullptr };
+            VkSemaphore isRendered { nullptr };
+        };
+
+        virtual void setup();
+
         window::types::window window;
         types::device device;
+        VkSwapchainKHR swapchain { nullptr };
+        VkSurfaceFormatKHR surfaceFormat { VK_FORMAT_MAX_ENUM };
+        VkPresentModeKHR surfacePresentMode { VK_PRESENT_MODE_MAX_ENUM_KHR };
+        properties_T properties {};
+        VkFormat _depthImageFormat { VK_FORMAT_MAX_ENUM };
+        std::vector<image_T> _swapchainImages {};
+        uint32_t flightImgIndex { 0 };
+        uint32_t _semaphoreIndex { 0 };
+        VkSwapchainCreateInfoKHR _swapchainCreateInfo {};
     };
     namespace tools
     {

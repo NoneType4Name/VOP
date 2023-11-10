@@ -6,7 +6,10 @@ namespace Engine
 {
     instance::data::~data()
     {
-        deviceDescriptions.clear();
+        // deviceDescriptions.clear();
+        // links.clear();
+        // windows.clear();
+        // devices.clear();
     }
 
     void device::data::setupQueues( tools::queueSet &queues )

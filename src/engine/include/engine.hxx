@@ -7,6 +7,7 @@
 #    define STB_IMAGE_IMPLEMENTATION
 #    define RESOLUTION_TYPE uint16_t
 #    define DEFINE_HANDLE( object ) \
+        class object;               \
         namespace types             \
         {                           \
             typedef object *object; \
@@ -68,12 +69,6 @@ namespace Engine
         DISCRETE_GPU   = 0x4ui8,
     };
 
-    // typedef uint64_t deviceID;
-    typedef uint64_t textureID;
-    typedef uint64_t modelID;
-    typedef uint64_t shaderID;
-    typedef uint64_t pipelineID;
-
     enum ShaderStage
     {
         ALL_SHADER_TYPE,
@@ -86,7 +81,7 @@ namespace Engine
         std::vector<shaderID> shadersID;
     };
 
-    struct DeviceDescription
+    struct ENGINE_EXPORT DeviceDescription
     {
       private:
         class data;
@@ -99,17 +94,23 @@ namespace Engine
         ;
     };
     DEFINE_HANDLE( DeviceDescription );
+    DEFINE_HANDLE( texture );
+    DEFINE_HANDLE( model );
 
-    class device
+    class ENGINE_EXPORT device
     {
       private:
         class data;
 
       public:
-        !todo : class contain all childs;
         device( types::DeviceDescription description );
+        types::texture CreateTexture( const char *path );
+        types::texture CreateTexture( std::string path );
+        types::model CreateModel( const char *path );
+        types::model CreateModel( std::string path );
+        types::model CreateModel( const char *path, types::texture texture );
+        types::model CreateModel( std::string path, types::texture texture );
         const std::unique_ptr<data> data;
-        ;
         ~device();
     };
     DEFINE_HANDLE( device );
@@ -123,7 +124,6 @@ namespace Engine
         link( window::types::window window, types::device device );
         ~link();
         const std::unique_ptr<data> data;
-        ;
     };
 
     DEFINE_HANDLE( link );
@@ -135,14 +135,12 @@ namespace Engine
 
       public:
         instance( const char *appName = nullptr, uint32_t appVersion = 0 );
-        void init();
         const std::vector<types::DeviceDescription> GetDevices() const;
         window::types::window CreateWindow( RESOLUTION_TYPE width, RESOLUTION_TYPE height, std::string title );
         window::types::window CreateWindow( RESOLUTION_TYPE width, RESOLUTION_TYPE height, const char *title );
         types::device CreateDevice( types::DeviceDescription description );
         types::link CreateLink( window::types::window window, types::device device );
         const std::unique_ptr<data> data;
-        ;
         ~instance();
     };
     DEFINE_HANDLE( instance );

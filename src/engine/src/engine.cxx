@@ -71,6 +71,7 @@ namespace Engine
     }
 #ifdef CreateWindow
 #    undef CreateWindow
+#endif
     window::types::window Engine::instance::CreateWindow( RESOLUTION_TYPE width, RESOLUTION_TYPE height, const char *title )
     {
         data->windows.push_back( std::unique_ptr<window::window> { new window::window { width, height, title, this } } );
@@ -90,16 +91,19 @@ namespace Engine
 
     types::link instance::CreateLink( window::types::window window, types::device device )
     {
-        data->links.push_back( std::unique_ptr<link> { new link {} } );
-        return data->link.back().get();
+        data->links.push_back( std::unique_ptr<link> { new link { window, device } } );
+        return data->links.back().get();
     }
 
     // ! // void instance::init()
     //   // {
     //   // }
 
-#    ifdef CreateWindowA
-#        define CreateWindow CreateWindowA
+#ifdef UNICODE
+#    define CreateWindow CreateWindowW
+#else
+#    define CreateWindow CreateWindowA
+#endif
 
     instance::~instance()
     {
