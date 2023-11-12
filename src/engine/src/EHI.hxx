@@ -3,6 +3,7 @@
 #include <common/logging.hxx>
 #include <platform.hxx>
 #include <device.hxx>
+#include <image.hxx>
 #include <engine.hxx>
 
 #define ENGINE_VERSION VK_MAKE_VERSION( 0, 0, 1 )
@@ -17,7 +18,7 @@ namespace Engine
         void destroySurface();
         RESOLUTION_TYPE width { 0 };
         RESOLUTION_TYPE height { 0 };
-        std::string title {};
+        std::string title;
         ResizeCallback resizeCallBack { nullptr };
         KeyEventCallBack eventCallBack { nullptr };
         GLFWwindow *window { nullptr };
@@ -44,6 +45,7 @@ namespace Engine
         std::vector<std::string> extensions;
         VkDebugUtilsMessengerEXT debugMessenger { nullptr };
         VkInstance handle { nullptr };
+        void *pUserData { nullptr };
         ~data();
     };
 
@@ -70,8 +72,8 @@ namespace Engine
         void init();
         VkDevice device { nullptr };
         std::vector<std::string> extensions;
-        window::window *window;
-        DeviceDescription *description;
+        window::window *window { nullptr };
+        DeviceDescription *description { nullptr };
         tools::queueSet queuesSet;
     };
 
@@ -79,31 +81,34 @@ namespace Engine
     {
         struct properties_T
         {
-            VkSurfaceCapabilitiesKHR Capabilities;
-            std::vector<VkSurfaceFormatKHR> Format;
-            std::vector<VkPresentModeKHR> PresentModes;
+            properties_T( window::types::window window, types::device device );
+            VkSurfaceCapabilitiesKHR capabilities;
+            std::vector<VkSurfaceFormatKHR> formats;
+            std::vector<VkPresentModeKHR> presentModes;
         };
 
         struct image_T
         {
-            types::image image;
+            image *image { nullptr };
             VkSemaphore isAvailable { nullptr };
             VkSemaphore isRendered { nullptr };
         };
 
-        virtual void setup();
+        virtual void setupCreateInfo( VkSwapchainCreateInfoKHR &createInfo );
+        void init( window::types::window window, types::device device );
+        void setup();
 
-        window::types::window window;
-        types::device device;
+        window::types::window window { nullptr };
+        types::device device { nullptr };
         VkSwapchainKHR swapchain { nullptr };
-        VkSurfaceFormatKHR surfaceFormat { VK_FORMAT_MAX_ENUM };
-        VkPresentModeKHR surfacePresentMode { VK_PRESENT_MODE_MAX_ENUM_KHR };
-        properties_T properties {};
-        VkFormat _depthImageFormat { VK_FORMAT_MAX_ENUM };
-        std::vector<image_T> _swapchainImages {};
+        VkSurfaceFormatKHR format { VK_FORMAT_MAX_ENUM };
+        VkPresentModeKHR presentMode { VK_PRESENT_MODE_MAX_ENUM_KHR };
+        VkFormat depthImageFormat { VK_FORMAT_MAX_ENUM };
+        properties_T properties;
+        std::vector<image_T> images;
         uint32_t flightImgIndex { 0 };
-        uint32_t _semaphoreIndex { 0 };
-        VkSwapchainCreateInfoKHR _swapchainCreateInfo {};
+        uint32_t semaphoreIndex { 0 };
+        VkSwapchainCreateInfoKHR createInfo {};
     };
     namespace tools
     {

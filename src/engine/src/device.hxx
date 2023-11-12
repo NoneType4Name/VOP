@@ -24,6 +24,6 @@ namespace Engine
     namespace tools
     {
         inline DeviceType VkDevTypeToEngineDevType( VkPhysicalDeviceType type );
-        uint32_t requeredMemoryTypeIndex( device device, uint32_t type, VkMemoryPropertyFlags properties );
+        uint32_t requeredMemoryTypeIndex( types::device device, uint32_t type, VkMemoryPropertyFlags properties );
     } // namespace tools
 } // namespace Engine

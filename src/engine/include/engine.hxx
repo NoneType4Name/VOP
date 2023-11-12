@@ -54,7 +54,6 @@ namespace Engine
             void updateEvents();
             bool shouldClose();
             const std::unique_ptr<data> data;
-            ;
             ~window();
         };
         DEFINE_HANDLE( window );
@@ -74,11 +73,6 @@ namespace Engine
         ALL_SHADER_TYPE,
         VERTEX_SHADER_TYPE,
         FRAGMENT_SHADER_TYPE
-    };
-
-    struct ENGINE_EXPORT PipelineInfo
-    {
-        std::vector<shaderID> shadersID;
     };
 
     struct ENGINE_EXPORT DeviceDescription
@@ -121,11 +115,10 @@ namespace Engine
         class data;
 
       public:
-        link( window::types::window window, types::device device );
+        link() = default;
         ~link();
         const std::unique_ptr<data> data;
     };
-
     DEFINE_HANDLE( link );
 
     class ENGINE_EXPORT instance
@@ -134,7 +127,7 @@ namespace Engine
         class data;
 
       public:
-        instance( const char *appName = nullptr, uint32_t appVersion = 0 );
+        instance( const char *appName = nullptr, uint32_t appVersion = 0, void *pUserData = nullptr );
         const std::vector<types::DeviceDescription> GetDevices() const;
         window::types::window CreateWindow( RESOLUTION_TYPE width, RESOLUTION_TYPE height, std::string title );
         window::types::window CreateWindow( RESOLUTION_TYPE width, RESOLUTION_TYPE height, const char *title );
@@ -143,19 +136,11 @@ namespace Engine
         const std::unique_ptr<data> data;
         ~instance();
     };
-    DEFINE_HANDLE( instance );
+    DEFINE_HANDLE( instance )
 
-    // ENGINE_EXPORT void init( AppCreateInfo sAppCreateInfo );
-    // ENGINE_EXPORT void shutdown();
-    // ENGINE_EXPORT std::vector<Device> GetGraphicDevices( uint8_t devicesTypeFlag = 0 );
-    // ENGINE_EXPORT void SetGraphicDevice( Device device ); // todo
-    // ENGINE_EXPORT Device GetActiveGrapchicDevice();
-    ENGINE_EXPORT textureID CreateTexture( const char *path );
-    ENGINE_EXPORT modelID CreateModel( const char *path );
-    ENGINE_EXPORT shaderID CreateShader( const char *path, const char *mainFuncName, ShaderStage stage );
-    // ENGINE_EXPORT pipelineID CreateDescriptorSet( DescriptorSetInfo info );
-    ENGINE_EXPORT pipelineID CreatePipeline( PipelineInfo info );
-    ENGINE_EXPORT void ModelBindTexture( modelID model, textureID texture );
+    // ENGINE_EXPORT shaderID CreateShader( const char *path, const char *mainFuncName, ShaderStage stage );
+    // // ENGINE_EXPORT pipelineID CreateDescriptorSet( DescriptorSetInfo info );
+    // ENGINE_EXPORT pipelineID CreatePipeline( PipelineInfo info );
 
 } // namespace Engine
 

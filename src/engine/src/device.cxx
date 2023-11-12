@@ -207,11 +207,11 @@ namespace Engine
         //     _queues.init( _device );
         // }
 
-        uint32_t requeredMemoryTypeIndex( device device, uint32_t type, VkMemoryPropertyFlags properties )
+        uint32_t requeredMemoryTypeIndex( types::device device, uint32_t type, VkMemoryPropertyFlags properties )
         {
-            for ( uint32_t i { 0 }; i < device.data->description->data->memProperties.memoryTypeCount; i++ )
+            for ( uint32_t i { 0 }; i < device->data->description->data->memProperties.memoryTypeCount; i++ )
             {
-                if ( ( type & ( 1 << i ) ) && ( ( device.data->description->data->memProperties.memoryTypes[ i ].propertyFlags & properties ) == properties ) ) return i;
+                if ( ( type & ( 1 << i ) ) && ( ( device->data->description->data->memProperties.memoryTypes[ i ].propertyFlags & properties ) == properties ) ) return i;
             }
             SPDLOG_CRITICAL( "Failed to find suitable memory type, type: {}, properties: {}.", type, properties );
             assert( 0 );

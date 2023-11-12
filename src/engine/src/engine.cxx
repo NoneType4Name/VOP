@@ -91,7 +91,8 @@ namespace Engine
 
     types::link instance::CreateLink( window::types::window window, types::device device )
     {
-        data->links.push_back( std::unique_ptr<link> { new link { window, device } } );
+        data->links.push_back( std::unique_ptr<link> { new link {} } );
+        data->links.back()->data->init( window, device );
         return data->links.back().get();
     }
 
@@ -107,6 +108,10 @@ namespace Engine
 
     instance::~instance()
     {
+        data->links.clear();
+        data->windows.clear();
+        data->devices.clear();
+        data->deviceDescriptions.clear();
         data->destroyDebugLayerCallback();
         vkDestroyInstance( data->handle, ALLOCATION_CALLBACK );
     }
