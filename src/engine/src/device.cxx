@@ -4,48 +4,12 @@
 
 namespace Engine
 {
-    instance::data::~data()
-    {
-        // deviceDescriptions.clear();
-        // links.clear();
-        // windows.clear();
-        // devices.clear();
-    }
+    DeviceDescription::DeviceDescription() {
+        DEFINE_DATA_FIELD };
 
-    void device::data::setupQueues( tools::queueSet &queues )
-    {
-        if ( description->data->queueFamilyProperties.size() - 1 )
-        {
-            for ( uint32_t i { 0 }; i < description->data->queueFamilyProperties.size(); i++ )
-            {
-                VkBool32 presentSupport { false };
-                vkGetPhysicalDeviceSurfaceSupportKHR( description->data->phDevice, i, window->data->surface, &presentSupport );
-                if ( !queuesSet.graphic.inited() && description->data->queueFamilyProperties[ i ].queueFlags & VK_QUEUE_GRAPHICS_BIT )
-                {
-                    queuesSet.graphic = i;
-                }
-                if ( !queuesSet.present.inited() && presentSupport )
-                    queuesSet.present = i;
-                else if ( !queuesSet.transfer.inited() && description->data->queueFamilyProperties[ i ].queueFlags & VK_QUEUE_TRANSFER_BIT )
-                    queuesSet.transfer = i;
-                // else if ( !queuesSet.compute.has_value() && description.data->queueFamilyProperties[ i ].queueFlags & VK_QUEUE_COMPUTE_BIT )
-                //     queuesSet.compute = i;
-                else
-                    break;
-            }
-        }
-        else
-        {
-            VkBool32 presentSupport { false };
-            vkGetPhysicalDeviceSurfaceSupportKHR( description->data->phDevice, 0, window->data->surface, &presentSupport );
-            if ( description->data->queueFamilyProperties[ 0 ].queueFlags & ( VK_QUEUE_TRANSFER_BIT | VK_QUEUE_GRAPHICS_BIT ) && presentSupport )
-            {
-                queuesSet = { 0, 0, 0 };
-            }
-        }
-    }
+    DeviceDescription::~DeviceDescription() {};
 
-    void DeviceDescription::data::init( VkPhysicalDevice device )
+    void DeviceDescription::DATA_TYPE::init( VkPhysicalDevice device )
     {
         phDevice = device;
         uint32_t c;
@@ -57,49 +21,100 @@ namespace Engine
         vkGetPhysicalDeviceFeatures( device, &features );
     }
 
-    void device::data::setupNextChain( const void *&nextChainData )
+    device::DATA_TYPE::DATA_TYPE( DeviceDescription *description ) :
+        description { description }, queuesSet { description } {}
+
+    void device::DATA_TYPE::setupNextChain( const void *&pNext, std::vector<void *> &dataPointers )
     {
-        VkPhysicalDeviceDescriptorIndexingFeatures features {};
-        features.sType                                     = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
-        features.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
-        features.runtimeDescriptorArray                    = VK_TRUE;
-        features.descriptorBindingVariableDescriptorCount  = VK_TRUE;
-        nextChainData                                      = &features;
+        dataPointers.resize( 1 );
+        dataPointers[ 0 ] = static_cast<void *>( new VkPhysicalDeviceDescriptorIndexingFeatures {} );
+        VkPhysicalDeviceDescriptorIndexingFeatures *features { static_cast<VkPhysicalDeviceDescriptorIndexingFeatures *>( dataPointers[ 0 ] ) };
+        pNext                                               = dataPointers[ 0 ];
+        features->sType                                     = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
+        features->shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
+        features->runtimeDescriptorArray                    = VK_TRUE;
+        features->descriptorBindingVariableDescriptorCount  = VK_TRUE;
     }
 
-    device::device( types::DeviceDescription description )
+    void device::DATA_TYPE::setupExtensions( std::vector<const char *> &deviceExtensions ) {}
+    void device::DATA_TYPE::setupFeatures( VkPhysicalDeviceFeatures &features )
     {
+        features.samplerAnisotropy = VK_TRUE;
+        features.sampleRateShading = VK_TRUE;
+    }
+    void device::DATA_TYPE::setupQueueSet( queueSet &queues, VkSurfaceKHR surface )
+    {
+        if ( description->data->queueFamilyProperties.size() - 1 )
+        {
+            for ( uint32_t i { 0 }; i < description->data->queueFamilyProperties.size(); i++ )
+            {
+                VkBool32 presentSupport { false };
+                vkGetPhysicalDeviceSurfaceSupportKHR( description->data->phDevice, i, surface, &presentSupport );
+                if ( !queuesSet.graphic.familyIndex.has_value() && description->data->queueFamilyProperties[ i ].queueFlags & VK_QUEUE_GRAPHICS_BIT )
+                    queuesSet.graphic = { i, 1.f };
+                if ( !queuesSet.present.familyIndex.has_value() && presentSupport )
+                    queuesSet.present = { i, 1.f };
+                else if ( !queuesSet.transfer.familyIndex.has_value() && description->data->queueFamilyProperties[ i ].queueFlags & VK_QUEUE_TRANSFER_BIT )
+                    queuesSet.transfer = { i, 1.f };
+                // else if ( !queuesSet.compute.familyIndex.has_value() && description.data->queueFamilyProperties[ i ].queueFlags & VK_QUEUE_COMPUTE_BIT )
+                //     queuesSet.compute = i;
+                else
+                    break;
+            }
+        }
+        else
+        {
+            VkBool32 presentSupport { false };
+            vkGetPhysicalDeviceSurfaceSupportKHR( description->data->phDevice, 0, surface, &presentSupport );
+            if ( description->data->queueFamilyProperties[ 0 ].queueFlags & ( VK_QUEUE_TRANSFER_BIT | VK_QUEUE_GRAPHICS_BIT ) && presentSupport )
+            {
+                queuesSet = { { 0, 0, 1.f }, { 0, 0, 1.f }, { 0, 0, 1.f } };
+            }
+        }
+    }
+
+    device::device() = default;
+    device::device( types::DeviceDescription description, window::types::window window )
+    {
+        auto &_data = const_cast<std ::unique_ptr<DATA_TYPE> &>( data );
+        _data.reset( new DATA_TYPE { description } );
         data->description = description;
-        data->setupQueues( data->queuesSet );
+        data->setupQueueSet( data->queuesSet, window->data->surface );
         std::vector<VkDeviceQueueCreateInfo> QueuesCreateInfo;
         QueuesCreateInfo.reserve( data->queuesSet.getUniqueIndecies().size() );
         // std::vector<float> _priorities( data->queuesSet.getUniqueIndecies().size() );
+        std::vector<std::vector<void *>> userNexChains;
+        userNexChains.reserve( data->queuesSet.getUniqueIndecies().size() );
+        auto d { data->queuesSet.getUniqueIndecies() };
         for ( const auto &index : data->queuesSet.getUniqueIndecies() )
         {
+            userNexChains.push_back( {} );
             QueuesCreateInfo.push_back( { VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO } );
-            data->queuesSet.setupNextChain( QueuesCreateInfo.back().pNext );
+            data->queuesSet.setupNextChain( QueuesCreateInfo.back().pNext, userNexChains.back() );
             data->queuesSet.setupFlags( QueuesCreateInfo.back().flags );
             QueuesCreateInfo.back().queueFamilyIndex = index.first;
-            QueuesCreateInfo.back().queueCount       = index.second.first;
+            QueuesCreateInfo.back().queueCount       = index.second.second.size();
             QueuesCreateInfo.back().pQueuePriorities = index.second.second.data();
         }
         std::vector<const char *> extensions {};
         VkPhysicalDeviceFeatures2 physicalDeviceFeatures {};
         VkDeviceCreateInfo createInfo {};
-        data->setupFeatures( data->description->data->features );
+        VkPhysicalDeviceFeatures features {};
+        data->setupFeatures( features );
         data->setupExtensions( extensions );
         data->setExtensions( extensions );
         assert( data->supportExtensions() );
 
+        std::vector<void *> nextChainData;
         createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-        data->setupNextChain( createInfo.pNext );
+        data->setupNextChain( createInfo.pNext, nextChainData );
         createInfo.queueCreateInfoCount    = static_cast<uint32_t>( QueuesCreateInfo.size() );
         createInfo.pQueueCreateInfos       = QueuesCreateInfo.data();
-        createInfo.pEnabledFeatures        = &data->description->data->features;
-        createInfo.enabledExtensionCount   = static_cast<uint32_t>( extensions.size() );
-        createInfo.ppEnabledExtensionNames = extensions.size() ? extensions.data() : nullptr;
+        createInfo.pEnabledFeatures        = &features;
+        createInfo.enabledExtensionCount   = static_cast<uint32_t>( data->extensions.size() );
+        createInfo.ppEnabledExtensionNames = data->extensions.size() ? data->extensions.data() : nullptr;
         CHECK_RESULT( vkCreateDevice( data->description->data->phDevice, &createInfo, ALLOCATION_CALLBACK, &data->device ) );
-        // _queues.init( _device );
+        data->queuesSet.init( data->device );
     }
 
     device::~device()
@@ -107,7 +122,7 @@ namespace Engine
         vkDestroyDevice( data->device, ALLOCATION_CALLBACK );
     }
 
-    const std::vector<types::DeviceDescription> instance::GetDevices() const
+    const std::vector<types::DeviceDescription> instance::GetDevices()
     {
         if ( data->deviceDescriptions.empty() )
         {
@@ -115,10 +130,12 @@ namespace Engine
             std::vector<VkPhysicalDevice> devices;
             CHECK_RESULT( vkEnumeratePhysicalDevices( data->handle, &_c, nullptr ) );
             devices.resize( _c );
+
             data->deviceDescriptions.resize( _c );
             CHECK_RESULT( vkEnumeratePhysicalDevices( data->handle, &_c, devices.data() ) );
             for ( uint32_t c { 0 }; c < devices.size(); c++ )
             {
+                data->deviceDescriptions[ c ].reset( new DeviceDescription );
                 data->deviceDescriptions[ c ]->data->init( devices[ c ] );
                 data->deviceDescriptions[ c ]->name  = data->deviceDescriptions[ c ]->data->properties.deviceName;
                 data->deviceDescriptions[ c ]->type  = tools::VkDevTypeToEngineDevType( data->deviceDescriptions[ c ]->data->properties.deviceType );
@@ -134,79 +151,6 @@ namespace Engine
 
     namespace tools
     {
-
-        // void getSuitableDevices( std::vector<Device> &devices )
-        // {
-        //     getSuitableDevices( devices, 0 );
-        // }
-
-        // void getSuitableDevices( std::vector<Device> &devices, uint8_t types )
-        // {
-        //     auto _all_devices { tools::getDevices() };
-        //     devices.reserve( _all_devices.size() );
-        //     devices.resize( 0 );
-        //     if ( types )
-        //     {
-        //         for ( auto &dev : _all_devices )
-        //         {
-        //             VkPhysicalDeviceMemoryProperties Mproperties {};
-        //             VkPhysicalDeviceProperties properties {};
-        //             VkPhysicalDeviceFeatures features {};
-        //             vkGetPhysicalDeviceMemoryProperties( dev, &Mproperties );
-        //             vkGetPhysicalDeviceProperties( dev, &properties );
-        //             vkGetPhysicalDeviceFeatures( dev, &features );
-        //             if ( ( ( static_cast<VkPhysicalDeviceType>( types ) & properties.deviceType ) == properties.deviceType ) )
-        //             {
-        //                 devices.push_back( { properties.deviceName, dev } );
-        //             }
-        //         }
-        //     }
-        // }
-
-        // void createDevice( VkPhysicalDevice phDevice )
-        // {
-        //     _phDevice = phDevice;
-        //     uint32_t _c { 0 };
-        //     vkGetPhysicalDeviceQueueFamilyProperties( _phDevice, &_c, nullptr );
-        //     std::vector<VkQueueFamilyProperties> queueFamilyProperties { _c };
-        //     vkGetPhysicalDeviceQueueFamilyProperties( _phDevice, &_c, queueFamilyProperties.data() );
-        //     _queues = getIndecies( _phDevice );
-        //     std::vector<VkDeviceQueueCreateInfo> QueuesCreateInfo( _queues.getUniqueIndeciesCount().size() );
-        //     std::vector<float> _priorities( _queues.getUniqueIndeciesCount().size() );
-        //     _c = 0;
-        //     for ( const auto &index : _queues.getUniqueIndeciesCount() )
-        //         QueuesCreateInfo[ _c++ ] = queueCreateInfo( index.first, index.second.first, index.second.second.data() );
-
-        // VkPhysicalDeviceFeatures enabledFeatures {};
-        // enabledFeatures.samplerAnisotropy = VK_TRUE;
-        // enabledFeatures.sampleRateShading = VK_TRUE;
-
-        // VkPhysicalDeviceDescriptorIndexingFeaturesEXT PhysicalDeviceDescriptorIndexingFeatures {};
-        // PhysicalDeviceDescriptorIndexingFeatures.sType                                     = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
-        // PhysicalDeviceDescriptorIndexingFeatures.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
-        // PhysicalDeviceDescriptorIndexingFeatures.runtimeDescriptorArray                    = VK_TRUE;
-        // PhysicalDeviceDescriptorIndexingFeatures.descriptorBindingVariableDescriptorCount  = VK_TRUE;
-
-        // VkPhysicalDeviceFeatures2 physicalDeviceFeatures {};
-        // physicalDeviceFeatures.sType    = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-        // physicalDeviceFeatures.pNext    = &PhysicalDeviceDescriptorIndexingFeatures;
-        // physicalDeviceFeatures.features = enabledFeatures;
-
-        //     std::vector<const char *> Extensions {};
-        //     getDeviceExtensions( Extensions );
-        //     assert( isDeviceSupportExtensions( Extensions ) );
-        //     VkDeviceCreateInfo createInfo {};
-        //     createInfo.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-        //     createInfo.pNext                   = &physicalDeviceFeatures;
-        //     createInfo.queueCreateInfoCount    = static_cast<uint32_t>( QueuesCreateInfo.size() );
-        //     createInfo.pQueueCreateInfos       = QueuesCreateInfo.data();
-        //     createInfo.pEnabledFeatures        = nullptr;
-        //     createInfo.enabledExtensionCount   = static_cast<uint32_t>( Extensions.size() );
-        //     createInfo.ppEnabledExtensionNames = Extensions.size() ? Extensions.data() : nullptr;
-        //     CHECK_RESULT( vkCreateDevice( _phDevice, &createInfo, nullptr, &_device ) );
-        //     _queues.init( _device );
-        // }
-
         uint32_t requeredMemoryTypeIndex( types::device device, uint32_t type, VkMemoryPropertyFlags properties )
         {
             for ( uint32_t i { 0 }; i < device->data->description->data->memProperties.memoryTypeCount; i++ )

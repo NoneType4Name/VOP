@@ -5,30 +5,38 @@
 
 namespace Engine
 {
-    namespace tools
+    struct link::DATA_TYPE
     {
-        struct SwapchainProperties
+        DATA_TYPE( window::types::window window, types::device device );
+
+        struct properties_T
         {
-            VkSurfaceCapabilitiesKHR Capabilities;
-            std::vector<VkSurfaceFormatKHR> Format;
-            std::vector<VkPresentModeKHR> PresentModes;
+            properties_T( window::types::window window, types::device device );
+            VkSurfaceCapabilitiesKHR capabilities {};
+            std::vector<VkSurfaceFormatKHR> formats;
+            std::vector<VkPresentModeKHR> presentModes;
         };
 
-        struct SwapchainImage
+        struct image_T
         {
-            imageID image;
-            VkSemaphore isAvailable;
-            VkSemaphore isRendered;
+            std::unique_ptr<image> image { nullptr };
+            VkSemaphore isAvailable { nullptr };
+            VkSemaphore isRendered { nullptr };
         };
 
-        // void createSwapchain();
-        // void reCreateSwapchain();
-        // void destroySwapchain();
-        // uint32_t AcquireImageIndex( VkSemaphore &semaphore );
-        // void swapchainPresent( VkSemaphore *semaphore );
-        SwapchainProperties getSwapchainProperties();
-        VkSurfaceFormatKHR getSwapchainSurfaceFormat();
-        VkPresentModeKHR getSwapchainSurfacePresentMode();
-        VkFormat getSwapchainDepthImageFormat();
-    } // namespace tools
+        virtual void setupCreateInfo( VkSwapchainCreateInfoKHR &createInfo, std::vector<void *> &dataPointer );
+        VkSwapchainCreateInfoKHR setup( std::vector<void *> &userData );
+
+        window::types::window window { nullptr };
+        types::device device { nullptr };
+        VkSwapchainKHR swapchain { nullptr };
+        VkSurfaceFormatKHR format { VK_FORMAT_MAX_ENUM };
+        VkPresentModeKHR presentMode { VK_PRESENT_MODE_MAX_ENUM_KHR };
+        VkFormat depthImageFormat { VK_FORMAT_MAX_ENUM };
+        properties_T properties;
+        std::vector<image_T> images;
+        uint32_t flightImgIndex { 0 };
+        uint32_t semaphoreIndex { 0 };
+        VkSwapchainCreateInfoKHR createInfo {};
+    };
 } // namespace Engine

@@ -2,24 +2,38 @@
 #include <platform.hxx>
 #include <common/globals.hxx>
 #include <common/logging.hxx>
-#include <engine.hxx>
 #include <surface.hxx>
 #include <queue.hxx>
 
 namespace Engine
 {
-    // struct PhysicalDevice
-    // {
-    //     PhysicalDevice();
-    //     PhysicalDevice( const char *name, VkPhysicalDevice handle );
-    //     const char *name { nullptr };
-    //     const VkPhysicalDevice getHandle() const;
-    //     void setName( const char *name );
-    //     void setHandle( VkPhysicalDevice device );
+    struct DeviceDescription::DATA_TYPE
+    {
+        DATA_TYPE() = default;
+        void init( VkPhysicalDevice device );
+        std::vector<VkQueueFamilyProperties> queueFamilyProperties;
+        VkPhysicalDeviceMemoryProperties memProperties {};
+        VkPhysicalDeviceProperties properties {};
+        VkPhysicalDeviceFeatures features {};
+        VkPhysicalDevice phDevice { nullptr };
+    };
 
-    //   private:
-    //     VkPhysicalDevice _handle { nullptr };
-    // };
+    struct device::DATA_TYPE
+    {
+        DATA_TYPE( DeviceDescription *description );
+        virtual void setupNextChain( const void *&pNext, std::vector<void *> &dataPointers );
+        virtual void setupExtensions( std::vector<const char *> &deviceExtensions );
+        virtual void setupFeatures( VkPhysicalDeviceFeatures &features );
+        virtual void setupQueueSet( queueSet &queues, VkSurfaceKHR surface );
+        void setExtensions( std::vector<const char *> &deviceExtensions );
+        bool supportExtensions();
+        void init();
+        VkDevice device { nullptr };
+        std::vector<const char *> extensions;
+        // window::window *window { nullptr };
+        queueSet queuesSet;
+        DeviceDescription *description { nullptr };
+    };
 
     namespace tools
     {

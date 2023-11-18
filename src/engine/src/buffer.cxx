@@ -3,140 +3,128 @@
 
 namespace Engine
 {
-    namespace tools
+    // buffer::buffer( VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertiesFlag, VkDeviceSize size )
+    // {
+    //     init( usageFlags, memoryPropertiesFlag, size );
+    // }
+    buffer::buffer( types::device device ) :
+        device { device }
     {
-        buffer::buffer( VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertiesFlag, VkDeviceSize size )
-        {
-            init( usageFlags, memoryPropertiesFlag, size );
-        }
+    }
 
-        buffer::~buffer()
-        {
-            if ( _mapped != nullptr )
-                unmap();
-            vkFreeMemory( tools::getDevice(), _memory, ALLOCATION_CALLBACK );
-            vkDestroyBuffer( tools::getDevice(), _buffer, ALLOCATION_CALLBACK );
-        }
+    buffer::~buffer()
+    {
+        if ( mapped != nullptr )
+            unmap();
+        vkFreeMemory( device->data->device, memory, ALLOCATION_CALLBACK );
+        vkDestroyBuffer( device->data->device, handle, ALLOCATION_CALLBACK );
+    }
 
-        void buffer::init( VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertiesFlag, VkDeviceSize size )
-        {
-            VkBufferCreateInfo BufferCreateInfo {};
-            BufferCreateInfo.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-            BufferCreateInfo.size        = size;
-            BufferCreateInfo.usage       = usageFlags;
-            BufferCreateInfo.flags       = BufferCreateInfo.flags ? BufferCreateInfo.flags : 0;
-            BufferCreateInfo.sharingMode = BufferCreateInfo.sharingMode ? BufferCreateInfo.sharingMode : VK_SHARING_MODE_EXCLUSIVE;
+    void buffer::init( VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertiesFlag, VkDeviceSize size, VkSharingMode sharingMode, VkBufferCreateFlags flags, void *pNext, void *pNextAllocate )
+    {
+        VkBufferCreateInfo BufferCreateInfo {};
+        BufferCreateInfo.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        BufferCreateInfo.flags       = flags;
+        BufferCreateInfo.pNext       = pNext;
+        BufferCreateInfo.size        = size;
+        BufferCreateInfo.usage       = usageFlags;
+        BufferCreateInfo.sharingMode = sharingMode;
 
-            CHECK_RESULT( vkCreateBuffer( tools::getDevice(), &BufferCreateInfo, nullptr, &_buffer ) );
-            VkMemoryRequirements Requirements;
-            vkGetBufferMemoryRequirements( tools::getDevice(), _buffer, &Requirements );
-            VkMemoryAllocateInfo MemoryAllocateInfo {};
-            MemoryAllocateInfo.sType          = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-            MemoryAllocateInfo.allocationSize = Requirements.size;
-            VkPhysicalDeviceMemoryProperties memProperties {};
-            vkGetPhysicalDeviceMemoryProperties( tools::getPhysicalDevice(), &memProperties );
+        CHECK_RESULT( vkCreateBuffer( device->data->device, &BufferCreateInfo, nullptr, &handle ) );
+        VkMemoryRequirements Requirements;
+        vkGetBufferMemoryRequirements( device->data->device, handle, &Requirements );
+        VkMemoryAllocateInfo MemoryAllocateInfo {};
+        MemoryAllocateInfo.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        MemoryAllocateInfo.pNext           = pNextAllocate;
+        MemoryAllocateInfo.allocationSize  = Requirements.size;
+        MemoryAllocateInfo.memoryTypeIndex = tools::requeredMemoryTypeIndex( device, Requirements.memoryTypeBits, memoryPropertiesFlag );
+        CHECK_RESULT( vkAllocateMemory( device->data->device, &MemoryAllocateInfo, ALLOCATION_CALLBACK, &memory ) );
+        CHECK_RESULT( vkBindBufferMemory( device->data->device, handle, memory, 0 ) ); // allocate todo?
+    }
 
-            for ( uint32_t i { 0 }; i < memProperties.memoryTypeCount; i++ )
-            {
-                if ( ( Requirements.memoryTypeBits & ( 1 << i ) ) && ( ( memProperties.memoryTypes[ i ].propertyFlags & memoryPropertiesFlag ) == memoryPropertiesFlag ) ) MemoryAllocateInfo.memoryTypeIndex = i;
-            }
-            CHECK_RESULT( vkAllocateMemory( tools::getDevice(), &MemoryAllocateInfo, ALLOCATION_CALLBACK, &_memory ) );
-            CHECK_RESULT( vkBindBufferMemory( tools::getDevice(), _buffer, _memory, 0 ) ); // allocate todo?
-        }
+    VkResult buffer::map( VkDeviceSize offset, VkDeviceSize size, VkMemoryMapFlags flags )
+    {
+        if ( memory == nullptr )
+            SPDLOG_CRITICAL( "Failed to map memory." );
+        if ( mapped != nullptr )
+            return VK_SUCCESS;
+        return vkMapMemory( device->data->device, memory, offset, size, flags, &mapped );
+    }
 
-        const VkBuffer buffer::getHandle()
-        {
-            return _buffer;
-        }
+    void buffer::copy( void *data, VkDeviceSize size )
+    {
+        if ( memory == nullptr )
+            SPDLOG_CRITICAL( "Failed to copy memory." );
+        if ( mapped == nullptr )
+            return;
+        memcpy( mapped, data, size );
+    }
 
-        const VkDeviceMemory buffer::getMemoryHandle()
-        {
-            return _memory;
-        }
+    void buffer::unmap()
+    {
+        if ( memory == nullptr )
+            SPDLOG_CRITICAL( "Failed to unmap memory." );
+        if ( mapped == nullptr )
+            return;
+        vkUnmapMemory( device->data->device, memory );
+        mapped = nullptr;
+    }
 
-        VkResult buffer::map( VkDeviceSize offset, VkDeviceSize size )
-        {
-            if ( _memory == nullptr )
-                SPDLOG_CRITICAL( "Failed to map memory." );
-            if ( _mapped != nullptr )
-                return VK_SUCCESS;
-            return vkMapMemory( tools::getDevice(), _memory, offset, size, 0, &_mapped );
-        }
+    commandBuffer::commandBuffer( types::device device, VkCommandPool commandPool, VkCommandBufferLevel level, Engine::queue *queue )
+    {
+        this->device = device;
+        this->queue  = queue;
+        VkCommandBufferAllocateInfo CommandBufferAllocateInfo {};
+        CommandBufferAllocateInfo.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        CommandBufferAllocateInfo.commandPool        = commandPool; // todo
+        CommandBufferAllocateInfo.level              = level;
+        CommandBufferAllocateInfo.commandBufferCount = 1; // todo
+        CHECK_RESULT( vkAllocateCommandBuffers( device->data->device, &CommandBufferAllocateInfo, &handle ) );
 
-        void buffer::copy( void *data, VkDeviceSize size )
-        {
-            if ( _memory == nullptr )
-                SPDLOG_CRITICAL( "Failed to copy memory." );
-            if ( _mapped == nullptr )
-                return;
-            memcpy( _mapped, data, size );
-        }
+        VkFenceCreateInfo FenceCreateInfo;
+        FenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+        CHECK_RESULT( vkCreateFence( device->data->device, &FenceCreateInfo, nullptr, &fence ) );
+    }
 
-        void buffer::unmap()
-        {
-            if ( _memory == nullptr )
-                SPDLOG_CRITICAL( "Failed to unmap memory." );
-            if ( _mapped == nullptr )
-                return;
-            vkUnmapMemory( tools::getDevice(), _memory );
-            _mapped = nullptr;
-        }
+    commandBuffer::~commandBuffer()
+    {
+        vkFreeCommandBuffers( device->data->device, pool, 1, &handle );
+        vkDestroyFence( device->data->device, fence, ALLOCATION_CALLBACK );
+    }
 
-        commandBuffer::commandBuffer( VkCommandPool commandPool, VkCommandBufferLevel level, queue queue )
-        {
-            _queue = queue;
-            VkCommandBufferAllocateInfo CommandBufferAllocateInfo {};
-            CommandBufferAllocateInfo.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-            CommandBufferAllocateInfo.commandPool        = commandPool;
-            CommandBufferAllocateInfo.level              = level;
-            CommandBufferAllocateInfo.commandBufferCount = 1;
-            CHECK_RESULT( vkAllocateCommandBuffers( tools::getDevice(), &CommandBufferAllocateInfo, &_commandBuffer ) );
+    VkCommandBuffer commandBuffer::getHandle() const
+    {
+        return handle;
+    }
 
-            VkFenceCreateInfo FenceCreateInfo;
-            FenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-            CHECK_RESULT( vkCreateFence( tools::getDevice(), &FenceCreateInfo, nullptr, &_fence ) );
-        }
+    void commandBuffer::begin()
+    {
+        if ( handle == nullptr )
+            SPDLOG_CRITICAL( "Failed to begin command buffer." );
+        if ( began ) return;
+        VkCommandBufferBeginInfo CommandBufferBeginInfo {};
+        CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        CommandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+        vkBeginCommandBuffer( handle, &CommandBufferBeginInfo );
+    }
 
-        commandBuffer::~commandBuffer()
-        {
-            vkFreeCommandBuffers( tools::getDevice(), _commandPool, 1, &_commandBuffer );
-            vkDestroyFence( tools::getDevice(), _fence, ALLOCATION_CALLBACK );
-        }
+    void commandBuffer::submit()
+    {
+        end();
+        VkSubmitInfo SubmitInfo {};
+        SubmitInfo.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        SubmitInfo.commandBufferCount = 1;
+        SubmitInfo.pCommandBuffers    = &handle;
+        vkResetFences( device->data->device, 1, &fence );
+        vkQueueSubmit( queue->handle, 1, &SubmitInfo, fence );
+        vkWaitForFences( device->data->device, 1, &fence, true, -1ui64 );
+    }
 
-        VkCommandBuffer commandBuffer::getHandle() const
-        {
-            return _commandBuffer;
-        }
-
-        void commandBuffer::begin()
-        {
-            if ( _commandBuffer == nullptr )
-                SPDLOG_CRITICAL( "Failed to begin command buffer." );
-            if ( began ) return;
-            VkCommandBufferBeginInfo CommandBufferBeginInfo {};
-            CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-            CommandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-            vkBeginCommandBuffer( _commandBuffer, &CommandBufferBeginInfo );
-        }
-
-        void commandBuffer::submit()
-        {
-            end();
-            VkSubmitInfo SubmitInfo {};
-            SubmitInfo.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-            SubmitInfo.commandBufferCount = 1;
-            SubmitInfo.pCommandBuffers    = &_commandBuffer;
-            vkResetFences( tools::getDevice(), 1, &_fence );
-            vkQueueSubmit( _queue.GetHandle(), 1, &SubmitInfo, _fence );
-            vkWaitForFences( tools::getDevice(), 1, &_fence, true, -1ui64 );
-        }
-
-        void commandBuffer::end()
-        {
-            if ( _commandBuffer == nullptr )
-                SPDLOG_CRITICAL( "Failed to end command buffer." );
-            if ( began )
-                vkEndCommandBuffer( _commandBuffer );
-        }
-    } // namespace tools
+    void commandBuffer::end()
+    {
+        if ( handle == nullptr )
+            SPDLOG_CRITICAL( "Failed to end command buffer." );
+        if ( began )
+            vkEndCommandBuffer( handle );
+    }
 } // namespace Engine

@@ -3,32 +3,28 @@
 #include <platform.hxx>
 #include <surface.hxx>
 #include <EHI.hxx>
-#include <engine.hxx>
 
 namespace Engine
 {
     namespace window
     {
-        void window::data::setupNextChain( const void *&pNext )
-        {
-            pNext = nullptr;
-        }
-
-        void window::data::setupFlags( VkWin32SurfaceCreateFlagsKHR flags )
-        {
-            flags = 0;
-        }
-
+        void window::DATA_TYPE::setupNextChain( const void *&pNext, std::vector<void *> &dataPointers ) {}
+        void window::DATA_TYPE::setupFlags( VkWin32SurfaceCreateFlagsKHR flags ) {}
+        window::window()  = default;
+        window::~window() = default;
         window::window( RESOLUTION_TYPE width, RESOLUTION_TYPE height, const char *title, instance *instance )
         {
+            // data       = new data;
+            DEFINE_DATA_FIELD;
             resolution displayRes { getDisplayResolution() };
             glfwWindowHint( GLFW_CLIENT_API, GLFW_NO_API );
             glfwWindowHint( GLFW_RESIZABLE, GLFW_FALSE );
             data->window = glfwCreateWindow( width ? width : displayRes.width, height ? height : displayRes.height, title, nullptr, nullptr );
             glfwSetWindowUserPointer( data->window, this );
             const void *next;
+            std::vector<void *> nextChainData;
             VkWin32SurfaceCreateFlagsKHR flags;
-            data->setupNextChain( next );
+            data->setupNextChain( next, nextChainData );
             data->setupFlags( flags );
             data->createSurface( instance->data->handle, &next, flags );
             cenralize();

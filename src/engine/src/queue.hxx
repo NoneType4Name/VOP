@@ -5,57 +5,53 @@
 
 namespace Engine
 {
-    namespace tools
+    class queueSet;
+    class queue
     {
-        class queue
-        {
-          public:
-            queue() = default;
-            queue( VkDevice device, uint32_t familyIndex, uint32_t queueIndex );
-            queue( uint32_t familyIndex, uint32_t queueIndex );
-            void init( VkDevice device );
-            void init( VkDevice device, uint32_t familyIndex, uint32_t queueIndex );
-            void setHandle( VkQueue queue );
-            void setFamilyIndex( uint32_t index );
-            void setQueueIndex( uint32_t index );
-            const VkQueue getHandle() const;
-            const uint32_t getFamilyIndex() const;
-            const uint32_t getQueueIndex() const;
-            const bool inited() const;
-            void operator=( uint32_t right );
-            void operator=( std::array<uint32_t, 2> right );
-            ~queue() = default;
+      public:
+        queue( queueSet *pSet );
+        queue( queueSet *pSet, VkDevice device, uint32_t familyIndex, uint32_t queueIndex, float priority = 0.f );
+        queue( queueSet *pSet, uint32_t familyIndex, uint32_t queueIndex, float priority = 0.f );
+        void init( VkDevice device );
+        void init( VkDevice device, uint32_t familyIndex, uint32_t queueIndex, float priority = 0.f );
+        void operator=( std::pair<uint32_t, float> familyPriority );
+        void operator=( std::tuple<uint32_t, uint32_t, float> familyIndexPriority );
+        bool operator==( const queue &right );
+        bool operator!=( const queue &right );
+        queueSet *set { nullptr };
+        VkQueue handle { nullptr };
+        float priority { 0.f };
+        uint32_t index { 0 };
+        std::optional<uint32_t> familyIndex;
+        ~queue() = default;
+    };
 
-          private:
-            VkQueue _queue { nullptr };
-            uint32_t _queueIndex { 0 };
-            std::optional<uint32_t> _familyIndex;
-        };
+    class queueSet
+    {
+      public:
+        Engine::queue graphic;
+        Engine::queue present;
+        Engine::queue transfer;
+        // Engine::queue compute { this };
+        queueSet();
+        queueSet( DeviceDescription *device );
+        virtual void setupNextChain( const void *&pNext, std::vector<void *> &dataPointers );
+        virtual void setupFlags( VkDeviceQueueCreateFlags &flag );
+        void init( VkDevice device );
+        const size_t count() const;
+        void operator=( std::initializer_list<std::pair<uint32_t, float>> familyPriority );
+        void operator=( std::initializer_list<std::tuple<uint32_t, uint32_t, float>> familyIndexPriority );
+        queue *operator[]( size_t index );
+        std::unordered_map<uint32_t, std::pair<std::unordered_map<uint32_t, float *>, std::vector<float>>> &getUniqueIndecies();
+        ~queueSet() = default;
 
-        class queueSet
-        {
-          public:
-            tools::queue graphic;
-            tools::queue present;
-            tools::queue transfer;
-            // tools::queue compute;
+      private:
+        friend class queue;
+        DeviceDescription *description { nullptr };
+        // <family<index in family, ptr to priority>, vector of all prioreties in family>
+        std::unordered_map<uint32_t, std::pair<std::unordered_map<uint32_t, float *>, std::vector<float>>> _unique;
+    };
 
-            queueSet() = default;
-            // virtual void setupQueues();
-            virtual void setupNextChain( const void *&pNext );
-            virtual void setupFlags( VkDeviceQueueCreateFlags &flag );
-            void init( VkDevice device );
-            const size_t count() const;
-            void operator=( std::initializer_list<uint32_t> right );
-            queue operator[]( size_t index );
-            std::unordered_map<uint32_t, std::pair<uint32_t, std::vector<float>>> &getUniqueIndecies();
-            ~queueSet() = default;
-
-          private:
-            std::unordered_map<uint32_t, std::pair<uint32_t, std::vector<float>>> _unique {};
-        };
-
-        VkDeviceQueueCreateInfo queueCreateInfo( uint32_t index, uint32_t count, const float *priority );
-        queueSet getIndecies( VkPhysicalDevice device );
-    } // namespace tools
+    VkDeviceQueueCreateInfo queueCreateInfo( uint32_t index, uint32_t count, const float *priority );
+    queueSet getIndecies( VkPhysicalDevice device );
 } // namespace Engine

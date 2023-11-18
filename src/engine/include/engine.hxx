@@ -39,10 +39,12 @@ namespace Engine
         class ENGINE_EXPORT window
         {
           private:
-            class data;
+            class DATA_TYPE;
+            window( RESOLUTION_TYPE width, RESOLUTION_TYPE height, const char *title, Engine::instance *instance );
+            friend class Engine::instance;
 
           public:
-            window( RESOLUTION_TYPE width, RESOLUTION_TYPE height, const char *title, Engine::instance *instance );
+            window();
             resolution getResolution();
             resolution getDisplayResolution();
             void cenralize();
@@ -53,7 +55,7 @@ namespace Engine
             void setKeyEventsCallback( KeyEventCallBack callback );
             void updateEvents();
             bool shouldClose();
-            const std::unique_ptr<data> data;
+            const std::unique_ptr<DATA_TYPE> data;
             ~window();
         };
         DEFINE_HANDLE( window );
@@ -78,14 +80,16 @@ namespace Engine
     struct ENGINE_EXPORT DeviceDescription
     {
       private:
-        class data;
+        class DATA_TYPE;
+        friend struct queue;
 
       public:
+        DeviceDescription();
         const char *name;
         DeviceType type;
         uint32_t grade;
-        const std::unique_ptr<data> data;
-        ;
+        const std::unique_ptr<DATA_TYPE> data;
+        ~DeviceDescription();
     };
     DEFINE_HANDLE( DeviceDescription );
     DEFINE_HANDLE( texture );
@@ -94,17 +98,19 @@ namespace Engine
     class ENGINE_EXPORT device
     {
       private:
-        class data;
+        class DATA_TYPE;
+        device( types::DeviceDescription description, window::types::window window );
+        friend class instance;
 
       public:
-        device( types::DeviceDescription description );
+        device();
         types::texture CreateTexture( const char *path );
         types::texture CreateTexture( std::string path );
         types::model CreateModel( const char *path );
         types::model CreateModel( std::string path );
         types::model CreateModel( const char *path, types::texture texture );
         types::model CreateModel( std::string path, types::texture texture );
-        const std::unique_ptr<data> data;
+        const std::unique_ptr<DATA_TYPE> data;
         ~device();
     };
     DEFINE_HANDLE( device );
@@ -112,28 +118,30 @@ namespace Engine
     class ENGINE_EXPORT link
     {
       private:
-        class data;
+        class DATA_TYPE;
+        friend class instance;
 
       public:
-        link() = default;
+        link();
         ~link();
-        const std::unique_ptr<data> data;
+        const std::unique_ptr<DATA_TYPE> data;
     };
     DEFINE_HANDLE( link );
 
     class ENGINE_EXPORT instance
     {
       private:
-        class data;
+        class DATA_TYPE;
 
       public:
-        instance( const char *appName = nullptr, uint32_t appVersion = 0, void *pUserData = nullptr );
-        const std::vector<types::DeviceDescription> GetDevices() const;
-        window::types::window CreateWindow( RESOLUTION_TYPE width, RESOLUTION_TYPE height, std::string title );
-        window::types::window CreateWindow( RESOLUTION_TYPE width, RESOLUTION_TYPE height, const char *title );
-        types::device CreateDevice( types::DeviceDescription description );
-        types::link CreateLink( window::types::window window, types::device device );
-        const std::unique_ptr<data> data;
+        instance();
+        instance( const char *appName, uint32_t appVersion = 0 );
+        const std::vector<types::DeviceDescription> GetDevices();
+        window::types::window createWindow( RESOLUTION_TYPE width, RESOLUTION_TYPE height, std::string title );
+        window::types::window createWindow( RESOLUTION_TYPE width, RESOLUTION_TYPE height, const char *title );
+        // types::device CreateDevice( types::DeviceDescription description );
+        types::link CreateLink( window::types::window window, types::DeviceDescription description );
+        const std::unique_ptr<DATA_TYPE> data;
         ~instance();
     };
     DEFINE_HANDLE( instance )

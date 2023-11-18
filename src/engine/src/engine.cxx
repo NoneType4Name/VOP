@@ -1,18 +1,15 @@
 #include <engine.hxx>
-#include <map>
 #include <EHI.hxx>
 // #include <RHI.hxx>
 #include <surface.hxx>
 #include <device.hxx>
 #include <swapchain.hxx>
-#include <texture.hxx>
-#include <model.hxx>
-#include <renderpass.hxx>
-#include <descriptorSet.hxx>
-#include <pipeline.hxx>
-#include <sampler.hxx>
-
-#define CHECK_FOR_INIT assert( inited )
+// #include <texture.hxx>
+// #include <model.hxx>
+// #include <renderpass.hxx>
+// #include <descriptorSet.hxx>
+// #include <pipeline.hxx>
+// #include <sampler.hxx>
 
 namespace
 {
@@ -29,8 +26,10 @@ namespace
 
 namespace Engine
 {
+    instance::instance() = default;
     instance::instance( const char *appName, uint32_t appVersion )
     {
+        DEFINE_DATA_FIELD
         VkApplicationInfo ApplicationInfo {};
         ApplicationInfo.sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO;
         ApplicationInfo.engineVersion      = ENGINE_VERSION;
@@ -44,23 +43,21 @@ namespace Engine
         data->setupExtensions( Extensions );
         data->setLayers( Layers );
         data->setExtensions( Extensions );
-        data->layers.clear();
-        data->extensions.clear();
         data->layers.reserve( Layers.size() );
-        data->extensions.reserve( Extensions.size() );
-        // data->validationFeatures.reserve( Validation.size() );
-        for ( auto layer : Layers )
-            data->layers.push_back( layer );
-        for ( auto extension : Extensions )
-            data->extensions.push_back( extension );
-        Extensions.clear();
-        Layers.clear();
+        Extensions.reserve( data->extensions.size() );
+        Layers.reserve( data->layers.size() );
+        for ( const auto &layer : data->layers )
+            Layers.push_back( layer.data() );
+        for ( const auto &extension : data->extensions )
+            Extensions.push_back( extension.data() );
         assert( data->supportExtensions() );
         assert( data->supportLayers() );
 
+        std::vector<void *> nextChainData;
         VkInstanceCreateInfo InstanceCreateInfo {};
         InstanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-        data->setupNextChain( InstanceCreateInfo.pNext );
+        data->setupNextChain( InstanceCreateInfo.pNext, nextChainData );
+        VkValidationFeaturesEXT *d                 = static_cast<VkValidationFeaturesEXT *>( const_cast<void *>( InstanceCreateInfo.pNext ) );
         InstanceCreateInfo.enabledLayerCount       = Layers.size();
         InstanceCreateInfo.ppEnabledLayerNames     = Layers.size() ? Layers.data() : nullptr;
         InstanceCreateInfo.enabledExtensionCount   = Extensions.size();
@@ -69,42 +66,56 @@ namespace Engine
         CHECK_RESULT( vkCreateInstance( &InstanceCreateInfo, ALLOCATION_CALLBACK, &data->handle ) );
         data->setupDebugLayerCallback();
     }
-#ifdef CreateWindow
-#    undef CreateWindow
-#endif
-    window::types::window Engine::instance::CreateWindow( RESOLUTION_TYPE width, RESOLUTION_TYPE height, const char *title )
+
+    instance::DATA_TYPE::~DATA_TYPE()
+    {
+        // deviceDescriptions.clear();
+        // links.clear();
+        // windows.clear();
+        // devices.clear();
+    }
+
+    window::types::window Engine::instance::createWindow( RESOLUTION_TYPE width, RESOLUTION_TYPE height, const char *title )
     {
         data->windows.push_back( std::unique_ptr<window::window> { new window::window { width, height, title, this } } );
         return data->windows.back().get();
     }
 
-    window::types::window Engine::instance::CreateWindow( RESOLUTION_TYPE width, RESOLUTION_TYPE height, std::string title )
+    window::types::window Engine::instance::createWindow( RESOLUTION_TYPE width, RESOLUTION_TYPE height, std::string title )
     {
-        CreateWindow( width, height, title.data() );
+        return createWindow( width, height, title.data() );
     }
 
-    types::device instance::CreateDevice( types::DeviceDescription description )
-    {
-        data->devices.push_back( std::unique_ptr<device> { new device { description } } );
-        return data->devices.back().get();
-    }
+    // types::device instance::CreateDevice( types::DeviceDescription description )
+    // {
+    //     data->devices.emplace_back( std::unique_ptr<device> { new device { description } } );
+    //     return data->devices.back().get();
+    // }
 
-    types::link instance::CreateLink( window::types::window window, types::device device )
+    types::link instance::CreateLink( window::types::window window, types::DeviceDescription description )
     {
-        data->links.push_back( std::unique_ptr<link> { new link {} } );
-        data->links.back()->data->init( window, device );
+        data->links.emplace_back( std::unique_ptr<link> { new link } );
+        data->devices.emplace_back( std::unique_ptr<device> { new device { description, window } } );
+        auto &_data = const_cast<std::unique_ptr<link::DATA_TYPE> &>( data->links.back()->data );
+        _data.reset( new link::DATA_TYPE { window, data->devices.back().get() } );
         return data->links.back().get();
     }
 
-    // ! // void instance::init()
-    //   // {
-    //   // }
-
-#ifdef UNICODE
-#    define CreateWindow CreateWindowW
-#else
-#    define CreateWindow CreateWindowA
-#endif
+    void instance::DATA_TYPE::setupExtensions( std::vector<const char *> &rExtensions ) {}
+    void instance::DATA_TYPE::setupLayers( std::vector<const char *> &rLayers ) {}
+    void instance::DATA_TYPE::setupNextChain( const void *&pNext, std::vector<void *> &dataPointers )
+    {
+        dataPointers.resize( 2 );
+        dataPointers[ 0 ] = static_cast<void *>( new VkValidationFeatureEnableEXT { VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT } );
+        dataPointers[ 1 ] = static_cast<void *>( new VkValidationFeaturesEXT {} );
+        VkValidationFeaturesEXT &ValidationFeatures { *static_cast<VkValidationFeaturesEXT *>( dataPointers[ 1 ] ) };
+        pNext                                             = dataPointers[ 1 ];
+        ValidationFeatures.sType                          = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
+        ValidationFeatures.enabledValidationFeatureCount  = 1;
+        ValidationFeatures.pEnabledValidationFeatures     = static_cast<VkValidationFeatureEnableEXT *>( dataPointers[ 0 ] );
+        ValidationFeatures.disabledValidationFeatureCount = 0;
+        ValidationFeatures.pDisabledValidationFeatures    = nullptr;
+    }
 
     instance::~instance()
     {

@@ -5,14 +5,16 @@ if(WIN32)
     add_definitions(-DPLATFORM_WINDOWS)
 endif()
 
-file(GLOB_RECURSE ENGINE_SOURCE_FILES
-        "./src/*.cxx"
-        "./${ENGINE_PLATFORM_INCLUDE}/*.cxx"
+# file(GLOB_RECURSE ENGINE_SOURCE_FILES
+# "./src/*.cxx"
+# "./${ENGINE_PLATFORM_INCLUDE}/*.cxx"
+# )
+set(ENGINE_SOURCE_FILES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/windows/WindowsPlatform.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/buffer.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/device.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/EHI.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/engine.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/image.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/queue.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/surface.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/swapchain.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/debug.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/LayersAndExtensions.cxx"
 )
 
 add_library(engine SHARED ${ENGINE_SOURCE_FILES})
 add_library(engine::engine ALIAS engine)
-
 
 find_package(Vulkan)
 find_package(glfw3 PATHS "${CMAKE_SOURCE_DIR}/conan_build")
@@ -31,7 +33,7 @@ target_link_libraries(engine glm::glm)
 target_include_directories(
     engine
     PRIVATE "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>"
-    PUBLIC  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+    PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
 )
 
 generate_export_header(engine EXPORT_FILE_NAME ${CMAKE_CURRENT_SOURCE_DIR}/include/engine_export.hxx)

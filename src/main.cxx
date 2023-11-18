@@ -50,10 +50,10 @@ int main()
 {
     // Game::GraphicEngine engine { "test app", 1 };
     Engine::types::instance engine { new Engine::instance { "d", 0 } };
-    const std::vector<Engine::types::DeviceDescription> &devices = engine->GetDevices();
-    Engine::window::types::window window { engine->CreateWindow( 0, 0, "window#1" ) };
-    Engine::types::device device { engine->CreateDevice( devices[ 0 ] ) };
-    Engine::types::link link { engine->CreateLink( window, device ) };
+    Engine::window::types::window window { engine->createWindow( 0, 0, "window#1" ) };
+    const std::vector<Engine::types::DeviceDescription> devices = engine->GetDevices();
+    Engine::types::link link { engine->CreateLink( window, devices[ 0 ] ) };
+    // Engine::types::device device { engine->CreateDevice( devices[ 0 ] ) };
     // Engine::types::Device
     // engine.InitDevice( devices[ 0 ] );
     // auto rectangle{ Engine::CreateModel( Engine::modelType::MODEL_TYPE_ENTITY, "./assets/models/rectangle/model.obj" ) };

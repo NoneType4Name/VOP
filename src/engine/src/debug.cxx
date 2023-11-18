@@ -47,7 +47,7 @@ namespace Engine
         }
     } // namespace
 
-    void instance::data::setupDebugLayerCallback()
+    void instance::DATA_TYPE::setupDebugLayerCallback()
     {
         // VkValidationFeatureEnableEXT enabled[]{ VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT };
         // VkValidationFeaturesEXT ValidationFeatures{};
@@ -63,7 +63,7 @@ namespace Engine
         DebugUtilsMessengerCreateInfoEXT.pfnUserCallback = DebugCallback;
         DebugUtilsMessengerCreateInfoEXT.pUserData       = nullptr;
 
-        auto _crtDbgUtMsgrEXT = ( PFN_vkCreateDebugUtilsMessengerEXT ) vkGetInstanceProcAddr( handle, "vkCreateDebugUtilsMessengerEXT" );
+        auto _crtDbgUtMsgrEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>( vkGetInstanceProcAddr( handle, "vkCreateDebugUtilsMessengerEXT" ) );
         if ( _crtDbgUtMsgrEXT != nullptr )
         {
             CHECK_RESULT( _crtDbgUtMsgrEXT( handle, &DebugUtilsMessengerCreateInfoEXT, nullptr, &debugMessenger ) );
@@ -74,7 +74,7 @@ namespace Engine
         }
     }
 
-    void instance::data::destroyDebugLayerCallback()
+    void instance::DATA_TYPE::destroyDebugLayerCallback()
     {
         if ( debugMessenger != VK_NULL_HANDLE )
         {

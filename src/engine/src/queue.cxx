@@ -1,130 +1,124 @@
-#include <EHI.hxx>
 #include <queue.hxx>
+#include <EHI.hxx>
+
 namespace Engine
 {
-    namespace tools
+    queue::queue( queueSet *pSet )
     {
-        queue::queue( VkDevice device, uint32_t familyIndex, uint32_t queueIndex )
-        {
-            init( device, familyIndex, queueIndex );
-        }
+        set = pSet;
+    }
 
-        queue::queue( uint32_t familyIndex, uint32_t queueIndex )
-        {
-            _familyIndex = familyIndex;
-            _queueIndex  = queueIndex;
-        }
+    queue::queue( queueSet *pSet, VkDevice device, uint32_t familyIndex, uint32_t queueIndex, float priority )
+    {
+        set            = pSet;
+        this->priority = priority;
+        init( device, familyIndex, queueIndex );
+    }
 
-        void queue::init( VkDevice device )
-        {
-            init( device, _familyIndex.value(), _queueIndex );
-        }
+    queue::queue( queueSet *pSet, uint32_t familyIndex, uint32_t queueIndex, float priority )
+    {
+        set               = pSet;
+        this->familyIndex = familyIndex;
+        index             = queueIndex;
+        this->priority    = priority;
+    }
 
-        void queue::init( VkDevice device, uint32_t familyIndex, uint32_t queueIndex )
-        {
-            _familyIndex = familyIndex;
-            _queueIndex  = queueIndex;
-            vkGetDeviceQueue( device, _familyIndex.value(), queueIndex, &_queue );
-        }
+    void queue::init( VkDevice device )
+    {
+        init( device, familyIndex.value(), index, priority );
+    }
 
-        void queue::setFamilyIndex( uint32_t index )
-        {
-            _familyIndex = index;
-        }
+    void queue::init( VkDevice device, uint32_t familyIndex, uint32_t queueIndex, float priority )
+    {
+        this->familyIndex = familyIndex;
+        index             = queueIndex;
+        this->priority    = priority;
+        vkGetDeviceQueue( device, this->familyIndex.value(), queueIndex, &handle );
+    }
 
-        void queue::setQueueIndex( uint32_t index )
-        {
-            _queueIndex = index;
-        }
+    void queue::operator=( std::pair<uint32_t, float> right )
+    {
+        familyIndex = right.first;
+        priority    = right.second;
+        if ( set->description->data->queueFamilyProperties[ 0 ].queueCount > 1 )
+            index = set->getUniqueIndecies()[ right.first ].second.size();
+    }
 
-        // void queue::setHandle( VkQueue queue )
-        // {
-        //     _queue = queue;
-        // }
+    void queue::operator=( std::tuple<uint32_t, uint32_t, float> right )
+    {
+        familyIndex = std::get<0>( right );
+        index       = std::get<1>( right );
+        priority    = std::get<2>( right );
+    }
 
-        const VkQueue queue::getHandle() const
-        {
-            return _queue;
-        }
+    bool queue::operator==( const queue &right )
+    {
+        if ( this->familyIndex.has_value() || right.familyIndex.has_value() )
+            if ( this->familyIndex.value() == right.familyIndex.value() && this->index == right.index && this->priority == right.priority )
+                return true;
+        return false;
+    }
 
-        const uint32_t queue::getFamilyIndex() const
-        {
-            if ( !_familyIndex.has_value() )
-            {
-                SPDLOG_CRITICAL( "Queue hasn't value." );
-                return -1;
-            }
-            return _familyIndex.value();
-        }
+    bool queue::operator!=( const queue &right )
+    {
+        return !operator==( right );
+    }
 
-        const uint32_t queue::getQueueIndex() const
-        {
-            if ( !_familyIndex.has_value() )
-            {
-                SPDLOG_CRITICAL( "Queue hasn't value." );
-                return -1;
-            }
-            return _queueIndex;
-        }
+    queueSet::queueSet() :
+        graphic { this }, present { this }, transfer { this } {}
 
-        const bool queue::inited() const
-        {
-            return _familyIndex.has_value();
-        }
+    queueSet::queueSet( DeviceDescription *description ) :
+        queueSet {}
+    {
+        this->description = description;
+    }
 
-        void queue::operator=( uint32_t right )
-        {
-            setFamilyIndex( right );
-        }
+    void queueSet::operator=( std::initializer_list<std::pair<uint32_t, float>> right )
+    {
+        uint32_t i { 0 };
+        for ( auto val : right )
+            *operator[]( i++ ) = val;
+    }
 
-        void queue::operator=( std::array<uint32_t, 2> right )
-        {
-            setFamilyIndex( right[ 0 ] );
-            setQueueIndex( right[ 1 ] );
-        }
+    void queueSet::operator=( std::initializer_list<std::tuple<uint32_t, uint32_t, float>> right )
+    {
+        uint32_t i { 0 };
+        for ( auto val : right )
+            *operator[]( i++ ) = val;
+    }
 
-        void queueSet::operator=( std::initializer_list<uint32_t> right )
+    queue *queueSet::operator[]( size_t index )
+    {
+        auto d { &graphic };
+        auto i { ( ( reinterpret_cast<queue *>( &graphic ) ) + index ) };
+        return ( ( reinterpret_cast<queue *>( &graphic ) ) + index );
+    }
+    // <family<index in family, ptr to priority>, vector of all prioreties in family>
+    std::unordered_map<uint32_t, std::pair<std::unordered_map<uint32_t, float *>, std::vector<float>>> &queueSet::getUniqueIndecies()
+    {
+        _unique.clear();
+        for ( uint32_t i { 0 }; i < count(); i++ )
         {
-            uint32_t i { 0 };
-            for ( uint32_t val : right )
-                ( *( tools::queue * ) ( ( &*this ) + sizeof( tools::queue ) * i++ ) ) = val;
+            if ( !operator[]( i )->familyIndex.has_value() ||
+                 ( _unique[ operator[]( i )->familyIndex.value() ].first.count( operator[]( i )->index ) ) )
+                continue;
+            _unique[ operator[]( i )->familyIndex.value() ].second.push_back( operator[]( i )->priority );
+            _unique[ operator[]( i )->familyIndex.value() ].first[ operator[]( i )->index ] = &_unique[ operator[]( i )->familyIndex.value() ].second.back();
         }
+        return _unique;
+    }
+    void queueSet::setupNextChain( const void *&pNext, std::vector<void *> &dataPointers ) {}
+    void queueSet::setupFlags( VkDeviceQueueCreateFlags &flag ) {}
+    const size_t queueSet::count() const
+    {
+        return ( ( sizeof( *this ) - sizeof( _unique ) - sizeof( void * ) ) / sizeof( queue ) );
+    }
 
-        tools::queue queueSet::operator[]( size_t index )
+    void queueSet::init( VkDevice device )
+    {
+        for ( uint32_t i { 0 }; i < count(); i++ )
         {
-            return *reinterpret_cast<tools::queue *>( reinterpret_cast<char *>( this ) + sizeof( tools::queue ) * index );
+            operator[]( i )->init( device );
         }
-
-        std::unordered_map<uint32_t, std::pair<uint32_t, std::vector<float>>> &queueSet::getUniqueIndecies()
-        {
-            if ( _unique.empty() )
-                for ( uint32_t i { 0 }; i < count(); i++ )
-                {
-                    uint32_t index { operator[]( i ).getFamilyIndex() };
-                    if ( _unique.count( index ) )
-                    {
-                        _unique[ index ].first += 1;
-                    }
-                    else
-                    {
-                        _unique[ index ].first = 1;
-                    }
-                    _unique[ index ].second.push_back( 1.f );
-                }
-            return _unique;
-        }
-
-        const size_t queueSet::count() const
-        {
-            return ( ( sizeof( *this ) - sizeof( _unique ) ) / sizeof( queue ) );
-        }
-
-        void queueSet::init( VkDevice device )
-        {
-            for ( uint32_t i { 0 }; i < count(); i++ )
-            {
-                ( ( queue * ) ( ( ( uint8_t * ) this ) + sizeof( queue ) * i ) )->init( device );
-            }
-        }
-    } // namespace tools
+    }
 } // namespace Engine
