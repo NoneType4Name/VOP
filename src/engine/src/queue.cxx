@@ -41,7 +41,7 @@ namespace Engine
         familyIndex = right.first;
         priority    = right.second;
         if ( set->description->data->queueFamilyProperties[ 0 ].queueCount > 1 )
-            index = set->getUniqueIndecies()[ right.first ].second.size();
+            index = set->getUniqueIndecies()[ right.first ].second.size() - 1;
     }
 
     void queue::operator=( std::tuple<uint32_t, uint32_t, float> right )
