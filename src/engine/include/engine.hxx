@@ -12,6 +12,12 @@
         {                           \
             typedef object *object; \
         }
+#    define DEFINE_TEMPLATE( name )             \
+        class name : Engine::render::attachment \
+        {                                       \
+          public:                               \
+            name( types::link link );           \
+        };
 #    include <array>
 #    include <memory>
 #    include <vector>
@@ -150,10 +156,12 @@ namespace Engine
 
           public:
             subpass();
+            virtual void setup();
             ~subpass();
 
             const std::unique_ptr<DATA_TYPE> data;
         };
+
         DEFINE_HANDLE( subpass );
 
         class ENGINE_EXPORT subpassLink
@@ -205,15 +213,12 @@ namespace Engine
     // ENGINE_EXPORT shaderID CreateShader( const char *path, const char *mainFuncName, ShaderStage stage );
     // // ENGINE_EXPORT pipelineID CreateDescriptorSet( DescriptorSetInfo info );
     // ENGINE_EXPORT pipelineID CreatePipeline( PipelineInfo info );
-    namespace templates
-    {
-        // class colorAttachment : render::attachment
-        // {
-        //   public:
-        //     colorAttachment();
-        //     colorAttachment( types::link link );
-        // };
-    } // namespace templates
+    // namespace templates
+    // {
+    //     DEFINE_TEMPLATE( colorAttachment );
+    //     DEFINE_TEMPLATE( colorResolveAttachment );
+    //     DEFINE_TEMPLATE( depthAttachment ); // setup only in subpass?.
+    // } // namespace templates
 } // namespace Engine
 
 #endif

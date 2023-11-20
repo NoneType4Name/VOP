@@ -96,19 +96,24 @@ namespace Engine
     // } // namespace tools
     namespace render
     {
-        // attachment::attachment()  = default;
+        attachment::attachment()  = default;
         attachment::~attachment() = default;
 
         struct attachment::DATA_TYPE : VkAttachmentDescription
         {
+            uint32_t attachment;
+            VkImageLayout layout;
         };
 
         struct subpass::DATA_TYPE
         {
+            std::vector<VkAttachmentReference> referencies;
+            std::vector<VkAttachmentDescription> attachments;
         };
 
         struct subpassLink::DATA_TYPE : VkSubpassDependency
         {
+            std::vector<std::pair<subpass *,VkSubpassDependency>> subpasses;
         };
 
         struct pass::DATA_TYPE
@@ -123,13 +128,46 @@ namespace Engine
         colorAttachment::colorAttachment( types::link link )
         {
             data->format         = link->data->format.format;
-            data->samples        = VK_SAMPLE_COUNT_1_BIT;
+            data->samples        = VK_SAMPLE_COUNT_2_BIT;
             data->loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
             data->storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
             data->stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
             data->stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
             data->initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
             data->finalLayout    = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+            data->layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+            data->attachment = 0;
+        }
+
+        depthAttachment::depthAttachment( types::link link )
+        {
+            data->format         = link->data->depthImageFormat;
+            data->samples        = VK_SAMPLE_COUNT_2_BIT;
+            data->loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
+            data->storeOp        = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+            data->stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+            data->stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+            data->initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
+            data->finalLayout    = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+            data->layout     = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+            data->attachment = 1;
+        }
+
+        colorResolveAttachment::colorResolveAttachment( types::link link )
+        {
+            data->format         = link->data->format.format;
+            data->samples        = VK_SAMPLE_COUNT_1_BIT;
+            data->loadOp         = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+            data->storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
+            data->stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+            data->stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+            data->initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
+            data->finalLayout    = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+            data->layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+            data->attachment = 2;
         }
     } // namespace templates
 } // namespace Engine

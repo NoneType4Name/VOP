@@ -30,7 +30,6 @@ namespace
         }
         ~_()
         {
-            // Engine::shutdown();
             SPDLOG_DEBUG( "--- Logging end ---" );
             spdlog::shutdown();
         }
@@ -39,23 +38,17 @@ namespace
 
 namespace Game
 {
-    // class GraphicEngine : public Engine::instance
-    // {
-    //     using Engine::instance::instance;
-    //     // using Engine::instance::~instance;
-    // };
+    Engine::types::instance engine { new Engine::instance { "test", 0 } };
+    Engine::window::types::window window { engine->createWindow( 120, 120, "window#1" ) };
+    const std::vector<Engine::types::DeviceDescription> devices = engine->GetDevices();
+    Engine::types::link link { engine->CreateLink( window, devices.back() ) };
 } // namespace Game
 
 int main()
 {
-    // Game::GraphicEngine engine { "test app", 1 };
-    Engine::types::instance engine { new Engine::instance { "d", 0 } };
-    Engine::window::types::window window { engine->createWindow( 120, 120, "window#1" ) };
-    const std::vector<Engine::types::DeviceDescription> devices = engine->GetDevices();
-    Engine::types::link link { engine->CreateLink( window, devices.back() ) };
-    while ( !window->shouldClose() )
+    while ( !Game::window->shouldClose() )
     {
-        window->updateEvents();
+        Game::window->updateEvents();
     }
     // Engine::types::device device { engine->CreateDevice( devices[ 0 ] ) };
     // Engine::types::Device
