@@ -102,6 +102,10 @@ namespace Engine
         return data->links.back().get();
     }
 
+    render::types::pass instance::CreateRenderPass( render::types::attachment subpassesLink, types::link link )
+    {
+    }
+
     void instance::DATA_TYPE::setupExtensions( std::vector<const char *> &rExtensions ) {}
     void instance::DATA_TYPE::setupLayers( std::vector<const char *> &rLayers ) {}
     void instance::DATA_TYPE::setupNextChain( const void *&pNext, std::vector<void *> &dataPointers )

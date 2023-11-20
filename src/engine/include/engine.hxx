@@ -128,6 +128,61 @@ namespace Engine
     };
     DEFINE_HANDLE( link );
 
+    namespace render
+    {
+        class ENGINE_EXPORT attachment
+        {
+          private:
+            class DATA_TYPE;
+
+          public:
+            attachment();
+            attachment( types::link link );
+            ~attachment();
+            const std::unique_ptr<DATA_TYPE> data;
+        };
+        DEFINE_HANDLE( attachment );
+
+        class ENGINE_EXPORT subpass
+        {
+          private:
+            class DATA_TYPE;
+
+          public:
+            subpass();
+            ~subpass();
+
+            const std::unique_ptr<DATA_TYPE> data;
+        };
+        DEFINE_HANDLE( subpass );
+
+        class ENGINE_EXPORT subpassLink
+        {
+          private:
+            class DATA_TYPE;
+
+          public:
+            subpassLink();
+            ~subpassLink();
+
+            const std::unique_ptr<DATA_TYPE> data;
+        };
+        DEFINE_HANDLE( subpassLink );
+
+        class ENGINE_EXPORT pass
+        {
+          private:
+            class DATA_TYPE;
+
+          public:
+            pass();
+            ~pass();
+
+            const std::unique_ptr<DATA_TYPE> data;
+        };
+        DEFINE_HANDLE( pass );
+    } // namespace render
+
     class ENGINE_EXPORT instance
     {
       private:
@@ -139,17 +194,26 @@ namespace Engine
         const std::vector<types::DeviceDescription> GetDevices();
         window::types::window createWindow( RESOLUTION_TYPE width, RESOLUTION_TYPE height, std::string title );
         window::types::window createWindow( RESOLUTION_TYPE width, RESOLUTION_TYPE height, const char *title );
-        // types::device CreateDevice( types::DeviceDescription description );
         types::link CreateLink( window::types::window window, types::DeviceDescription description );
-        const std::unique_ptr<DATA_TYPE> data;
+        render::types::pass CreateRenderPass( render::types::attachment subpassesLink, types::link link );
         ~instance();
+
+        const std::unique_ptr<DATA_TYPE> data;
     };
     DEFINE_HANDLE( instance )
 
     // ENGINE_EXPORT shaderID CreateShader( const char *path, const char *mainFuncName, ShaderStage stage );
     // // ENGINE_EXPORT pipelineID CreateDescriptorSet( DescriptorSetInfo info );
     // ENGINE_EXPORT pipelineID CreatePipeline( PipelineInfo info );
-
+    namespace templates
+    {
+        // class colorAttachment : render::attachment
+        // {
+        //   public:
+        //     colorAttachment();
+        //     colorAttachment( types::link link );
+        // };
+    } // namespace templates
 } // namespace Engine
 
 #endif

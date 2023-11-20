@@ -52,7 +52,7 @@ int main()
     Engine::types::instance engine { new Engine::instance { "d", 0 } };
     Engine::window::types::window window { engine->createWindow( 120, 120, "window#1" ) };
     const std::vector<Engine::types::DeviceDescription> devices = engine->GetDevices();
-    Engine::types::link link { engine->CreateLink( window, devices[ 0 ] ) };
+    Engine::types::link link { engine->CreateLink( window, devices.back() ) };
     while ( !window->shouldClose() )
     {
         window->updateEvents();
