@@ -84,8 +84,12 @@ namespace Engine
     //     return Format;
     // }
 
-    link::link()  = default;
-    link::~link() = default;
+    link::link() = default;
+    link::~link()
+    {
+        vkDestroySwapchainKHR( data->device->data->device, data->swapchain, ALLOCATION_CALLBACK );
+    };
+
     link::DATA_TYPE::properties_T::properties_T( window::types::window window, types::device device )
     {
         uint32_t c;

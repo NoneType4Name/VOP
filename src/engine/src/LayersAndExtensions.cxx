@@ -13,6 +13,7 @@ namespace Engine
         };
         std::vector<const char *> DefaultInstanceExtensions {
             VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
+            VK_EXT_DEBUG_REPORT_EXTENSION_NAME,
             VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME
 #ifdef PLATFORM_WINDOWS
 #endif
@@ -87,7 +88,7 @@ namespace Engine
         }
         if ( tmpRequeredDeviceL.size() )
         {
-            std::string e { "Not avilable instance extensions:\n" };
+            std::string e { "Not avilable instance layers:\n" };
             for ( const auto &ext : tmpRequeredDeviceL )
             {
                 auto s { std::format( "\t{}\n", ext ) };
@@ -112,7 +113,7 @@ namespace Engine
 
         if ( tmpRequeredDeviceExts.size() )
         {
-            std::string e { "Not avilable device extensions:\n" };
+            std::string e { "Not avilable instance extensions:\n" };
             for ( const auto &ext : tmpRequeredDeviceExts )
             {
                 auto s { std::format( "\t{}\n", ext ) };

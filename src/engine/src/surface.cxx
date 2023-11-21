@@ -10,8 +10,7 @@ namespace Engine
     {
         void window::DATA_TYPE::setupNextChain( const void *&pNext, std::vector<void *> &dataPointers, void *userPoiner ) {}
         void window::DATA_TYPE::setupFlags( VkWin32SurfaceCreateFlagsKHR flags, void *userPoiner ) {}
-        window::window()  = default;
-        window::~window() = default;
+        window::window() = default;
         window::window( RESOLUTION_TYPE width, RESOLUTION_TYPE height, const char *title, instance *instance )
         {
             DEFINE_DATA_FIELD;
@@ -21,14 +20,18 @@ namespace Engine
             glfwWindowHint( GLFW_RESIZABLE, GLFW_FALSE );
             data->window = glfwCreateWindow( width ? width : displayRes.width, height ? height : displayRes.height, title, !( width || height ) ? glfwGetPrimaryMonitor() : nullptr, nullptr );
             glfwSetWindowUserPointer( data->window, this );
-            const void *next;
+            const void *next { nullptr };
             std::vector<void *> nextChainData;
-            VkWin32SurfaceCreateFlagsKHR flags;
+            VkWin32SurfaceCreateFlagsKHR flags {};
             data->setupNextChain( next, nextChainData, data->instance->data->userPointer );
             data->setupFlags( flags, data->instance->data->userPointer );
-            data->createSurface( data->instance->data->handle, &next, flags );
+            data->createSurface( data->instance->data->handle, next, flags );
             cenralize();
             setWindowResolution( width, height );
+        }
+        window::~window()
+        {
+            data->destroySurface( data->instance->data->handle );
         }
 
         resolution window::getResolution()

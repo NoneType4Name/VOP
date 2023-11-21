@@ -76,10 +76,11 @@ namespace Engine
     device::device() = default;
     device::device( types::DeviceDescription description, window::types::window window )
     {
-        this->data->window = window;
-        auto &_data        = const_cast<std ::unique_ptr<DATA_TYPE> &>( data );
+        auto &_data = const_cast<std ::unique_ptr<DATA_TYPE> &>( data );
         _data.reset( new DATA_TYPE { description } );
-        data->description = description;
+
+        this->data->window = window;
+        data->description  = description;
         data->setupQueueSet( data->queuesSet, this->data->window->data->surface, data->window->data->instance->data->userPointer );
         std::vector<VkDeviceQueueCreateInfo> QueuesCreateInfo;
         QueuesCreateInfo.reserve( data->queuesSet.getUniqueIndecies().size() );
@@ -120,7 +121,7 @@ namespace Engine
 
     device::~device()
     {
-        vkDestroyDevice( data->device, ALLOCATION_CALLBACK );
+        // vkDestroyDevice( data->device, ALLOCATION_CALLBACK );
     }
 
     const std::vector<types::DeviceDescription> instance::GetDevices()

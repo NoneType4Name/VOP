@@ -40,32 +40,30 @@ namespace Engine
         ApplicationInfo.applicationVersion = appVersion;
 
         std::vector<const char *> Extensions, Layers;
+        std::vector<void *> pData;
+        VkDebugUtilsMessengerCreateInfoEXT debugUtilsMsg {};
+        data->setupDebugLayerCallback( debugUtilsMsg, pData );
+        VkDebugUtilsMessengerCreateInfoEXT debugUtilsMsgCI = debugUtilsMsg;
+        debugUtilsMsgCI.pNext                              = nullptr;
         data->setupLayers( Layers );
         data->setupExtensions( Extensions );
         data->setLayers( Layers );
         data->setExtensions( Extensions );
-        data->layers.reserve( Layers.size() );
-        Extensions.reserve( data->extensions.size() );
-        Layers.reserve( data->layers.size() );
-        for ( const auto &layer : data->layers )
-            Layers.push_back( layer.data() );
-        for ( const auto &extension : data->extensions )
-            Extensions.push_back( extension.data() );
         assert( data->supportExtensions() );
         assert( data->supportLayers() );
 
         std::vector<void *> nextChainData;
         VkInstanceCreateInfo InstanceCreateInfo {};
         InstanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-        data->setupNextChain( InstanceCreateInfo.pNext, nextChainData );
-        VkValidationFeaturesEXT *d                 = static_cast<VkValidationFeaturesEXT *>( const_cast<void *>( InstanceCreateInfo.pNext ) );
-        InstanceCreateInfo.enabledLayerCount       = Layers.size();
-        InstanceCreateInfo.ppEnabledLayerNames     = Layers.size() ? Layers.data() : nullptr;
-        InstanceCreateInfo.enabledExtensionCount   = Extensions.size();
-        InstanceCreateInfo.ppEnabledExtensionNames = Extensions.size() ? Extensions.data() : nullptr;
+        InstanceCreateInfo.pNext = &debugUtilsMsgCI;
+        // data->setupNextChain( debugUtilsMsgCI.pNext, nextChainData );
+        InstanceCreateInfo.enabledLayerCount       = data->layers.size();
+        InstanceCreateInfo.ppEnabledLayerNames     = data->layers.size() ? data->layers.data() : nullptr;
+        InstanceCreateInfo.enabledExtensionCount   = data->extensions.size();
+        InstanceCreateInfo.ppEnabledExtensionNames = data->extensions.size() ? data->extensions.data() : nullptr;
         InstanceCreateInfo.pApplicationInfo        = &ApplicationInfo;
         CHECK_RESULT( vkCreateInstance( &InstanceCreateInfo, ALLOCATION_CALLBACK, &data->handle ) );
-        data->setupDebugLayerCallback();
+        data->initDebugLayerCallBack( debugUtilsMsg );
     }
 
     instance::DATA_TYPE::~DATA_TYPE()
@@ -103,28 +101,33 @@ namespace Engine
         return data->links.back().get();
     }
 
-    render::types::pass instance::CreateRenderPass( render::types::attachment subpassesLink, types::link link )
+    types::pass instance::CreateRenderPass( types::link link )
     {
+        data->passes.emplace_back( std::unique_ptr<pass> { new pass { link } } );
+        return data->passes.back().get();
     }
 
     void instance::DATA_TYPE::setupExtensions( std::vector<const char *> &rExtensions ) {}
     void instance::DATA_TYPE::setupLayers( std::vector<const char *> &rLayers ) {}
     void instance::DATA_TYPE::setupNextChain( const void *&pNext, std::vector<void *> &dataPointers )
     {
-        dataPointers.resize( 2 );
-        dataPointers[ 0 ] = static_cast<void *>( new VkValidationFeatureEnableEXT { VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT } );
-        dataPointers[ 1 ] = static_cast<void *>( new VkValidationFeaturesEXT {} );
-        VkValidationFeaturesEXT &ValidationFeatures { *static_cast<VkValidationFeaturesEXT *>( dataPointers[ 1 ] ) };
-        pNext                                             = dataPointers[ 1 ];
+        dataPointers.resize( 5 );
+        dataPointers[ 0 ] = static_cast<void *>( new VkValidationFeaturesEXT {} );
+        dataPointers[ 1 ] = static_cast<void *>( new VkValidationFeatureEnableEXT { VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT } );
+        dataPointers[ 2 ] = static_cast<void *>( new VkValidationFeatureEnableEXT { VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT } );
+        dataPointers[ 3 ] = static_cast<void *>( new VkValidationFeatureEnableEXT { VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT } );
+        dataPointers[ 4 ] = static_cast<void *>( new VkValidationFeatureEnableEXT { VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT } );
+        VkValidationFeaturesEXT &ValidationFeatures { *static_cast<VkValidationFeaturesEXT *>( dataPointers[ 0 ] ) };
         ValidationFeatures.sType                          = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
-        ValidationFeatures.enabledValidationFeatureCount  = 1;
-        ValidationFeatures.pEnabledValidationFeatures     = static_cast<VkValidationFeatureEnableEXT *>( dataPointers[ 0 ] );
+        ValidationFeatures.enabledValidationFeatureCount  = 4;
+        ValidationFeatures.pEnabledValidationFeatures     = static_cast<VkValidationFeatureEnableEXT *>( dataPointers[ 1 ] );
         ValidationFeatures.disabledValidationFeatureCount = 0;
         ValidationFeatures.pDisabledValidationFeatures    = nullptr;
     }
 
     instance::~instance()
     {
+        data->passes.clear();
         data->links.clear();
         data->windows.clear();
         data->devices.clear();

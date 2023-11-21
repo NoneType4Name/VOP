@@ -10,7 +10,7 @@ namespace Engine
         virtual void setupNextChain( const void *&pNext, std::vector<void *> &dataPointers, void *userPoiner );
         virtual void setupFlags( VkWin32SurfaceCreateFlagsKHR flags, void *userPoiner );
         void createSurface( VkInstance instance, const void *pNext, VkWin32SurfaceCreateFlagsKHR flags );
-        void destroySurface();
+        void destroySurface( VkInstance instance );
         RESOLUTION_TYPE width { 0 };
         RESOLUTION_TYPE height { 0 };
         std::string title;

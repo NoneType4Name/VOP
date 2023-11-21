@@ -10,11 +10,11 @@ namespace Engine
     {
         void window::DATA_TYPE::createSurface( VkInstance instance, const void *pNext, VkWin32SurfaceCreateFlagsKHR flags )
         {
-            VkWin32SurfaceCreateInfoKHR CI { VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR, 0, 0, GetModuleHandle( nullptr ), glfwGetWin32Window( window ) };
+            VkWin32SurfaceCreateInfoKHR CI { VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR, pNext, flags, GetModuleHandle( nullptr ), glfwGetWin32Window( window ) };
             CHECK_RESULT( vkCreateWin32SurfaceKHR( instance, &CI, ALLOCATION_CALLBACK, &surface ) );
         };
 
-        void window::DATA_TYPE::destroySurface()
+        void window::DATA_TYPE::destroySurface( VkInstance instance )
         {
             vkDestroySurfaceKHR( instance, surface, ALLOCATION_CALLBACK );
         }

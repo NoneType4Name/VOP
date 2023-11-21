@@ -12,7 +12,8 @@ namespace Engine
 {
     struct instance::DATA_TYPE
     {
-        void setupDebugLayerCallback();
+        void setupDebugLayerCallback( VkDebugUtilsMessengerCreateInfoEXT &createInfo, std::vector<void *> &pData );
+        void initDebugLayerCallBack( VkDebugUtilsMessengerCreateInfoEXT createInfo );
         void destroyDebugLayerCallback();
         void setLayers( std::vector<const char *> layers );
         void setExtensions( std::vector<const char *> extrensions );
@@ -25,8 +26,9 @@ namespace Engine
         std::vector<std::unique_ptr<DeviceDescription>> deviceDescriptions;
         std::vector<std::unique_ptr<device>> devices;
         std::vector<std::unique_ptr<link>> links;
-        std::vector<std::string> layers;
-        std::vector<std::string> extensions;
+        std::vector<std::unique_ptr<pass>> passes;
+        std::vector<const char *> layers;
+        std::vector<const char *> extensions;
         VkDebugUtilsMessengerEXT debugMessenger { nullptr };
         VkInstance handle { nullptr };
         void *userPointer { nullptr };

@@ -27,7 +27,7 @@ namespace Engine
                     StrMessageType = string_VkDebugUtilsMessageTypeFlagsEXT( MessageType );
                     break;
             }
-            switch ( static_cast<uint32_t>( MessageLevel ) )
+            switch ( MessageLevel )
             {
                 case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
                     SPDLOG_DEBUG( std::format( "{} message: {}", ( MessageType == VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT ? "" : format( "Type: {}, ", StrMessageType ) ), CallbackData->pMessage ) );
@@ -42,31 +42,28 @@ namespace Engine
                     SPDLOG_CRITICAL( std::format( "{} message: {}", ( MessageType == VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT ? "" : format( "Type: {}, ", StrMessageType ) ), CallbackData->pMessage ) );
                     return VK_TRUE;
                     break;
+                default:
+                    break;
             }
             return VK_FALSE;
         }
     } // namespace
 
-    void instance::DATA_TYPE::setupDebugLayerCallback()
+    void instance::DATA_TYPE::setupDebugLayerCallback( VkDebugUtilsMessengerCreateInfoEXT &createInfo, std::vector<void *> &pData )
     {
-        // VkValidationFeatureEnableEXT enabled[]{ VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT };
-        // VkValidationFeaturesEXT ValidationFeatures{};
-        // ValidationFeatures.sType                         = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
-        // ValidationFeatures.enabledValidationFeatureCount = sizeof( enabled ) / sizeof( enabled[ 0 ] );
-        // ValidationFeatures.pEnabledValidationFeatures    = enabled;
+        createInfo.sType           = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+        createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+        createInfo.messageType     = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+        createInfo.pfnUserCallback = DebugCallback;
+        createInfo.pUserData       = this;
+    }
 
-        VkDebugUtilsMessengerCreateInfoEXT DebugUtilsMessengerCreateInfoEXT {};
-        DebugUtilsMessengerCreateInfoEXT.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-        // DebugUtilsMessengerCreateInfoEXT.pNext           = &ValidationFeatures;
-        DebugUtilsMessengerCreateInfoEXT.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-        DebugUtilsMessengerCreateInfoEXT.messageType     = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-        DebugUtilsMessengerCreateInfoEXT.pfnUserCallback = DebugCallback;
-        DebugUtilsMessengerCreateInfoEXT.pUserData       = nullptr;
-
-        auto _crtDbgUtMsgrEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>( vkGetInstanceProcAddr( handle, "vkCreateDebugUtilsMessengerEXT" ) );
-        if ( _crtDbgUtMsgrEXT != nullptr )
+    void instance::DATA_TYPE::initDebugLayerCallBack( VkDebugUtilsMessengerCreateInfoEXT createInfo )
+    {
+        auto createMsgCallback = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>( vkGetInstanceProcAddr( handle, "vkCreateDebugUtilsMessengerEXT" ) );
+        if ( createMsgCallback != nullptr )
         {
-            CHECK_RESULT( _crtDbgUtMsgrEXT( handle, &DebugUtilsMessengerCreateInfoEXT, nullptr, &debugMessenger ) );
+            CHECK_RESULT( createMsgCallback( handle, &createInfo, ALLOCATION_CALLBACK, &debugMessenger ) );
         }
         else
         {
@@ -78,7 +75,7 @@ namespace Engine
     {
         if ( debugMessenger != VK_NULL_HANDLE )
         {
-            PFN_vkDestroyDebugUtilsMessengerEXT destroyMsgCallback = ( PFN_vkDestroyDebugUtilsMessengerEXT ) ( void * ) vkGetInstanceProcAddr( handle, "vkDestroyDebugUtilsMessengerEXT" );
+            PFN_vkDestroyDebugUtilsMessengerEXT destroyMsgCallback = ( PFN_vkDestroyDebugUtilsMessengerEXT ) vkGetInstanceProcAddr( handle, "vkDestroyDebugUtilsMessengerEXT" );
             destroyMsgCallback( handle, debugMessenger, ALLOCATION_CALLBACK );
         }
     }

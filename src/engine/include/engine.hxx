@@ -124,7 +124,7 @@ namespace Engine
     {
       private:
         class DATA_TYPE;
-        friend class instance;
+        friend instance;
 
       public:
         link();
@@ -133,63 +133,20 @@ namespace Engine
     };
     DEFINE_HANDLE( link );
 
-    namespace render
+    class ENGINE_EXPORT pass
     {
-        class ENGINE_EXPORT attachment
-        {
-          private:
-            class DATA_TYPE;
+      private:
+        pass( Engine::types::link link );
+        class DATA_TYPE;
+        friend instance;
 
-          public:
-            attachment();
-            attachment( DATA_TYPE data );
-            ~attachment();
-            DATA_TYPE *data;
-        };
-        DEFINE_HANDLE( attachment );
+      public:
+        pass();
+        ~pass();
 
-        class ENGINE_EXPORT subpass
-        {
-          private:
-            class DATA_TYPE;
-
-          public:
-            subpass();
-            subpass( Engine::types::link link, std::vector<types::attachment> attachment_template );
-            virtual void setup( Engine::types::link link, std::vector<types::attachment> attachment_template, void *userPoiner );
-            ~subpass();
-
-            const std::unique_ptr<DATA_TYPE> data;
-        };
-
-        DEFINE_HANDLE( subpass );
-
-        class ENGINE_EXPORT subpassLink
-        {
-          private:
-            class DATA_TYPE;
-
-          public:
-            subpassLink();
-            ~subpassLink();
-
-            const std::unique_ptr<DATA_TYPE> data;
-        };
-        DEFINE_HANDLE( subpassLink );
-
-        class ENGINE_EXPORT pass
-        {
-          private:
-            class DATA_TYPE;
-
-          public:
-            pass();
-            ~pass();
-
-            const std::unique_ptr<DATA_TYPE> data;
-        };
-        DEFINE_HANDLE( pass );
-    } // namespace render
+        const std::unique_ptr<DATA_TYPE> data;
+    };
+    DEFINE_HANDLE( pass );
 
     class ENGINE_EXPORT instance
     {
@@ -203,15 +160,15 @@ namespace Engine
         window::types::window createWindow( RESOLUTION_TYPE width, RESOLUTION_TYPE height, std::string title );
         window::types::window createWindow( RESOLUTION_TYPE width, RESOLUTION_TYPE height, const char *title );
         types::link CreateLink( window::types::window window, types::DeviceDescription description );
-        render::types::pass CreateRenderPass( render::types::subpassLink subpassesLink );
+        types::pass CreateRenderPass( types::link link );
         ~instance();
 
         const std::unique_ptr<DATA_TYPE> data;
     };
     DEFINE_HANDLE( instance )
-    DEFINE_RENDER_ATTACHMENT_TEMPLATE( RENDER_ATTACHMENT_DEFAULT_COLOR )
-    DEFINE_RENDER_ATTACHMENT_TEMPLATE( RENDER_ATTACHMENT_DEFAULT_DEPTH )
-    DEFINE_RENDER_ATTACHMENT_TEMPLATE( RENDER_ATTACHMENT_DEFAULT_COLOR_RESOLVE )
+    // DEFINE_RENDER_ATTACHMENT_TEMPLATE( RENDER_ATTACHMENT_DEFAULT_COLOR )
+    // DEFINE_RENDER_ATTACHMENT_TEMPLATE( RENDER_ATTACHMENT_DEFAULT_DEPTH )
+    // DEFINE_RENDER_ATTACHMENT_TEMPLATE( RENDER_ATTACHMENT_DEFAULT_COLOR_RESOLVE )
 
     // ENGINE_EXPORT shaderID CreateShader( const char *path, const char *mainFuncName, ShaderStage stage );
     // // ENGINE_EXPORT pipelineID CreateDescriptorSet( DescriptorSetInfo info );
