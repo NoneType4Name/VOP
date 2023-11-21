@@ -186,6 +186,16 @@ namespace Engine
         }
     }
 
+    link::DATA_TYPE::~DATA_TYPE()
+    {
+        for ( auto &img : images )
+        {
+            vkDestroySemaphore( device->data->device, img.isAvailable, ALLOCATION_CALLBACK );
+            vkDestroySemaphore( device->data->device, img.isRendered, ALLOCATION_CALLBACK );
+            img.image.reset();
+        }
+    }
+
     // void reCreateSwapchain()
     // {
     //     _imageIndex = 0;

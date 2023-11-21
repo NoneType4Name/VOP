@@ -121,7 +121,7 @@ namespace Engine
 
     device::~device()
     {
-        // vkDestroyDevice( data->device, ALLOCATION_CALLBACK );
+        vkDestroyDevice( data->device, ALLOCATION_CALLBACK );
     }
 
     const std::vector<types::DeviceDescription> instance::GetDevices()

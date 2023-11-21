@@ -17,7 +17,6 @@
 #include <engine.hxx>
 
 #define ALLOCATION_CALLBACK nullptr
-#define DATA_TYPEYPE        DATA_TYPE
 #define DEFINE_DATA_FIELD                                           \
     auto &_data = const_cast<std::unique_ptr<DATA_TYPE> &>( data ); \
     _data.reset( new DATA_TYPE );
