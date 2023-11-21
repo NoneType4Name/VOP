@@ -2,6 +2,7 @@
 #include <device.hxx>
 #include <surface.hxx>
 #include <image.hxx>
+#include <EHI.hxx>
 
 namespace Engine
 {
@@ -98,7 +99,7 @@ namespace Engine
         vkGetPhysicalDeviceSurfacePresentModesKHR( device->data->description->data->phDevice, window->data->surface, &c, presentModes.data() );
     }
 
-    void link::DATA_TYPE::setupCreateInfo( VkSwapchainCreateInfoKHR &createInfo, std::vector<void *> &dataPointer )
+    void link::DATA_TYPE::setupCreateInfo( VkSwapchainCreateInfoKHR &createInfo, std::vector<void *> &dataPointer, void *userPoiner )
     {
         VkSurfaceFormatKHR SurfaceFormat { properties.formats[ 0 ] };
         for ( const auto &format : properties.formats )
@@ -124,10 +125,10 @@ namespace Engine
         createInfo.compositeAlpha     = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     }
 
-    VkSwapchainCreateInfoKHR link::DATA_TYPE::setup( std::vector<void *> &dataPointer )
+    VkSwapchainCreateInfoKHR link::DATA_TYPE::setup( std::vector<void *> &dataPointer, void *userPoiner )
     {
         VkSwapchainCreateInfoKHR createInfo {};
-        setupCreateInfo( createInfo, dataPointer );
+        setupCreateInfo( createInfo, dataPointer, window->data->instance->data->userPointer );
         createInfo.sType   = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
         createInfo.surface = window->data->surface;
         if ( createInfo.minImageCount < properties.capabilities.minImageCount )
@@ -164,7 +165,7 @@ namespace Engine
         this->window = window;
         this->device = device;
         std::vector<void *> dataPointers;
-        auto createInfo { setup( dataPointers ) };
+        auto createInfo { setup( dataPointers, window->data->instance->data->userPointer ) };
         CHECK_RESULT( vkCreateSwapchainKHR( device->data->device, &createInfo, ALLOCATION_CALLBACK, &swapchain ) );
         uint32_t c;
         vkGetSwapchainImagesKHR( device->data->device, swapchain, &c, nullptr );

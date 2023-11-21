@@ -8,13 +8,14 @@ namespace Engine
 {
     namespace window
     {
-        void window::DATA_TYPE::setupNextChain( const void *&pNext, std::vector<void *> &dataPointers ) {}
-        void window::DATA_TYPE::setupFlags( VkWin32SurfaceCreateFlagsKHR flags ) {}
+        void window::DATA_TYPE::setupNextChain( const void *&pNext, std::vector<void *> &dataPointers, void *userPoiner ) {}
+        void window::DATA_TYPE::setupFlags( VkWin32SurfaceCreateFlagsKHR flags, void *userPoiner ) {}
         window::window()  = default;
         window::~window() = default;
         window::window( RESOLUTION_TYPE width, RESOLUTION_TYPE height, const char *title, instance *instance )
         {
             DEFINE_DATA_FIELD;
+            data->instance = instance;
             resolution displayRes { getDisplayResolution() };
             glfwWindowHint( GLFW_CLIENT_API, GLFW_NO_API );
             glfwWindowHint( GLFW_RESIZABLE, GLFW_FALSE );
@@ -23,9 +24,9 @@ namespace Engine
             const void *next;
             std::vector<void *> nextChainData;
             VkWin32SurfaceCreateFlagsKHR flags;
-            data->setupNextChain( next, nextChainData );
-            data->setupFlags( flags );
-            data->createSurface( instance->data->handle, &next, flags );
+            data->setupNextChain( next, nextChainData, data->instance->data->userPointer );
+            data->setupFlags( flags, data->instance->data->userPointer );
+            data->createSurface( data->instance->data->handle, &next, flags );
             cenralize();
             setWindowResolution( width, height );
         }

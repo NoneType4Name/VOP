@@ -29,6 +29,7 @@ namespace Engine
         std::vector<std::string> extensions;
         VkDebugUtilsMessengerEXT debugMessenger { nullptr };
         VkInstance handle { nullptr };
+        void *userPointer { nullptr };
         ~DATA_TYPE();
     };
 } // namespace Engine

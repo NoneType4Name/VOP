@@ -21,16 +21,16 @@ namespace Engine
     struct device::DATA_TYPE
     {
         DATA_TYPE( DeviceDescription *description );
-        virtual void setupNextChain( const void *&pNext, std::vector<void *> &dataPointers );
-        virtual void setupExtensions( std::vector<const char *> &deviceExtensions );
-        virtual void setupFeatures( VkPhysicalDeviceFeatures &features );
-        virtual void setupQueueSet( queueSet &queues, VkSurfaceKHR surface );
+        virtual void setupNextChain( const void *&pNext, std::vector<void *> &dataPointers, void *userPoiner );
+        virtual void setupExtensions( std::vector<const char *> &deviceExtensions, void *userPoiner );
+        virtual void setupFeatures( VkPhysicalDeviceFeatures &features, void *userPoiner );
+        virtual void setupQueueSet( queueSet &queues, VkSurfaceKHR surface, void *userPoiner );
         void setExtensions( std::vector<const char *> &deviceExtensions );
         bool supportExtensions();
         void init();
         VkDevice device { nullptr };
         std::vector<const char *> extensions;
-        // window::window *window { nullptr };
+        window::window *window { nullptr };
         queueSet queuesSet;
         DeviceDescription *description { nullptr };
     };

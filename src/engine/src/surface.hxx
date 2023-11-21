@@ -7,8 +7,8 @@ namespace Engine
 {
     struct window::window::DATA_TYPE
     {
-        virtual void setupNextChain( const void *&pNext, std::vector<void *> &dataPointers );
-        virtual void setupFlags( VkWin32SurfaceCreateFlagsKHR flags );
+        virtual void setupNextChain( const void *&pNext, std::vector<void *> &dataPointers, void *userPoiner );
+        virtual void setupFlags( VkWin32SurfaceCreateFlagsKHR flags, void *userPoiner );
         void createSurface( VkInstance instance, const void *pNext, VkWin32SurfaceCreateFlagsKHR flags );
         void destroySurface();
         RESOLUTION_TYPE width { 0 };
@@ -18,6 +18,6 @@ namespace Engine
         KeyEventCallBack eventCallBack { nullptr };
         GLFWwindow *window { nullptr };
         VkSurfaceKHR surface { nullptr };
-        VkInstance instance { nullptr };
+        Engine::types::instance instance { nullptr };
     };
 } // namespace Engine

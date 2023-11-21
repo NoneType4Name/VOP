@@ -24,8 +24,8 @@ namespace Engine
             VkSemaphore isRendered { nullptr };
         };
 
-        virtual void setupCreateInfo( VkSwapchainCreateInfoKHR &createInfo, std::vector<void *> &dataPointer );
-        VkSwapchainCreateInfoKHR setup( std::vector<void *> &userData );
+        virtual void setupCreateInfo( VkSwapchainCreateInfoKHR &createInfo, std::vector<void *> &dataPointer, void *userPoiner );
+        VkSwapchainCreateInfoKHR setup( std::vector<void *> &userData, void *userPoiner );
 
         window::types::window window { nullptr };
         types::device device { nullptr };

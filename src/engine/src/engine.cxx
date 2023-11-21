@@ -27,9 +27,10 @@ namespace
 namespace Engine
 {
     instance::instance() = default;
-    instance::instance( const char *appName, uint32_t appVersion )
+    instance::instance( const char *appName, uint32_t appVersion, void *userPoiner )
     {
         DEFINE_DATA_FIELD
+        data->userPointer = userPoiner;
         VkApplicationInfo ApplicationInfo {};
         ApplicationInfo.sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO;
         ApplicationInfo.engineVersion      = ENGINE_VERSION;

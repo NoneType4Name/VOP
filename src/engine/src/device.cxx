@@ -24,7 +24,7 @@ namespace Engine
     device::DATA_TYPE::DATA_TYPE( DeviceDescription *description ) :
         description { description }, queuesSet { description } {}
 
-    void device::DATA_TYPE::setupNextChain( const void *&pNext, std::vector<void *> &dataPointers )
+    void device::DATA_TYPE::setupNextChain( const void *&pNext, std::vector<void *> &dataPointers, void *userPoiner )
     {
         dataPointers.resize( 1 );
         dataPointers[ 0 ] = static_cast<void *>( new VkPhysicalDeviceDescriptorIndexingFeatures {} );
@@ -36,13 +36,13 @@ namespace Engine
         features->descriptorBindingVariableDescriptorCount  = VK_TRUE;
     }
 
-    void device::DATA_TYPE::setupExtensions( std::vector<const char *> &deviceExtensions ) {}
-    void device::DATA_TYPE::setupFeatures( VkPhysicalDeviceFeatures &features )
+    void device::DATA_TYPE::setupExtensions( std::vector<const char *> &deviceExtensions, void *userPoiner ) {}
+    void device::DATA_TYPE::setupFeatures( VkPhysicalDeviceFeatures &features, void *userPoiner )
     {
         features.samplerAnisotropy = VK_TRUE;
         features.sampleRateShading = VK_TRUE;
     }
-    void device::DATA_TYPE::setupQueueSet( queueSet &queues, VkSurfaceKHR surface )
+    void device::DATA_TYPE::setupQueueSet( queueSet &queues, VkSurfaceKHR surface, void *userPoiner )
     {
         if ( description->data->queueFamilyProperties.size() - 1 )
         {
@@ -76,10 +76,11 @@ namespace Engine
     device::device() = default;
     device::device( types::DeviceDescription description, window::types::window window )
     {
-        auto &_data = const_cast<std ::unique_ptr<DATA_TYPE> &>( data );
+        this->data->window = window;
+        auto &_data        = const_cast<std ::unique_ptr<DATA_TYPE> &>( data );
         _data.reset( new DATA_TYPE { description } );
         data->description = description;
-        data->setupQueueSet( data->queuesSet, window->data->surface );
+        data->setupQueueSet( data->queuesSet, this->data->window->data->surface, data->window->data->instance->data->userPointer );
         std::vector<VkDeviceQueueCreateInfo> QueuesCreateInfo;
         QueuesCreateInfo.reserve( data->queuesSet.getUniqueIndecies().size() );
         // std::vector<float> _priorities( data->queuesSet.getUniqueIndecies().size() );
@@ -100,14 +101,14 @@ namespace Engine
         VkPhysicalDeviceFeatures2 physicalDeviceFeatures {};
         VkDeviceCreateInfo createInfo {};
         VkPhysicalDeviceFeatures features {};
-        data->setupFeatures( features );
-        data->setupExtensions( extensions );
+        data->setupFeatures( features, data->window->data->instance->data->userPointer );
+        data->setupExtensions( extensions, data->window->data->instance->data->userPointer );
         data->setExtensions( extensions );
         assert( data->supportExtensions() );
 
         std::vector<void *> nextChainData;
         createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-        data->setupNextChain( createInfo.pNext, nextChainData );
+        data->setupNextChain( createInfo.pNext, nextChainData, data->window->data->instance->data->userPointer );
         createInfo.queueCreateInfoCount    = static_cast<uint32_t>( QueuesCreateInfo.size() );
         createInfo.pQueueCreateInfos       = QueuesCreateInfo.data();
         createInfo.pEnabledFeatures        = &features;

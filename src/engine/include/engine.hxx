@@ -7,17 +7,16 @@
 #    define STB_IMAGE_IMPLEMENTATION
 #    define RESOLUTION_TYPE uint16_t
 #    define DEFINE_HANDLE( object ) \
-        class object;               \
+        class ENGINE_EXPORT object; \
         namespace types             \
         {                           \
             typedef object *object; \
         }
-#    define DEFINE_TEMPLATE( name )             \
-        class name : Engine::render::attachment \
-        {                                       \
-          public:                               \
-            name( types::link link );           \
-        };
+#    define DEFINE_RENDER_ATTACHMENT_TEMPLATE( name ) \
+        namespace templates                           \
+        {                                             \
+            extern render::attachment name;           \
+        }
 #    include <array>
 #    include <memory>
 #    include <vector>
@@ -143,9 +142,9 @@ namespace Engine
 
           public:
             attachment();
-            attachment( types::link link );
+            attachment( DATA_TYPE data );
             ~attachment();
-            const std::unique_ptr<DATA_TYPE> data;
+            DATA_TYPE *data;
         };
         DEFINE_HANDLE( attachment );
 
@@ -156,7 +155,8 @@ namespace Engine
 
           public:
             subpass();
-            virtual void setup();
+            subpass( Engine::types::link link, std::vector<types::attachment> attachment_template );
+            virtual void setup( Engine::types::link link, std::vector<types::attachment> attachment_template, void *userPoiner );
             ~subpass();
 
             const std::unique_ptr<DATA_TYPE> data;
@@ -198,17 +198,20 @@ namespace Engine
 
       public:
         instance();
-        instance( const char *appName, uint32_t appVersion = 0 );
+        instance( const char *appName, uint32_t appVersion = 0, void *usepPointer = nullptr );
         const std::vector<types::DeviceDescription> GetDevices();
         window::types::window createWindow( RESOLUTION_TYPE width, RESOLUTION_TYPE height, std::string title );
         window::types::window createWindow( RESOLUTION_TYPE width, RESOLUTION_TYPE height, const char *title );
         types::link CreateLink( window::types::window window, types::DeviceDescription description );
-        render::types::pass CreateRenderPass( render::types::attachment subpassesLink, types::link link );
+        render::types::pass CreateRenderPass( render::types::subpassLink subpassesLink );
         ~instance();
 
         const std::unique_ptr<DATA_TYPE> data;
     };
     DEFINE_HANDLE( instance )
+    DEFINE_RENDER_ATTACHMENT_TEMPLATE( RENDER_ATTACHMENT_DEFAULT_COLOR )
+    DEFINE_RENDER_ATTACHMENT_TEMPLATE( RENDER_ATTACHMENT_DEFAULT_DEPTH )
+    DEFINE_RENDER_ATTACHMENT_TEMPLATE( RENDER_ATTACHMENT_DEFAULT_COLOR_RESOLVE )
 
     // ENGINE_EXPORT shaderID CreateShader( const char *path, const char *mainFuncName, ShaderStage stage );
     // // ENGINE_EXPORT pipelineID CreateDescriptorSet( DescriptorSetInfo info );
