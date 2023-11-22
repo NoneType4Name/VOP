@@ -10,7 +10,7 @@ endif()
 # "./${ENGINE_PLATFORM_INCLUDE}/*.cxx"
 # )
 set(ENGINE_SOURCE_FILES
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/windows/WindowsPlatform.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/buffer.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/device.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/EHI.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/engine.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/image.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/queue.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/surface.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/swapchain.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/debug.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/LayersAndExtensions.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/renderpass.cxx"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/windows/WindowsPlatform.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/buffer.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/device.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/EHI.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/engine.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/image.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/queue.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/surface.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/swapchain.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/debug.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/LayersAndExtensions.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/renderpass.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/descriptorPool.cxx"
 )
 
 add_library(engine SHARED ${ENGINE_SOURCE_FILES})

@@ -2,6 +2,7 @@
 #include <platform.hxx>
 #include <common/globals.hxx>
 #include <common/logging.hxx>
+#include <descriptorPool.hxx>
 #include <surface.hxx>
 #include <queue.hxx>
 
@@ -25,10 +26,16 @@ namespace Engine
         virtual void setupExtensions( std::vector<const char *> &deviceExtensions, void *userPoiner );
         virtual void setupFeatures( VkPhysicalDeviceFeatures &features, void *userPoiner );
         virtual void setupQueueSet( queueSet &queues, VkSurfaceKHR surface, void *userPoiner );
+        virtual void setupDescriptors( VkDevice device, std::vector<descriptorPool> &descriptorSets );
         void setExtensions( std::vector<const char *> &deviceExtensions );
         bool supportExtensions();
         void init();
+        ~DATA_TYPE();
         VkDevice device { nullptr };
+        VkCommandPool grapchicPool { nullptr };
+        VkCommandPool transferPool { nullptr };
+        VkCommandPool presentPool { nullptr };
+        std::vector<descriptorPool> descriptorPools;
         std::vector<const char *> extensions;
         window::window *window { nullptr };
         queueSet queuesSet;

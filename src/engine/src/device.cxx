@@ -22,7 +22,13 @@ namespace Engine
     }
 
     device::DATA_TYPE::DATA_TYPE( DeviceDescription *description ) :
-        description { description }, queuesSet { description } {}
+        description { description }, queuesSet { description }
+    {
+    }
+
+    device::DATA_TYPE::~DATA_TYPE()
+    {
+    }
 
     void device::DATA_TYPE::setupNextChain( const void *&pNext, std::vector<void *> &dataPointers, void *userPoiner )
     {
@@ -41,6 +47,18 @@ namespace Engine
     {
         features.samplerAnisotropy = VK_TRUE;
         features.sampleRateShading = VK_TRUE;
+    }
+    void device::DATA_TYPE::setupDescriptors( VkDevice device, std::vector<descriptorPool> &descriptorSets )
+    {
+        std::vector<std::vector<VkDescriptorSetLayoutBinding>> set { { { { 0,
+                                                                           VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                                                                           1,
+                                                                           VK_SHADER_STAGE_ALL },
+                                                                         { 1,
+                                                                           VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                                                                           1,
+                                                                           VK_SHADER_STAGE_FRAGMENT_BIT } } } };
+        descriptorSets.emplace_back( device, set );
     }
     void device::DATA_TYPE::setupQueueSet( queueSet &queues, VkSurfaceKHR surface, void *userPoiner )
     {
@@ -84,7 +102,6 @@ namespace Engine
         data->setupQueueSet( data->queuesSet, this->data->window->data->surface, data->window->data->instance->data->userPointer );
         std::vector<VkDeviceQueueCreateInfo> QueuesCreateInfo;
         QueuesCreateInfo.reserve( data->queuesSet.getUniqueIndecies().size() );
-        // std::vector<float> _priorities( data->queuesSet.getUniqueIndecies().size() );
         std::vector<std::vector<void *>> userNexChains;
         userNexChains.reserve( data->queuesSet.getUniqueIndecies().size() );
         auto d { data->queuesSet.getUniqueIndecies() };
@@ -117,10 +134,25 @@ namespace Engine
         createInfo.ppEnabledExtensionNames = data->extensions.size() ? data->extensions.data() : nullptr;
         CHECK_RESULT( vkCreateDevice( data->description->data->phDevice, &createInfo, ALLOCATION_CALLBACK, &data->device ) );
         data->queuesSet.init( data->device );
+        VkCommandPoolCreateInfo poolCI {};
+        poolCI.sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+        poolCI.flags            = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+        poolCI.queueFamilyIndex = data->queuesSet.graphic.familyIndex.value();
+        CHECK_RESULT( vkCreateCommandPool( data->device, &poolCI, ALLOCATION_CALLBACK, &data->grapchicPool ) );
+        poolCI.queueFamilyIndex = data->queuesSet.transfer.familyIndex.value();
+        CHECK_RESULT( vkCreateCommandPool( data->device, &poolCI, ALLOCATION_CALLBACK, &data->transferPool ) );
+        poolCI.queueFamilyIndex = data->queuesSet.present.familyIndex.value();
+        CHECK_RESULT( vkCreateCommandPool( data->device, &poolCI, ALLOCATION_CALLBACK, &data->presentPool ) );
+        // std::vector<descriptorPool> descriptors;
+        data->setupDescriptors( data->device, data->descriptorPools );
     }
 
     device::~device()
     {
+        vkDestroyCommandPool( data->device, data->grapchicPool, ALLOCATION_CALLBACK );
+        vkDestroyCommandPool( data->device, data->transferPool, ALLOCATION_CALLBACK );
+        vkDestroyCommandPool( data->device, data->presentPool, ALLOCATION_CALLBACK );
+        data->descriptorPools.clear();
         vkDestroyDevice( data->device, ALLOCATION_CALLBACK );
     }
 
