@@ -3,8 +3,13 @@
 
 namespace Engine
 {
+    namespace
+    {
+        std::vector<std::unique_ptr<image>> images;
+    }
     image::image( types::device device, VkExtent3D extend, const VkBufferUsageFlags iUsage, const VkImageTiling tiling, const VkMemoryPropertyFlags mProperties, VkImageAspectFlags aspect, VkFormat format, VkImageCreateInfo ImageCreateInfo )
     {
+        images.emplace_back( this );
         this->device                  = device;
         ImageCreateInfo.sType         = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
         ImageCreateInfo.imageType     = VK_IMAGE_TYPE_2D;
@@ -29,7 +34,7 @@ namespace Engine
         MemoryAllocateInfo.allocationSize  = MemoryRequirements.size;
         MemoryAllocateInfo.memoryTypeIndex = tools::requeredMemoryTypeIndex( this->device, MemoryRequirements.memoryTypeBits, mProperties );
 
-        CHECK_RESULT( vkAllocateMemory( this->device->data->device, &MemoryAllocateInfo, ALLOCATION_CALLBACK, &memory ) );
+        CHECK_RESULT( vkAllocateMemory( this->device->data->device, &MemoryAllocateInfo, ALLOCATION_CALLBACK, &memory ) ); // todo: memory allocate similar as std::vector with capacity.
         CHECK_RESULT( vkBindImageMemory( this->device->data->device, handler, memory, 0 ) );
 
         VkImageViewCreateInfo ImageViewCreateInfo {};
@@ -49,6 +54,7 @@ namespace Engine
 
     image::image( types::device device, VkExtent3D extend, VkImage image, VkImageAspectFlags aspect, VkFormat format, uint32_t mipLevels, uint32_t arrayLayers )
     {
+        images.emplace_back( this );
         this->device = device;
         handler      = image;
         VkImageViewCreateInfo ImageViewCreateInfo {};

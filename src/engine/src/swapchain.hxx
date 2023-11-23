@@ -19,7 +19,7 @@ namespace Engine
 
         struct image_T
         {
-            std::unique_ptr<image> image { nullptr };
+            image *image { nullptr };
             VkSemaphore isAvailable { nullptr };
             VkSemaphore isRendered { nullptr };
         };

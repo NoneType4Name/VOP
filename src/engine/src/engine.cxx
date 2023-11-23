@@ -77,7 +77,6 @@ namespace Engine
     window::types::window Engine::instance::createWindow( RESOLUTION_TYPE width, RESOLUTION_TYPE height, const char *title )
     {
         data->windows.push_back( std::unique_ptr<window::window> { new window::window { width, height, title, this } } );
-        data->windows.back()->cenralize();
         return data->windows.back().get();
     }
 

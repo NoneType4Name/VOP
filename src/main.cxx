@@ -39,7 +39,7 @@ namespace
 namespace Game
 {
     std::unique_ptr<Engine::instance> engine { new Engine::instance { "test", 0 } };
-    Engine::window::types::window window { engine->createWindow( 120, 120, "window#1" ) };
+    Engine::window::types::window window { engine->createWindow( 1000, 1000, "window#1" ) };
     const std::vector<Engine::types::DeviceDescription> devices = engine->GetDevices();
     Engine::types::link link { engine->CreateLink( window, devices.back() ) };
 } // namespace Game

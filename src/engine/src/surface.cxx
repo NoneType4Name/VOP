@@ -17,17 +17,27 @@ namespace Engine
             data->instance = instance;
             resolution displayRes { getDisplayResolution() };
             glfwWindowHint( GLFW_CLIENT_API, GLFW_NO_API );
-            glfwWindowHint( GLFW_RESIZABLE, GLFW_FALSE );
-            data->window = glfwCreateWindow( width ? width : displayRes.width, height ? height : displayRes.height, title, !( width || height ) ? glfwGetPrimaryMonitor() : nullptr, nullptr );
+            data->window = glfwCreateWindow( width ? width : displayRes.width, height ? height : displayRes.height, title, nullptr, nullptr );
             glfwSetWindowUserPointer( data->window, this );
+            glfwGetWindowSize( data->window, reinterpret_cast<int *>( &this->data->width ), reinterpret_cast<int *>( &this->data->height ) );
+            cenralize();
+            glfwSetWindowSizeCallback( data->window, []( GLFWwindow *wnd, int w, int h )
+                                       {auto from_wnd    = reinterpret_cast<window *>( glfwGetWindowUserPointer( wnd ) );
+                                        from_wnd->data->width = static_cast<RESOLUTION_TYPE>( w );
+                                        from_wnd->data->height = static_cast<RESOLUTION_TYPE>( h );
+                                        from_wnd->data->resizeCallBack(w, h); } );
+            glfwSetKeyCallback( data->window, []( GLFWwindow *wnd, int key, int scancode, int action, int mods )
+                                {   
+                                    auto from_wnd    = reinterpret_cast<window *>( glfwGetWindowUserPointer( wnd ) );
+                                    if (from_wnd->data->eventCallBack)
+                                        from_wnd->data->eventCallBack( key, scancode, action, mods ); } );
             const void *next { nullptr };
             std::vector<void *> nextChainData;
             VkWin32SurfaceCreateFlagsKHR flags {};
             data->setupNextChain( next, nextChainData, data->instance->data->userPointer );
             data->setupFlags( flags, data->instance->data->userPointer );
             data->createSurface( data->instance->data->handle, next, flags );
-            cenralize();
-            setWindowResolution( width, height );
+            // todo: fix bug with full screen window.
         }
         window::~window()
         {
@@ -87,20 +97,11 @@ namespace Engine
         void window::setResizeCallBack( ResizeCallback callback )
         {
             data->resizeCallBack = callback;
-            glfwSetWindowSizeCallback( data->window, []( GLFWwindow *wnd, int w, int h )
-                                       {auto from_wnd    = reinterpret_cast<window *>( glfwGetWindowUserPointer( wnd ) );
-                                        from_wnd->data->width = static_cast<RESOLUTION_TYPE>( w );
-                                        from_wnd->data->height = static_cast<RESOLUTION_TYPE>( h );
-                                        from_wnd->data->resizeCallBack(w, h); } );
         }
 
         void window::setKeyEventsCallback( KeyEventCallBack callback )
         {
             data->eventCallBack = callback;
-            glfwSetKeyCallback( data->window, []( GLFWwindow *wnd, int key, int scancode, int action, int mods )
-                                {   
-                                    auto from_wnd    = reinterpret_cast<window *>( glfwGetWindowUserPointer( wnd ) );
-                                    from_wnd->data->eventCallBack( key, scancode, action, mods ); } );
         }
 
         void window::updateEvents()

@@ -180,7 +180,7 @@ namespace Engine
         semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
         for ( size_t i { 0 }; i < imgs.size(); i++ )
         {
-            images[ i ].image.reset( new image( device, { createInfo.imageExtent.width, createInfo.imageExtent.height }, imgs[ i ], VK_IMAGE_ASPECT_COLOR_BIT, createInfo.imageFormat, 1, createInfo.imageArrayLayers ) );
+            images[ i ].image = new image( device, { createInfo.imageExtent.width, createInfo.imageExtent.height }, imgs[ i ], VK_IMAGE_ASPECT_COLOR_BIT, createInfo.imageFormat, 1, createInfo.imageArrayLayers );
             CHECK_RESULT( vkCreateSemaphore( device->data->device, &semaphoreInfo, ALLOCATION_CALLBACK, &images[ i ].isAvailable ) );
             CHECK_RESULT( vkCreateSemaphore( device->data->device, &semaphoreInfo, ALLOCATION_CALLBACK, &images[ i ].isRendered ) );
         }
@@ -192,7 +192,6 @@ namespace Engine
         {
             vkDestroySemaphore( device->data->device, img.isAvailable, ALLOCATION_CALLBACK );
             vkDestroySemaphore( device->data->device, img.isRendered, ALLOCATION_CALLBACK );
-            img.image.reset();
         }
     }
 
