@@ -19,14 +19,13 @@ namespace Engine
 
         struct image_T
         {
-            image *image { nullptr };
+            std::unique_ptr<image> image { nullptr };
             VkSemaphore isAvailable { nullptr };
             VkSemaphore isRendered { nullptr };
         };
+        void setup( types::link swapchain, VkSwapchainCreateInfoKHR &createInfo, std::vector<void *> &userData, void *userPoiner );
+        void setupImgs();
         ~DATA_TYPE();
-
-        virtual void setupCreateInfo( VkSwapchainCreateInfoKHR &createInfo, std::vector<void *> &dataPointer, void *userPoiner );
-        VkSwapchainCreateInfoKHR setup( std::vector<void *> &userData, void *userPoiner );
 
         window::types::window window { nullptr };
         types::device device { nullptr };

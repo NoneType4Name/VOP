@@ -30,7 +30,7 @@ namespace Engine
     {
     }
 
-    void device::DATA_TYPE::setupNextChain( const void *&pNext, std::vector<void *> &dataPointers, void *userPoiner )
+    void InstanceSetup::deviceNextChain( types::device device, const void *&pNext, std::vector<void *> &dataPointers, void *userPoiner )
     {
         dataPointers.resize( 1 );
         dataPointers[ 0 ] = static_cast<void *>( new VkPhysicalDeviceDescriptorIndexingFeatures {} );
@@ -42,13 +42,13 @@ namespace Engine
         features->descriptorBindingVariableDescriptorCount  = VK_TRUE;
     }
 
-    void device::DATA_TYPE::setupExtensions( std::vector<const char *> &deviceExtensions, void *userPoiner ) {}
-    void device::DATA_TYPE::setupFeatures( VkPhysicalDeviceFeatures &features, void *userPoiner )
+    void InstanceSetup::deviceExtensions( types::device device, std::vector<const char *> &deviceExtensions, void *userPoiner ) {}
+    void InstanceSetup::deviceFeatures( types::device device, VkPhysicalDeviceFeatures &features, void *userPoiner )
     {
         features.samplerAnisotropy = VK_TRUE;
         features.sampleRateShading = VK_TRUE;
     }
-    void device::DATA_TYPE::setupDescriptors( VkDevice device, std::vector<descriptorPool> &descriptorSets )
+    void InstanceSetup::deviceDescriptors( types::device device, VkDevice pDevice, std::vector<descriptorPool> &descriptorSets )
     {
         std::vector<std::vector<VkDescriptorSetLayoutBinding>> set { { { { 0,
                                                                            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
@@ -58,22 +58,22 @@ namespace Engine
                                                                            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
                                                                            1,
                                                                            VK_SHADER_STAGE_FRAGMENT_BIT } } } };
-        descriptorSets.emplace_back( device, set );
+        descriptorSets.emplace_back( pDevice, set );
     }
-    void device::DATA_TYPE::setupQueueSet( queueSet &queues, VkSurfaceKHR surface, void *userPoiner )
+    void InstanceSetup::deviceQueueSet( types::device device, queueSet &queues, VkSurfaceKHR surface, void *userPoiner )
     {
-        if ( description->data->queueFamilyProperties.size() - 1 )
+        if ( device->data->description->data->queueFamilyProperties.size() - 1 )
         {
-            for ( uint32_t i { 0 }; i < description->data->queueFamilyProperties.size(); i++ )
+            for ( uint32_t i { 0 }; i < device->data->description->data->queueFamilyProperties.size(); i++ )
             {
                 VkBool32 presentSupport { false };
-                vkGetPhysicalDeviceSurfaceSupportKHR( description->data->phDevice, i, surface, &presentSupport );
-                if ( !queuesSet.graphic.familyIndex.has_value() && description->data->queueFamilyProperties[ i ].queueFlags & VK_QUEUE_GRAPHICS_BIT )
-                    queuesSet.graphic = { i, 1.f };
-                if ( !queuesSet.present.familyIndex.has_value() && presentSupport )
-                    queuesSet.present = { i, 1.f };
-                else if ( !queuesSet.transfer.familyIndex.has_value() && description->data->queueFamilyProperties[ i ].queueFlags & VK_QUEUE_TRANSFER_BIT )
-                    queuesSet.transfer = { i, 1.f };
+                vkGetPhysicalDeviceSurfaceSupportKHR( device->data->description->data->phDevice, i, surface, &presentSupport );
+                if ( !device->data->queuesSet.graphic.familyIndex.has_value() && device->data->description->data->queueFamilyProperties[ i ].queueFlags & VK_QUEUE_GRAPHICS_BIT )
+                    device->data->queuesSet.graphic = { i, 1.f };
+                if ( !device->data->queuesSet.present.familyIndex.has_value() && presentSupport )
+                    device->data->queuesSet.present = { i, 1.f };
+                else if ( !device->data->queuesSet.transfer.familyIndex.has_value() && device->data->description->data->queueFamilyProperties[ i ].queueFlags & VK_QUEUE_TRANSFER_BIT )
+                    device->data->queuesSet.transfer = { i, 1.f };
                 // else if ( !queuesSet.compute.familyIndex.has_value() && description.data->queueFamilyProperties[ i ].queueFlags & VK_QUEUE_COMPUTE_BIT )
                 //     queuesSet.compute = i;
                 else
@@ -83,10 +83,10 @@ namespace Engine
         else
         {
             VkBool32 presentSupport { false };
-            vkGetPhysicalDeviceSurfaceSupportKHR( description->data->phDevice, 0, surface, &presentSupport );
-            if ( description->data->queueFamilyProperties[ 0 ].queueFlags & ( VK_QUEUE_TRANSFER_BIT | VK_QUEUE_GRAPHICS_BIT ) && presentSupport )
+            vkGetPhysicalDeviceSurfaceSupportKHR( device->data->description->data->phDevice, 0, surface, &presentSupport );
+            if ( device->data->description->data->queueFamilyProperties[ 0 ].queueFlags & ( VK_QUEUE_TRANSFER_BIT | VK_QUEUE_GRAPHICS_BIT ) && presentSupport )
             {
-                queuesSet = { { 0, 0, 1.f }, { 0, 0, 1.f }, { 0, 0, 1.f } };
+                device->data->queuesSet = { { 0, 0, 1.f }, { 0, 0, 1.f }, { 0, 0, 1.f } };
             }
         }
     }
@@ -99,7 +99,7 @@ namespace Engine
 
         this->data->window = window;
         data->description  = description;
-        data->setupQueueSet( data->queuesSet, this->data->window->data->surface, data->window->data->instance->data->userPointer );
+        data->window->data->instance->data->setup->deviceQueueSet( this, data->queuesSet, this->data->window->data->surface, data->window->data->instance->data->userPointer );
         std::vector<VkDeviceQueueCreateInfo> QueuesCreateInfo;
         QueuesCreateInfo.reserve( data->queuesSet.getUniqueIndecies().size() );
         std::vector<std::vector<void *>> userNexChains;
@@ -109,8 +109,8 @@ namespace Engine
         {
             userNexChains.push_back( {} );
             QueuesCreateInfo.push_back( { VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO } );
-            data->queuesSet.setupNextChain( QueuesCreateInfo.back().pNext, userNexChains.back() );
-            data->queuesSet.setupFlags( QueuesCreateInfo.back().flags );
+            data->window->data->instance->data->setup->queueSetNextChain( &data->queuesSet, QueuesCreateInfo.back().pNext, userNexChains.back() );
+            data->window->data->instance->data->setup->queueSetFlags( &data->queuesSet, QueuesCreateInfo.back().flags );
             QueuesCreateInfo.back().queueFamilyIndex = index.first;
             QueuesCreateInfo.back().queueCount       = index.second.second.size();
             QueuesCreateInfo.back().pQueuePriorities = index.second.second.data();
@@ -119,14 +119,14 @@ namespace Engine
         VkPhysicalDeviceFeatures2 physicalDeviceFeatures {};
         VkDeviceCreateInfo createInfo {};
         VkPhysicalDeviceFeatures features {};
-        data->setupFeatures( features, data->window->data->instance->data->userPointer );
-        data->setupExtensions( extensions, data->window->data->instance->data->userPointer );
+        data->window->data->instance->data->setup->deviceFeatures( this, features, data->window->data->instance->data->userPointer );
+        data->window->data->instance->data->setup->deviceExtensions( this, extensions, data->window->data->instance->data->userPointer );
         data->setExtensions( extensions );
         assert( data->supportExtensions() );
 
         std::vector<void *> nextChainData;
         createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-        data->setupNextChain( createInfo.pNext, nextChainData, data->window->data->instance->data->userPointer );
+        data->window->data->instance->data->setup->deviceNextChain( this, createInfo.pNext, nextChainData, data->window->data->instance->data->userPointer );
         createInfo.queueCreateInfoCount    = static_cast<uint32_t>( QueuesCreateInfo.size() );
         createInfo.pQueueCreateInfos       = QueuesCreateInfo.data();
         createInfo.pEnabledFeatures        = &features;
@@ -144,7 +144,7 @@ namespace Engine
         poolCI.queueFamilyIndex = data->queuesSet.present.familyIndex.value();
         CHECK_RESULT( vkCreateCommandPool( data->device, &poolCI, ALLOCATION_CALLBACK, &data->presentPool ) );
         // std::vector<descriptorPool> descriptors;
-        data->setupDescriptors( data->device, data->descriptorPools );
+        data->window->data->instance->data->setup->deviceDescriptors( this, data->device, data->descriptorPools );
     }
 
     device::~device()

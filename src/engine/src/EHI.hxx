@@ -1,10 +1,9 @@
 #pragma once
-#include <common/globals.hxx>
-#include <common/logging.hxx>
 #include <platform.hxx>
 #include <device.hxx>
 #include <image.hxx>
 #include <queue.hxx>
+#include <setup_engine.hxx>
 
 #define ENGINE_VERSION VK_MAKE_VERSION( 0, 0, 1 )
 
@@ -17,9 +16,6 @@ namespace Engine
         void destroyDebugLayerCallback();
         void setLayers( std::vector<const char *> layers );
         void setExtensions( std::vector<const char *> extrensions );
-        virtual void setupExtensions( std::vector<const char *> &rExtensions );
-        virtual void setupLayers( std::vector<const char *> &rLayers );
-        virtual void setupNextChain( const void *&pNext, std::vector<void *> &dataPointers );
         bool supportLayers();
         bool supportExtensions();
         std::vector<std::unique_ptr<window::window>> windows;
@@ -31,6 +27,7 @@ namespace Engine
         std::vector<const char *> extensions;
         VkDebugUtilsMessengerEXT debugMessenger { nullptr };
         VkInstance handle { nullptr };
+        std::unique_ptr<InstanceSetup> setup { nullptr };
         void *userPointer { nullptr };
         ~DATA_TYPE();
     };

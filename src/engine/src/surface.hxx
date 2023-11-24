@@ -7,8 +7,6 @@ namespace Engine
 {
     struct window::window::DATA_TYPE
     {
-        virtual void setupNextChain( const void *&pNext, std::vector<void *> &dataPointers, void *userPoiner );
-        virtual void setupFlags( VkWin32SurfaceCreateFlagsKHR flags, void *userPoiner );
         void createSurface( VkInstance instance, const void *pNext, VkWin32SurfaceCreateFlagsKHR flags );
         void destroySurface( VkInstance instance );
         RESOLUTION_TYPE width { 0 };

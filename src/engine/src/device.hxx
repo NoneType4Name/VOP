@@ -22,14 +22,8 @@ namespace Engine
     struct device::DATA_TYPE
     {
         DATA_TYPE( DeviceDescription *description );
-        virtual void setupNextChain( const void *&pNext, std::vector<void *> &dataPointers, void *userPoiner );
-        virtual void setupExtensions( std::vector<const char *> &deviceExtensions, void *userPoiner );
-        virtual void setupFeatures( VkPhysicalDeviceFeatures &features, void *userPoiner );
-        virtual void setupQueueSet( queueSet &queues, VkSurfaceKHR surface, void *userPoiner );
-        virtual void setupDescriptors( VkDevice device, std::vector<descriptorPool> &descriptorSets );
         void setExtensions( std::vector<const char *> &deviceExtensions );
         bool supportExtensions();
-        void init();
         ~DATA_TYPE();
         VkDevice device { nullptr };
         VkCommandPool grapchicPool { nullptr };

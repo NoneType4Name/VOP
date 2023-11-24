@@ -35,8 +35,6 @@ namespace Engine
         // Engine::queue compute { this };
         queueSet();
         queueSet( DeviceDescription *device );
-        virtual void setupNextChain( const void *&pNext, std::vector<void *> &dataPointers );
-        virtual void setupFlags( VkDeviceQueueCreateFlags &flag );
         void init( VkDevice device );
         const size_t count() const;
         void operator=( std::initializer_list<std::pair<uint32_t, float>> familyPriority );

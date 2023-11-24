@@ -6,7 +6,7 @@
 #    define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_CRITICAL
 #endif
 
-#include <engine.hxx>
+#include <setup_engine.hxx>
 #include <spdlog/spdlog.h>
 #include <iostream>
 
@@ -38,6 +38,9 @@ namespace
 
 namespace Game
 {
+    // class I : Engine::InstanceSetup
+    // {
+    // };
     std::unique_ptr<Engine::instance> engine { new Engine::instance { "test", 0 } };
     Engine::window::types::window window { engine->createWindow( 1000, 1000, "window#1" ) };
     const std::vector<Engine::types::DeviceDescription> devices = engine->GetDevices();

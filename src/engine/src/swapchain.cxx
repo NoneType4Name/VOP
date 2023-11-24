@@ -85,6 +85,17 @@ namespace Engine
     // }
 
     link::link() = default;
+    link::link( window::types::window window, types::device device ) :
+        data { new DATA_TYPE { window, device } }
+    {
+        std::vector<void *> pData;
+        std::vector<void *> pData1;
+        data->window->data->instance->data->setup->swapchain( this, data->createInfo, pData1, data->window->data->instance->data->userPointer );
+        data->setup( this, data->createInfo, pData, data->window->data->instance->data->userPointer );
+        CHECK_RESULT( vkCreateSwapchainKHR( data->device->data->device, &data->createInfo, ALLOCATION_CALLBACK, &data->swapchain ) );
+        data->setupImgs();
+    }
+
     link::~link()
     {
         vkDestroySwapchainKHR( data->device->data->device, data->swapchain, ALLOCATION_CALLBACK );
@@ -103,36 +114,34 @@ namespace Engine
         vkGetPhysicalDeviceSurfacePresentModesKHR( device->data->description->data->phDevice, window->data->surface, &c, presentModes.data() );
     }
 
-    void link::DATA_TYPE::setupCreateInfo( VkSwapchainCreateInfoKHR &createInfo, std::vector<void *> &dataPointer, void *userPoiner )
+    void InstanceSetup::swapchain( types::link swapchain, VkSwapchainCreateInfoKHR &createInfo, std::vector<void *> &dataPointer, void *userPoiner )
     {
-        VkSurfaceFormatKHR SurfaceFormat { properties.formats[ 0 ] };
-        for ( const auto &format : properties.formats )
+        VkSurfaceFormatKHR SurfaceFormat { swapchain->data->properties.formats[ 0 ] };
+        for ( const auto &format : swapchain->data->properties.formats )
         {
             if ( format.format == VK_FORMAT_B8G8R8A8_SRGB && format.colorSpace == VK_COLORSPACE_SRGB_NONLINEAR_KHR ) SurfaceFormat = format;
         }
 
-        presentMode = VK_PRESENT_MODE_FIFO_KHR;
-        for ( const auto &mode : properties.presentModes )
+        swapchain->data->presentMode = VK_PRESENT_MODE_FIFO_KHR;
+        for ( const auto &mode : swapchain->data->properties.presentModes )
         {
-            if ( mode == VK_PRESENT_MODE_MAILBOX_KHR ) presentMode = mode;
+            if ( mode == VK_PRESENT_MODE_MAILBOX_KHR ) swapchain->data->presentMode = mode;
         }
         int width, height;
-        glfwGetFramebufferSize( window->data->window, &width, &height );
+        glfwGetFramebufferSize( swapchain->data->window->data->window, &width, &height );
         createInfo.imageUsage         = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
         createInfo.imageFormat        = SurfaceFormat.format;
-        createInfo.imageExtent.width  = std::clamp( static_cast<uint32_t>( width ), properties.capabilities.minImageExtent.width, properties.capabilities.maxImageExtent.width );
-        createInfo.imageExtent.height = std::clamp( static_cast<uint32_t>( height ), properties.capabilities.minImageExtent.height, properties.capabilities.maxImageExtent.height );
-        createInfo.minImageCount      = properties.capabilities.minImageCount;
+        createInfo.imageExtent.width  = std::clamp( static_cast<uint32_t>( width ), swapchain->data->properties.capabilities.minImageExtent.width, swapchain->data->properties.capabilities.maxImageExtent.width );
+        createInfo.imageExtent.height = std::clamp( static_cast<uint32_t>( height ), swapchain->data->properties.capabilities.minImageExtent.height, swapchain->data->properties.capabilities.maxImageExtent.height );
+        createInfo.minImageCount      = swapchain->data->properties.capabilities.minImageCount;
         createInfo.clipped            = VK_FALSE;
-        createInfo.oldSwapchain       = swapchain;
-        createInfo.preTransform       = properties.capabilities.currentTransform;
+        createInfo.oldSwapchain       = swapchain->data->swapchain;
+        createInfo.preTransform       = swapchain->data->properties.capabilities.currentTransform;
         createInfo.compositeAlpha     = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     }
 
-    VkSwapchainCreateInfoKHR link::DATA_TYPE::setup( std::vector<void *> &dataPointer, void *userPoiner )
+    void link::DATA_TYPE::setup( types::link link, VkSwapchainCreateInfoKHR &createInfo, std::vector<void *> &dataPointer, void *userPoiner )
     {
-        VkSwapchainCreateInfoKHR createInfo {};
-        setupCreateInfo( createInfo, dataPointer, window->data->instance->data->userPointer );
         createInfo.sType   = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
         createInfo.surface = window->data->surface;
         if ( createInfo.minImageCount < properties.capabilities.minImageCount )
@@ -160,17 +169,10 @@ namespace Engine
         {
             createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
         }
-        return createInfo;
     }
 
-    link::DATA_TYPE::DATA_TYPE( window::types::window window, types::device device ) :
-        properties( window, device )
+    void link::DATA_TYPE::setupImgs()
     {
-        this->window = window;
-        this->device = device;
-        std::vector<void *> dataPointers;
-        auto createInfo { setup( dataPointers, window->data->instance->data->userPointer ) };
-        CHECK_RESULT( vkCreateSwapchainKHR( device->data->device, &createInfo, ALLOCATION_CALLBACK, &swapchain ) );
         uint32_t c;
         vkGetSwapchainImagesKHR( device->data->device, swapchain, &c, nullptr );
         std::vector<VkImage> imgs { c };
@@ -180,10 +182,17 @@ namespace Engine
         semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
         for ( size_t i { 0 }; i < imgs.size(); i++ )
         {
-            images[ i ].image = new image( device, { createInfo.imageExtent.width, createInfo.imageExtent.height }, imgs[ i ], VK_IMAGE_ASPECT_COLOR_BIT, createInfo.imageFormat, 1, createInfo.imageArrayLayers );
+            images[ i ].image.reset( new image( device, { createInfo.imageExtent.width, createInfo.imageExtent.height }, imgs[ i ], VK_IMAGE_ASPECT_COLOR_BIT, createInfo.imageFormat, 1, createInfo.imageArrayLayers ) );
             CHECK_RESULT( vkCreateSemaphore( device->data->device, &semaphoreInfo, ALLOCATION_CALLBACK, &images[ i ].isAvailable ) );
             CHECK_RESULT( vkCreateSemaphore( device->data->device, &semaphoreInfo, ALLOCATION_CALLBACK, &images[ i ].isRendered ) );
         }
+    }
+
+    link::DATA_TYPE::DATA_TYPE( window::types::window window, types::device device ) :
+        properties( window, device )
+    {
+        this->window = window;
+        this->device = device;
     }
 
     link::DATA_TYPE::~DATA_TYPE()

@@ -29,6 +29,7 @@
 
 namespace Engine
 {
+    class InstanceSetup;
     class instance;
     namespace window
     {
@@ -124,6 +125,7 @@ namespace Engine
     {
       private:
         class DATA_TYPE;
+        link( window::types::window window, types::device device );
         friend instance;
 
       public:
@@ -147,7 +149,6 @@ namespace Engine
         const std::unique_ptr<DATA_TYPE> data;
     };
     DEFINE_HANDLE( pass );
-
     class ENGINE_EXPORT instance
     {
       private:
@@ -155,7 +156,7 @@ namespace Engine
 
       public:
         instance();
-        instance( const char *appName, uint32_t appVersion = 0, void *usepPointer = nullptr );
+        instance( const char *appName, uint32_t appVersion = 0, InstanceSetup *setup = nullptr, void *usepPointer = nullptr );
         const std::vector<types::DeviceDescription> GetDevices();
         window::types::window createWindow( RESOLUTION_TYPE width, RESOLUTION_TYPE height, std::string title );
         window::types::window createWindow( RESOLUTION_TYPE width, RESOLUTION_TYPE height, const char *title );

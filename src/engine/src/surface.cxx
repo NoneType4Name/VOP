@@ -6,10 +6,11 @@
 
 namespace Engine
 {
+    void InstanceSetup::surfaceNextChain( window::types::window window, const void *&pNext, std::vector<void *> &dataPointers, void *userPoiner ) {}
+    void InstanceSetup::surfaceFlags( window::types::window window, VkWin32SurfaceCreateFlagsKHR flags, void *userPoiner ) {}
+
     namespace window
     {
-        void window::DATA_TYPE::setupNextChain( const void *&pNext, std::vector<void *> &dataPointers, void *userPoiner ) {}
-        void window::DATA_TYPE::setupFlags( VkWin32SurfaceCreateFlagsKHR flags, void *userPoiner ) {}
         window::window() = default;
         window::window( RESOLUTION_TYPE width, RESOLUTION_TYPE height, const char *title, instance *instance )
         {
@@ -34,8 +35,8 @@ namespace Engine
             const void *next { nullptr };
             std::vector<void *> nextChainData;
             VkWin32SurfaceCreateFlagsKHR flags {};
-            data->setupNextChain( next, nextChainData, data->instance->data->userPointer );
-            data->setupFlags( flags, data->instance->data->userPointer );
+            data->instance->data->setup->surfaceNextChain( this, next, nextChainData, data->instance->data->userPointer );
+            data->instance->data->setup->surfaceFlags( this, flags, data->instance->data->userPointer );
             data->createSurface( data->instance->data->handle, next, flags );
             // todo: fix bug with full screen window.
         }

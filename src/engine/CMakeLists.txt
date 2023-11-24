@@ -9,6 +9,7 @@ endif()
 # "./src/*.cxx"
 # "./${ENGINE_PLATFORM_INCLUDE}/*.cxx"
 # )
+option(ENGINE_MODIFY_SUPPORT ON "Enable support modify engine behavior.")
 set(ENGINE_SOURCE_FILES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/windows/WindowsPlatform.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/buffer.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/device.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/EHI.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/engine.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/image.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/queue.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/surface.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/swapchain.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/debug.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/LayersAndExtensions.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/renderpass.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/descriptorPool.cxx"
 )
@@ -30,6 +31,12 @@ target_link_libraries(engine Vulkan::Vulkan)
 target_link_libraries(engine spdlog::spdlog)
 target_link_libraries(engine tinyobjloader::tinyobjloader)
 target_link_libraries(engine glm::glm)
+if (ENGINE_MODIFY_SUPPORT)
+    target_include_directories(
+        engine
+        PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>"
+        PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+    )
 target_include_directories(
     engine
     PRIVATE "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>"

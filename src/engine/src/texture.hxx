@@ -15,7 +15,7 @@ namespace Engine
         texture() = default;
         texture( const char *path );
         ~texture();
-        virtual void generateMipMap( commandBuffer &cmdBuff );
+        // virtual void generateMipMap( commandBuffer &cmdBuff );
         void init();
         const textureID getID() const;
         const descriptorSetID getDescriptorSetID() const;

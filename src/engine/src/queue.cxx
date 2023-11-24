@@ -3,6 +3,8 @@
 
 namespace Engine
 {
+    void InstanceSetup::queueSetNextChain( queueSet *queueSet, const void *&pNext, std::vector<void *> &dataPointers ) {}
+    void InstanceSetup::queueSetFlags( queueSet *queueSet, VkDeviceQueueCreateFlags &flag ) {}
     queue::queue( queueSet *pSet )
     {
         set = pSet;
@@ -107,8 +109,7 @@ namespace Engine
         }
         return _unique;
     }
-    void queueSet::setupNextChain( const void *&pNext, std::vector<void *> &dataPointers ) {}
-    void queueSet::setupFlags( VkDeviceQueueCreateFlags &flag ) {}
+
     const size_t queueSet::count() const
     {
         return ( ( sizeof( *this ) - sizeof( _unique ) - sizeof( void * ) ) / sizeof( queue ) );

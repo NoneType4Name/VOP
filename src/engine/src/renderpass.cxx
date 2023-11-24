@@ -5,7 +5,7 @@
 
 namespace Engine
 {
-    void pass::DATA_TYPE::setup( types::link link, VkRenderPassCreateInfo &createInfo, std::vector<void *> &dataPointer, void *userPointer )
+    void InstanceSetup::renderpass( types::pass renderpass, types::link link, VkRenderPassCreateInfo &createInfo, std::vector<void *> &dataPointer, void *userPointer )
     {
         dataPointer.resize( 8, {} );
         uint8_t i { 0 };
@@ -82,7 +82,7 @@ namespace Engine
         data->link = link;
         std::vector<void *> pData;
         VkRenderPassCreateInfo createInfo {};
-        data->setup( data->link, createInfo, pData, data->link->data->window->data->instance->data->userPointer );
+        data->link->data->window->data->instance->data->setup->renderpass( this, data->link, createInfo, pData, data->link->data->window->data->instance->data->userPointer );
         createInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
         CHECK_RESULT( vkCreateRenderPass( link->data->device->data->device, &createInfo, ALLOCATION_CALLBACK, &data->handle ) );
     }
