@@ -1,5 +1,5 @@
 #pragma once
-#if defined( PLATFORM_WINDOWS )
+#if defined( ENGINE_PLATFORM_WINDOWS )
 #    include "windows/PlatformDefines.hxx"
 // #elif defined( PLATFORM_LINUX )
 // #    include "linux/VulkanPlatformDefines.h"
