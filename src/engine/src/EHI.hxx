@@ -1,11 +1,13 @@
 #pragma once
-#include <platform.hxx>
-#include <device.hxx>
-#include <image.hxx>
-#include <queue.hxx>
-#include <engine_setup.hxx>
+#ifndef EHI_HXX
+#    define EHI_HXX
+#    include <platform.hxx>
+#    include <device.hxx>
+#    include <image.hxx>
+#    include <queue.hxx>
+#    include <engine_setup.hxx>
 
-#define ENGINE_VERSION VK_MAKE_VERSION( 0, 0, 1 )
+#    define ENGINE_VERSION VK_MAKE_VERSION( 0, 0, 1 )
 
 namespace Engine
 {
@@ -27,8 +29,10 @@ namespace Engine
         std::vector<const char *> extensions;
         VkDebugUtilsMessengerEXT debugMessenger { nullptr };
         VkInstance handle { nullptr };
-        std::unique_ptr<InstanceSetup> setup { nullptr };
+        InstanceSetup *setup { nullptr };
+        std::unique_ptr<InstanceSetup> temp_setup { nullptr };
         void *userPointer { nullptr };
         ~DATA_TYPE();
     };
 } // namespace Engine
+#endif

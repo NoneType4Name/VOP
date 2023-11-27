@@ -26,6 +26,8 @@ namespace
 
 namespace Engine
 {
+    InstanceSetup::InstanceSetup()  = default;
+    InstanceSetup::~InstanceSetup() = default;
     void InstanceSetup::instanceExtensions( types::instance instance, std::vector<const char *> &rExtensions ) {}
     void InstanceSetup::instanceLayers( types::instance instance, std::vector<const char *> &rLayers ) {}
     void InstanceSetup::instanceNextChain( types::instance instance, const void *&pNext, std::vector<void *> &dataPointers )
@@ -47,9 +49,12 @@ namespace Engine
     instance::instance( const char *appName, uint32_t appVersion, InstanceSetup *setup, void *userPoiner )
     {
         DEFINE_DATA_FIELD
-        data->setup.reset( setup );
+        data->setup = setup;
         if ( !setup )
-            data->setup.reset( new InstanceSetup );
+        {
+            data->temp_setup.reset( new InstanceSetup );
+            data->setup = data->temp_setup.get();
+        }
         data->userPointer = userPoiner;
         VkApplicationInfo ApplicationInfo {};
         ApplicationInfo.sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO;

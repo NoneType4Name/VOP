@@ -1,11 +1,13 @@
 #pragma once
-#include <common/globals.hxx>
-#include <common/logging.hxx>
-#include <platform.hxx>
-#include <engine.hxx>
-#include <image.hxx>
-#include <descriptorSet.hxx>
-#include <buffer.hxx>
+#ifndef TEXTURE_HXX
+#    define TEXTURE_HXX
+#    include <common/globals.hxx>
+#    include <common/logging.hxx>
+#    include <platform.hxx>
+#    include <engine.hxx>
+#    include <image.hxx>
+#    include <descriptorSet.hxx>
+#    include <buffer.hxx>
 
 namespace Engine
 {
@@ -35,3 +37,4 @@ namespace Engine
         imageID img { 0 };
     };
 } // namespace Engine
+#endif

@@ -1,9 +1,11 @@
 #pragma once
-#include <common/globals.hxx>
-#include <common/logging.hxx>
-#include <platform.hxx>
-#include <shader.hxx>
-#include <descriptorSet.hxx>
+#ifndef PIPELINE_HXX
+#    define PIPELINE_HXX
+#    include <common/globals.hxx>
+#    include <common/logging.hxx>
+#    include <platform.hxx>
+#    include <shader.hxx>
+#    include <descriptorSet.hxx>
 
 namespace Engine
 {
@@ -33,3 +35,4 @@ namespace Engine
         void destroyPipelines();
     } // namespace tools
 } // namespace Engine
+#endif

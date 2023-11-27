@@ -1,8 +1,10 @@
 #pragma once
-#include <common/globals.hxx>
-#include <common/logging.hxx>
-#include <platform.hxx>
-#include <queue.hxx>
+#ifndef BUFFER_HXX
+#    define BUFFER_HXX
+#    include <common/globals.hxx>
+#    include <common/logging.hxx>
+#    include <platform.hxx>
+#    include <queue.hxx>
 
 namespace Engine
 {
@@ -39,3 +41,4 @@ namespace Engine
         bool began { 0 };
     };
 } // namespace Engine
+#endif

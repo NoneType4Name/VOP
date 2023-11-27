@@ -1,3 +1,6 @@
 #pragma once
-#include <common/globals.hxx>
-#include <spdlog/spdlog.h>
+#ifndef LOGGING_HXX
+#    define LOGGING_HXX
+#    include <common/globals.hxx>
+#    include <spdlog/spdlog.h>
+#endif

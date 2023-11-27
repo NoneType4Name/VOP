@@ -1,7 +1,9 @@
 #pragma once
-#include <common/globals.hxx>
-#include <common/logging.hxx>
-#include <platform.hxx>
+#ifndef DESCRIPTOR_POOL_HXX
+#    define DESCRIPTOR_POOL_HXX
+#    include <common/globals.hxx>
+#    include <common/logging.hxx>
+#    include <platform.hxx>
 
 namespace Engine
 {
@@ -17,3 +19,4 @@ namespace Engine
         VkDescriptorPool handle { nullptr };
     };
 } // namespace Engine
+#endif

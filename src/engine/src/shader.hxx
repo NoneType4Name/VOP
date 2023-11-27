@@ -1,8 +1,10 @@
 #pragma once
-#include <common/globals.hxx>
-#include <common/logging.hxx>
-#include <platform.hxx>
-#include <engine.hxx>
+#ifndef SHADER_HXX
+#    define SHADER_HXX
+#    include <common/globals.hxx>
+#    include <common/logging.hxx>
+#    include <platform.hxx>
+#    include <engine.hxx>
 
 namespace Engine
 {
@@ -20,8 +22,8 @@ namespace Engine
 
           private:
             shaderID id;
-            VkPipelineShaderStageCreateInfo info{ VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO };
-            const char *path{ nullptr };
+            VkPipelineShaderStageCreateInfo info { VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO };
+            const char *path { nullptr };
         };
 
         shader *getShader( shaderID id );
@@ -29,3 +31,4 @@ namespace Engine
         void destroyShaderModules();
     } // namespace tools
 } // namespace Engine
+#endif

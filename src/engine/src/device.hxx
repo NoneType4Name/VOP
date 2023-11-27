@@ -1,10 +1,12 @@
 #pragma once
-#include <platform.hxx>
-#include <common/globals.hxx>
-#include <common/logging.hxx>
-#include <descriptorPool.hxx>
-#include <surface.hxx>
-#include <queue.hxx>
+#ifndef DEVICE_HXX
+#    define DEVICE_HXX
+#    include <platform.hxx>
+#    include <common/globals.hxx>
+#    include <common/logging.hxx>
+#    include <descriptorPool.hxx>
+#    include <surface.hxx>
+#    include <queue.hxx>
 
 namespace Engine
 {
@@ -42,3 +44,4 @@ namespace Engine
         uint32_t requeredMemoryTypeIndex( types::device device, uint32_t type, VkMemoryPropertyFlags properties );
     } // namespace tools
 } // namespace Engine
+#endif

@@ -1,7 +1,9 @@
 #pragma once
-#include <common/globals.hxx>
-#include <common/logging.hxx>
-#include <platform.hxx>
+#ifndef QUEUE_HXX
+#    define QUEUE_HXX
+#    include <common/globals.hxx>
+#    include <common/logging.hxx>
+#    include <platform.hxx>
 
 namespace Engine
 {
@@ -53,3 +55,4 @@ namespace Engine
     VkDeviceQueueCreateInfo queueCreateInfo( uint32_t index, uint32_t count, const float *priority );
     queueSet getIndecies( VkPhysicalDevice device );
 } // namespace Engine
+#endif

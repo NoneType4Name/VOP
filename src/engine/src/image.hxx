@@ -1,7 +1,9 @@
 #pragma once
-#include <common/globals.hxx>
-#include <common/logging.hxx>
-#include <platform.hxx>
+#ifndef IMAGE_HXX
+#    define IMAGE_HXX
+#    include <common/globals.hxx>
+#    include <common/logging.hxx>
+#    include <platform.hxx>
 
 namespace Engine
 {
@@ -22,3 +24,4 @@ namespace Engine
     {
     } // namespace tools
 } // namespace Engine
+#endif

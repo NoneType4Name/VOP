@@ -1,7 +1,9 @@
 #pragma once
-#include <common/globals.hxx>
-#include <common/logging.hxx>
-#include <platform.hxx>
+#ifndef SURFACE_HXX
+#    define SURFACE_HXX
+#    include <common/globals.hxx>
+#    include <common/logging.hxx>
+#    include <platform.hxx>
 
 namespace Engine
 {
@@ -19,3 +21,4 @@ namespace Engine
         Engine::types::instance instance { nullptr };
     };
 } // namespace Engine
+#endif

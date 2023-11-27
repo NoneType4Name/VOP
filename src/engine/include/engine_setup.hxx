@@ -10,6 +10,8 @@ namespace Engine
     class ENGINE_EXPORT InstanceSetup
     {
       public:
+        InstanceSetup();
+        ~InstanceSetup();
         virtual void instanceLayers( types::instance instance, std::vector<const char *> &rLayers );
         virtual void instanceExtensions( types::instance instance, std::vector<const char *> &rExtensions );
         virtual void instanceNextChain( types::instance instace, const void *&pNext, std::vector<void *> &dataPointers );

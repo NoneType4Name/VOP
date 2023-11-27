@@ -44,9 +44,9 @@ namespace Game
         {
         }
     };
-    I test;
+    std::unique_ptr<I> test;
 
-    std::unique_ptr<Engine::instance> engine { new Engine::instance { "test", 0, &test } };
+    std::unique_ptr<Engine::instance> engine { new Engine::instance { "test", 0, test.get() } };
     Engine::window::types::window window { engine->createWindow( 1000, 1000, "window#1" ) };
     const std::vector<Engine::types::DeviceDescription> devices = engine->GetDevices();
     Engine::types::link link { engine->CreateLink( window, devices.back() ) };
