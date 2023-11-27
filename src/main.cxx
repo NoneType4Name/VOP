@@ -6,7 +6,7 @@
 #    define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_CRITICAL
 #endif
 
-#include <setup_engine.hxx>
+#include <engine_setup.hxx>
 #include <spdlog/spdlog.h>
 #include <iostream>
 
@@ -38,10 +38,15 @@ namespace
 
 namespace Game
 {
-    // class I : Engine::InstanceSetup
-    // {
-    // };
-    std::unique_ptr<Engine::instance> engine { new Engine::instance { "test", 0 } };
+    struct I : Engine::InstanceSetup
+    {
+        void instanceExtensions( Engine::types::instance instance, std::vector<const char *> &rExtensions ) override
+        {
+        }
+    };
+    I test;
+
+    std::unique_ptr<Engine::instance> engine { new Engine::instance { "test", 0, &test } };
     Engine::window::types::window window { engine->createWindow( 1000, 1000, "window#1" ) };
     const std::vector<Engine::types::DeviceDescription> devices = engine->GetDevices();
     Engine::types::link link { engine->CreateLink( window, devices.back() ) };

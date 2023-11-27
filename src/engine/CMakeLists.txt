@@ -16,7 +16,10 @@ set(ENGINE_SOURCE_FILES
 add_library(engine SHARED ${ENGINE_SOURCE_FILES} )
 add_library(engine::engine ALIAS engine)
 if (WIN32)
-    add_compile_definitions(engine INTERFACE -DENGINE_PLATFORM_WINDOWS)
+    set_target_properties(engine PROPERTIES 
+                            INTERFACE_COMPILE_DEFINITIONS -DENGINE_PLATFORM_WINDOWS
+                            COMPILE_DEFINITIONS -DENGINE_PLATFORM_WINDOWS
+    )
 endif()
 
 find_package(Vulkan)
@@ -48,5 +51,4 @@ else()
 endif()
 
 generate_export_header(engine EXPORT_FILE_NAME ${CMAKE_CURRENT_SOURCE_DIR}/include/engine_export.hxx)
-target_compile_definitions(
-    engine PUBLIC "$<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:engine_STATIC_DEFINE>")
+target_compile_definitions(engine PUBLIC "$<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:engine_STATIC_DEFINE>")

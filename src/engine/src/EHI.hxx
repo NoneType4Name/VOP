@@ -3,7 +3,7 @@
 #include <device.hxx>
 #include <image.hxx>
 #include <queue.hxx>
-#include <setup_engine.hxx>
+#include <engine_setup.hxx>
 
 #define ENGINE_VERSION VK_MAKE_VERSION( 0, 0, 1 )
 

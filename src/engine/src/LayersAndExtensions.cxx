@@ -7,7 +7,7 @@ namespace Engine
     namespace tools
     {
         std::vector<const char *> DefaultInstanceLayers {
-#ifdef PLATFORM_WINDOWS
+#ifdef ENGINE_PLATFORM_WINDOWS
             "VK_LAYER_KHRONOS_validation"
 #endif
         };
@@ -15,11 +15,11 @@ namespace Engine
             VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
             VK_EXT_DEBUG_REPORT_EXTENSION_NAME,
             VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME
-#ifdef PLATFORM_WINDOWS
+#ifdef ENGINE_PLATFORM_WINDOWS
 #endif
         };
         std::vector<const char *> DefaultDeviceExtensions {
-#ifdef PLATFORM_WINDOWS
+#ifdef ENGINE_PLATFORM_WINDOWS
             VK_KHR_SWAPCHAIN_EXTENSION_NAME,
             VK_KHR_MAINTENANCE3_EXTENSION_NAME
 #endif

@@ -1,6 +1,7 @@
 #pragma once
-#ifndef SETUP_ENGINE_HXX
-#    define SETUP_ENGINE_HXX
+#ifndef ENGINE_SETUP_HXX
+#    define ENGINE_SETUP_HXX
+#    include <engine.hxx>
 #    include <EHI.hxx>
 #    include <platform.hxx>
 
