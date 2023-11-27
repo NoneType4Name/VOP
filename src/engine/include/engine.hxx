@@ -135,6 +135,20 @@ namespace Engine
     };
     DEFINE_HANDLE( link );
 
+    class ENGINE_EXPORT pipeline
+    {
+      private:
+        class DATA_TYPE;
+        // pipeline(data);
+        friend instance;
+
+      public:
+        pipeline();
+        ~pipeline();
+        const std::unique_ptr<DATA_TYPE> data;
+    };
+    DEFINE_HANDLE( pipeline )
+
     class ENGINE_EXPORT pass
     {
       private:
@@ -161,6 +175,7 @@ namespace Engine
         window::types::window createWindow( RESOLUTION_TYPE width, RESOLUTION_TYPE height, std::string title );
         window::types::window createWindow( RESOLUTION_TYPE width, RESOLUTION_TYPE height, const char *title );
         types::link CreateLink( window::types::window window, types::DeviceDescription description );
+        types::pipeline CreatePipeline();
         types::pass CreateRenderPass( types::link link );
         ~instance();
 

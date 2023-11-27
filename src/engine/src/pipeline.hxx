@@ -5,13 +5,13 @@
 #    include <common/logging.hxx>
 #    include <platform.hxx>
 #    include <shader.hxx>
-#    include <descriptorSet.hxx>
+#    include <descriptorPool.hxx>
 
 namespace Engine
 {
     namespace tools
     {
-        void regConstantRange( VkPushConstantRange range );
+        // void regConstantRange( VkPushConstantRange range );
 
         class pipeline
         {
