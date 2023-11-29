@@ -21,5 +21,12 @@ namespace Engine
         const char *pName { nullptr };
         VkShaderStageFlagBits stage;
     };
+
+    struct layout::DATA_TYPE
+    {
+        types::device device { nullptr };
+        VkPipelineLayout handle { nullptr };
+        types::descriptorPool pool { nullptr };
+    };
 } // namespace Engine
 #endif

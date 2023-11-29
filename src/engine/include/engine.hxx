@@ -83,6 +83,8 @@ namespace Engine
         FRAGMENT_SHADER_TYPE
     };
 
+    typedef uint32_t ShaderStageFlags;
+
     struct ENGINE_EXPORT DeviceDescription
     {
       private:
@@ -101,11 +103,10 @@ namespace Engine
     DEFINE_HANDLE( texture );
     DEFINE_HANDLE( model );
     DEFINE_HANDLE( shader );
-    // DEFINE_HANDLE( pipeline );
+    DEFINE_HANDLE( pipeline );
     DEFINE_HANDLE( descriptorPool );
-    DEFINE_HANDLE( shaderNode );
     DEFINE_HANDLE( link );
-    DEFINE_HANDLE( layoutNode );
+    DEFINE_HANDLE( layout );
     DEFINE_HANDLE( pass );
     DEFINE_HANDLE( instance )
     DEFINE_HANDLE( device );
@@ -122,8 +123,8 @@ namespace Engine
         types::shader CreateShader( std::string path, std::string main, ShaderStage stage );
         types::shader CreateShader( const char *path, const char *main, ShaderStage stage );
         types::descriptorPool CreatePool( void *userData );
-        // types::shaderNode CreateShaderNode();
-        // types::pipeline CreatePipeline();
+        types::layout CreateLayout( types::descriptorPool pool, void *userData );
+        // types::pipeline CreatePipeline( types::shaderNode node, types::pass pass );
         types::texture CreateTexture( const char *path );
         types::texture CreateTexture( std::string path );
         types::model CreateModel( const char *path, types::texture texture );
@@ -155,6 +156,26 @@ namespace Engine
       public:
         shader();
         ~shader();
+        const std::unique_ptr<DATA_TYPE> data;
+    };
+
+    class ENGINE_EXPORT layout
+    {
+      private:
+        class DATA_TYPE;
+        layout( types::device device, types::descriptorPool pool, void *userData );
+        friend device;
+
+      public:
+        struct pushConstantRange
+        {
+            uint32_t offset;
+            uint32_t size;
+            ShaderStageFlags stage;
+        };
+
+        layout();
+        ~layout();
         const std::unique_ptr<DATA_TYPE> data;
     };
 
@@ -213,6 +234,7 @@ namespace Engine
 
         const std::unique_ptr<DATA_TYPE> data;
     };
+
     class ENGINE_EXPORT instance
     {
       private:

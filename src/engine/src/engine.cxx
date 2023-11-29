@@ -1,3 +1,4 @@
+#include <platform.hxx>
 #include <engine.hxx>
 #include <EHI.hxx>
 // #include <RHI.hxx>
@@ -20,6 +21,10 @@ namespace
             glfwSetErrorCallback( []( int code, const char *data )
                                   { SPDLOG_CRITICAL( "GLFW ERROR {}: {}", code, data ); } );
             assert( glfwInit() );
+        }
+        ~__init()
+        {
+            glfwTerminate();
         }
     } _;
 } // namespace

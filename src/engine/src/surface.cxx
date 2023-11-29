@@ -7,7 +7,7 @@
 namespace Engine
 {
     void InstanceSetup::surfaceNextChain( window::types::window window, const void *&pNext, std::vector<void *> &dataPointers, void *userPoiner ) {}
-    void InstanceSetup::surfaceFlags( window::types::window window, VkWin32SurfaceCreateFlagsKHR flags, void *userPoiner ) {}
+    void InstanceSetup::surfaceFlags( window::types::window window, VkWin32SurfaceCreateFlagsKHR &flags, void *userPoiner ) {}
 
     namespace window
     {
@@ -22,8 +22,8 @@ namespace Engine
             glfwSetWindowUserPointer( data->window, this );
             glfwGetWindowSize( data->window, reinterpret_cast<int *>( &this->data->width ), reinterpret_cast<int *>( &this->data->height ) );
             cenralize();
-            glfwSetWindowSizeCallback( data->window, []( GLFWwindow *wnd, int w, int h )
-                                       {auto from_wnd    = reinterpret_cast<window *>( glfwGetWindowUserPointer( wnd ) );
+            glfwSetFramebufferSizeCallback( data->window, []( GLFWwindow *wnd, int w, int h )
+                                            {auto from_wnd    = reinterpret_cast<window *>( glfwGetWindowUserPointer( wnd ) );
                                         from_wnd->data->width = static_cast<RESOLUTION_TYPE>( w );
                                         from_wnd->data->height = static_cast<RESOLUTION_TYPE>( h );
                                         from_wnd->data->resizeCallBack(w, h); } );

@@ -21,12 +21,15 @@ namespace Engine
         virtual void deviceQueueSet( types::device device, queueSet &queues, VkSurfaceKHR surface, void *userPoiner );
         // virtual void deviceDescriptorPools( types::device device, std::vector<std::unique_ptr<descriptorPool>> &descriptorSets );
         virtual void queueSetNextChain( queueSet *queueSet, const void *&pNext, std::vector<void *> &dataPointers );
-        virtual void queueSetFlags( queueSet *queueSet, VkDeviceQueueCreateFlags &flag );
+        virtual void queueSetFlags( queueSet *queueSet, VkDeviceQueueCreateFlags &flags );
         virtual void renderpass( types::pass renderpass, types::link link, VkRenderPassCreateInfo &createInfo, std::vector<void *> &dataPointer, void *userPointer );
         virtual void surfaceNextChain( window::types::window window, const void *&pNext, std::vector<void *> &dataPointers, void *userPoiner );
-        virtual void surfaceFlags( window::types::window window, VkWin32SurfaceCreateFlagsKHR flags, void *userPoiner );
+        virtual void surfaceFlags( window::types::window window, VkWin32SurfaceCreateFlagsKHR &flags, void *userPoiner );
         virtual void swapchain( types::link swapchain, VkSwapchainCreateInfoKHR &createInfo, std::vector<void *> &dataPointer, void *userPoiner );
         virtual void descriptorPool( types::descriptorPool pool, descriptorPool::SetOfBindingsInfo &sets, void *userData );
+        virtual void layoutNextChain( types::layout layout, const void *&pNext, std::vector<void *> &dataPointer );
+        virtual void layoutFlags( types::layout layout, VkPipelineLayoutCreateFlags &flags );
+
         // virtual void pipeline( types::pipeline pipeline );
         virtual void shader( types::shader shader, VkPipelineShaderStageCreateInfo &stageCreateInfo );
     };

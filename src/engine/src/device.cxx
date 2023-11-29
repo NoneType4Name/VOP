@@ -182,6 +182,12 @@ namespace Engine
         return data->shaders.back().get();
     }
 
+    types::layout device::CreateLayout( types::descriptorPool pool, void *userData )
+    {
+        data->layouts.emplace_back( std::unique_ptr<layout> { new layout { this, pool, userData } } );
+        return data->layouts.back().get();
+    }
+
     const std::vector<types::DeviceDescription> instance::GetDevices()
     {
         if ( data->deviceDescriptions.empty() )
