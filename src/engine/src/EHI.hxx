@@ -24,7 +24,6 @@ namespace Engine
         std::vector<std::unique_ptr<DeviceDescription>> deviceDescriptions;
         std::vector<std::unique_ptr<device>> devices;
         std::vector<std::unique_ptr<link>> links;
-        std::vector<std::unique_ptr<pipeline>> pipelines;
         std::vector<std::unique_ptr<pass>> passes;
         std::vector<const char *> layers;
         std::vector<const char *> extensions;

@@ -1,9 +1,29 @@
 #include <device.hxx>
+#include <shader.hxx>
 #include <EHI.hxx>
-#include <RHI.hxx>
 
 namespace Engine
 {
+    // void InstanceSetup::deviceDescriptorPools( types::device device, std::vector<std::unique_ptr<Engine::descriptorPool>> &descriptorSets )
+    // {
+    //     descriptorPool::SetOfBindingsInfo set( 1 );
+    //     set.back().resize( 2, {} );
+    //     set.back()[ 0 ].descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    //     set.back()[ 0 ].binding         = 0;
+    //     set.back()[ 0 ].dstArrayElement = 0;
+    //     set.back()[ 0 ].descriptorCount = 1;
+    //     set.back()[ 0 ].stageFlags      = VK_SHADER_STAGE_ALL;
+    //     set.back()[ 0 ].pBufferInfo     = nullptr;
+
+    //     set.back()[ 1 ].descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    //     set.back()[ 1 ].binding         = 1;
+    //     set.back()[ 1 ].dstArrayElement = 0;
+    //     set.back()[ 1 ].descriptorCount = 1;
+    //     set.back()[ 1 ].stageFlags      = VK_SHADER_STAGE_FRAGMENT_BIT;
+    //     set.back()[ 1 ].pImageInfo      = nullptr;
+    //     descriptorSets.emplace_back( pDevice, set );
+    // }
+
     DeviceDescription::DeviceDescription() {
         DEFINE_DATA_FIELD };
 
@@ -47,18 +67,6 @@ namespace Engine
     {
         features.samplerAnisotropy = VK_TRUE;
         features.sampleRateShading = VK_TRUE;
-    }
-    void InstanceSetup::deviceDescriptors( types::device device, VkDevice pDevice, std::vector<descriptorPool> &descriptorSets )
-    {
-        std::vector<std::vector<VkDescriptorSetLayoutBinding>> set { { { { 0,
-                                                                           VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                                                                           1,
-                                                                           VK_SHADER_STAGE_ALL },
-                                                                         { 1,
-                                                                           VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                                                                           1,
-                                                                           VK_SHADER_STAGE_FRAGMENT_BIT } } } };
-        descriptorSets.emplace_back( pDevice, set );
     }
     void InstanceSetup::deviceQueueSet( types::device device, queueSet &queues, VkSurfaceKHR surface, void *userPoiner )
     {
@@ -144,7 +152,7 @@ namespace Engine
         poolCI.queueFamilyIndex = data->queuesSet.present.familyIndex.value();
         CHECK_RESULT( vkCreateCommandPool( data->device, &poolCI, ALLOCATION_CALLBACK, &data->presentPool ) );
         // std::vector<descriptorPool> descriptors;
-        data->window->data->instance->data->setup->deviceDescriptors( this, data->device, data->descriptorPools );
+        // data->window->data->instance->data->setup->deviceDescriptorPools( this, data->descriptorPools );
     }
 
     device::~device()
@@ -153,7 +161,25 @@ namespace Engine
         vkDestroyCommandPool( data->device, data->transferPool, ALLOCATION_CALLBACK );
         vkDestroyCommandPool( data->device, data->presentPool, ALLOCATION_CALLBACK );
         data->descriptorPools.clear();
+        data->shaders.clear();
         vkDestroyDevice( data->device, ALLOCATION_CALLBACK );
+    }
+
+    types::descriptorPool device::CreatePool( void *userData )
+    {
+        data->descriptorPools.emplace_back( std::unique_ptr<descriptorPool> { new descriptorPool { this, userData } } );
+        return data->descriptorPools.back().get();
+    }
+
+    types::shader device::CreateShader( std::string path, std::string main, ShaderStage stage )
+    {
+        return CreateShader( path.data(), main.data(), stage );
+    }
+
+    types::shader device::CreateShader( const char *path, const char *main, ShaderStage stage )
+    {
+        data->shaders.emplace_back( std::unique_ptr<shader> { new shader { this, path, main, stage } } );
+        return data->shaders.back().get();
     }
 
     const std::vector<types::DeviceDescription> instance::GetDevices()

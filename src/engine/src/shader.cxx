@@ -1,5 +1,4 @@
 #include <shader.hxx>
-#include <device.hxx>
 
 namespace Engine
 {
@@ -7,91 +6,65 @@ namespace Engine
     {
         namespace
         {
-            shaderID shader_id{ 0 };
-            std::unordered_map<shaderID, shader *> _shaders{};
-            std::unordered_map<const char *, VkShaderModule> _shaderModules{};
+            std::unordered_map<const char *, VkShaderModule> _shaderModules {};
         } // namespace
-
-        // void createGrapchiPipeline(){};
-
-        shader::shader( const char *path, const char *mainFuncName, ShaderStage stage ) : id{ ++shader_id }, path{ path }
+        inline VkShaderStageFlagBits userShaderStageToVulkan( ShaderStage stage )
         {
-            info.pName = mainFuncName;
-            switch( stage )
+            switch ( stage )
             {
                 case VERTEX_SHADER_TYPE:
-                    info.stage = VK_SHADER_STAGE_VERTEX_BIT;
-                    break;
+                    return VK_SHADER_STAGE_VERTEX_BIT;
                 case FRAGMENT_SHADER_TYPE:
-                    info.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-                    break;
+                    return VK_SHADER_STAGE_FRAGMENT_BIT;
                 default:
-                    info.stage = VK_SHADER_STAGE_ALL;
-                    break;
+                    return VK_SHADER_STAGE_ALL;
             }
-            _shaders[ id ] = this;
         }
-
-        const VkPipelineShaderStageCreateInfo &shader::getInfo() const
+        VkShaderModule loadShaderModule( VkDevice device, const char *path )
         {
-            return info;
-        }
-
-        const shaderID shader::getID() const
-        {
-            return id;
-        }
-
-        shader::~shader()
-        {
-            vkDestroyShaderModule( getDevice(), info.module, ALLOCATION_CALLBACK );
-            _shaders[ id ] = nullptr;
-        }
-
-        shader *getShader( shaderID id )
-        {
-            return _shaders[ id ];
-        }
-
-        void shader::init()
-        {
-            if( _shaderModules.count( path ) )
-                info.module = _shaderModules[ path ];
-            std::ifstream File{ path, std::fstream::ate | std::fstream::binary };
-            if( !File.is_open() )
+            if ( _shaderModules.count( path ) )
+                return _shaderModules[ path ];
+            std::ifstream File { path, std::fstream::ate | std::fstream::binary };
+            if ( !File.is_open() )
             {
                 SPDLOG_CRITICAL( "Failed to open shader: {}.", path );
                 throw std::runtime_error( std::format( "Failed to open shader: {}.", path ) );
             }
-            size_t shBsize{ static_cast<size_t>( File.tellg() ) };
+            size_t shBsize { static_cast<size_t>( File.tellg() ) };
             std::vector<char> data( shBsize );
             data.resize( shBsize );
             File.seekg( 0 );
             File.read( data.data(), shBsize );
             File.close();
-            VkShaderModuleCreateInfo ShaderModuleCreateInfo{};
+            _shaderModules[ path ] = nullptr;
+            VkShaderModuleCreateInfo ShaderModuleCreateInfo {};
             ShaderModuleCreateInfo.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
             ShaderModuleCreateInfo.codeSize = data.size();
             ShaderModuleCreateInfo.pCode    = reinterpret_cast<const uint32_t *>( data.data() );
-            CHECK_RESULT( vkCreateShaderModule( tools::getDevice(), &ShaderModuleCreateInfo, nullptr, &info.module ) );
-            _shaderModules[ path ] = info.module;
+            CHECK_RESULT( vkCreateShaderModule( device, &ShaderModuleCreateInfo, nullptr, &_shaderModules[ path ] ) );
+            return _shaderModules[ path ];
         }
-
-        void createShaderModules()
-        {
-            for( auto &module : _shaders )
-            {
-                module.second->init();
-            }
-        }
-
-        void destroyShaderModules()
-        {
-            for( auto &module : _shaders )
-            {
-                delete module.second;
-            }
-        }
-
     } // namespace tools
+
+    // void createGrapchiPipeline(){};
+    shader::shader() = default;
+    shader::shader( types::device device, const char *path, const char *mainFuncName, ShaderStage stage )
+    {
+        DEFINE_DATA_FIELD;
+        data->device = device;
+        data->stage  = tools::userShaderStageToVulkan( stage );
+        data->module = tools::loadShaderModule( data->device->data->device, path );
+        data->pName  = mainFuncName;
+    }
+    shader::~shader()
+    {
+        vkDestroyShaderModule( data->device->data->device, data->module, ALLOCATION_CALLBACK );
+    }
+
+    void InstanceSetup::shader( types::shader shader, VkPipelineShaderStageCreateInfo &stageCreateInfo )
+    {
+        stageCreateInfo.stage  = shader->data->stage;
+        stageCreateInfo.module = shader->data->module;
+        stageCreateInfo.pName  = shader->data->pName;
+    }
 } // namespace Engine

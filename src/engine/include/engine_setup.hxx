@@ -19,13 +19,16 @@ namespace Engine
         virtual void deviceExtensions( types::device device, std::vector<const char *> &deviceExtensions, void *userPoiner );
         virtual void deviceFeatures( types::device device, VkPhysicalDeviceFeatures &features, void *userPoiner );
         virtual void deviceQueueSet( types::device device, queueSet &queues, VkSurfaceKHR surface, void *userPoiner );
-        virtual void deviceDescriptors( types::device device, VkDevice pDevice, std::vector<descriptorPool> &descriptorSets );
+        // virtual void deviceDescriptorPools( types::device device, std::vector<std::unique_ptr<descriptorPool>> &descriptorSets );
         virtual void queueSetNextChain( queueSet *queueSet, const void *&pNext, std::vector<void *> &dataPointers );
         virtual void queueSetFlags( queueSet *queueSet, VkDeviceQueueCreateFlags &flag );
         virtual void renderpass( types::pass renderpass, types::link link, VkRenderPassCreateInfo &createInfo, std::vector<void *> &dataPointer, void *userPointer );
         virtual void surfaceNextChain( window::types::window window, const void *&pNext, std::vector<void *> &dataPointers, void *userPoiner );
         virtual void surfaceFlags( window::types::window window, VkWin32SurfaceCreateFlagsKHR flags, void *userPoiner );
         virtual void swapchain( types::link swapchain, VkSwapchainCreateInfoKHR &createInfo, std::vector<void *> &dataPointer, void *userPoiner );
+        virtual void descriptorPool( types::descriptorPool pool, descriptorPool::SetOfBindingsInfo &sets, void *userData );
+        // virtual void pipeline( types::pipeline pipeline );
+        virtual void shader( types::shader shader, VkPipelineShaderStageCreateInfo &stageCreateInfo );
     };
 } // namespace Engine
 #endif

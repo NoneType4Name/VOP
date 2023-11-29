@@ -7,15 +7,25 @@
 
 namespace Engine
 {
-    class descriptorPool
+    struct descriptorPool::descriptorSetLayoutInfo
     {
-      public:
-        descriptorPool( VkDevice device, std::vector<std::vector<VkDescriptorSetLayoutBinding>> sets );
-        ~descriptorPool();
+        VkDescriptorType descriptorType;
+        const void *pNext;
+        uint32_t binding;
+        uint32_t descriptorCount;
+        VkShaderStageFlags stageFlags;
+        uint32_t dstArrayElement;
+        const VkDescriptorImageInfo *pImageInfo;
+        const VkDescriptorBufferInfo *pBufferInfo;
+        const VkSampler *pImmutableSamplers;
+        const VkBufferView *pTexelBufferView;
+    };
 
+    struct descriptorPool::DATA_TYPE
+    {
         std::vector<VkDescriptorSetLayout> layouts;
         std::vector<VkDescriptorSet> sets;
-        VkDevice device { nullptr };
+        types::device device { nullptr };
         VkDescriptorPool handle { nullptr };
     };
 } // namespace Engine

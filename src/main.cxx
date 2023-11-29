@@ -49,7 +49,11 @@ namespace Game
     std::unique_ptr<Engine::instance> engine { new Engine::instance { "test", 0, test.get() } };
     Engine::window::types::window window { engine->createWindow( 1000, 1000, "window#1" ) };
     const std::vector<Engine::types::DeviceDescription> devices = engine->GetDevices();
-    Engine::types::link link { engine->CreateLink( window, devices.back() ) };
+    auto [ link, device ] { engine->CreateLink( window, devices.back() ) };
+    Engine::types::descriptorPool pool { device->CreatePool( nullptr ) };
+    Engine::types::shader vertexShader { device->CreateShader( "./assets/shaders/binary.vert.spv", "main", Engine::ShaderStage::VERTEX_SHADER_TYPE ) };
+    Engine::types::shader fragmentShader { device->CreateShader( "./assets/shaders/binary.frag.spv", "main", Engine::ShaderStage::FRAGMENT_SHADER_TYPE ) };
+    // Engine::types::pipeline pipeline { device->CreatePipeline() };
 } // namespace Game
 
 int main()

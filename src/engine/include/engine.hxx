@@ -100,6 +100,15 @@ namespace Engine
     DEFINE_HANDLE( DeviceDescription );
     DEFINE_HANDLE( texture );
     DEFINE_HANDLE( model );
+    DEFINE_HANDLE( shader );
+    // DEFINE_HANDLE( pipeline );
+    DEFINE_HANDLE( descriptorPool );
+    DEFINE_HANDLE( shaderNode );
+    DEFINE_HANDLE( link );
+    DEFINE_HANDLE( layoutNode );
+    DEFINE_HANDLE( pass );
+    DEFINE_HANDLE( instance )
+    DEFINE_HANDLE( device );
 
     class ENGINE_EXPORT device
     {
@@ -110,16 +119,18 @@ namespace Engine
 
       public:
         device();
+        types::shader CreateShader( std::string path, std::string main, ShaderStage stage );
+        types::shader CreateShader( const char *path, const char *main, ShaderStage stage );
+        types::descriptorPool CreatePool( void *userData );
+        // types::shaderNode CreateShaderNode();
+        // types::pipeline CreatePipeline();
         types::texture CreateTexture( const char *path );
         types::texture CreateTexture( std::string path );
-        types::model CreateModel( const char *path );
-        types::model CreateModel( std::string path );
         types::model CreateModel( const char *path, types::texture texture );
         types::model CreateModel( std::string path, types::texture texture );
         const std::unique_ptr<DATA_TYPE> data;
         ~device();
     };
-    DEFINE_HANDLE( device );
 
     class ENGINE_EXPORT link
     {
@@ -133,21 +144,61 @@ namespace Engine
         ~link();
         const std::unique_ptr<DATA_TYPE> data;
     };
-    DEFINE_HANDLE( link );
 
-    class ENGINE_EXPORT pipeline
+    class ENGINE_EXPORT shader
     {
       private:
         class DATA_TYPE;
-        // pipeline(data);
+        shader( types::device device, const char *path, const char *mainFuncName, ShaderStage stage );
+        friend device;
+
+      public:
+        shader();
+        ~shader();
+        const std::unique_ptr<DATA_TYPE> data;
+    };
+
+    class ENGINE_EXPORT descriptorPool
+    {
+      private:
+        class DATA_TYPE;
+        descriptorPool( types::device device, void *userData );
+        friend instance;
+        friend device;
+
+      public:
+        descriptorPool();
+        ~descriptorPool();
+        struct descriptorSetLayoutInfo;
+        typedef std::vector<std::vector<descriptorSetLayoutInfo>> SetOfBindingsInfo;
+        const std::unique_ptr<DATA_TYPE> data;
+    };
+
+    class ENGINE_EXPORT layoutNode
+    {
+      private:
+        class DATA_TYPE;
+        layoutNode( types::device device, types::descriptorPool pool );
         friend instance;
 
       public:
-        pipeline();
-        ~pipeline();
+        layoutNode();
+        ~layoutNode();
         const std::unique_ptr<DATA_TYPE> data;
     };
-    DEFINE_HANDLE( pipeline )
+
+    // class ENGINE_EXPORT pipeline
+    // {
+    //   private:
+    //     class DATA_TYPE;
+    //     pipeline( types::device device, std::vector<types::shader> shaders );
+    //     friend instance;
+
+    //   public:
+    //     pipeline();
+    //     ~pipeline();
+    //     const std::unique_ptr<DATA_TYPE> data;
+    // };
 
     class ENGINE_EXPORT pass
     {
@@ -162,7 +213,6 @@ namespace Engine
 
         const std::unique_ptr<DATA_TYPE> data;
     };
-    DEFINE_HANDLE( pass );
     class ENGINE_EXPORT instance
     {
       private:
@@ -174,14 +224,12 @@ namespace Engine
         const std::vector<types::DeviceDescription> GetDevices();
         window::types::window createWindow( RESOLUTION_TYPE width, RESOLUTION_TYPE height, std::string title );
         window::types::window createWindow( RESOLUTION_TYPE width, RESOLUTION_TYPE height, const char *title );
-        types::link CreateLink( window::types::window window, types::DeviceDescription description );
-        types::pipeline CreatePipeline();
+        std::pair<types::link, types::device> CreateLink( window::types::window window, types::DeviceDescription description );
         types::pass CreateRenderPass( types::link link );
         ~instance();
 
         const std::unique_ptr<DATA_TYPE> data;
     };
-    DEFINE_HANDLE( instance )
     // DEFINE_RENDER_ATTACHMENT_TEMPLATE( RENDER_ATTACHMENT_DEFAULT_COLOR )
     // DEFINE_RENDER_ATTACHMENT_TEMPLATE( RENDER_ATTACHMENT_DEFAULT_DEPTH )
     // DEFINE_RENDER_ATTACHMENT_TEMPLATE( RENDER_ATTACHMENT_DEFAULT_COLOR_RESOLVE )

@@ -31,8 +31,10 @@ namespace Engine
         VkCommandPool grapchicPool { nullptr };
         VkCommandPool transferPool { nullptr };
         VkCommandPool presentPool { nullptr };
-        std::vector<descriptorPool> descriptorPools;
         std::vector<const char *> extensions;
+        std::vector<std::unique_ptr<descriptorPool>> descriptorPools;
+        std::vector<std::unique_ptr<shader>> shaders;
+        // std::vector<std::unique_ptr<pipeline>> pipelines;
         window::window *window { nullptr };
         queueSet queuesSet;
         DeviceDescription *description { nullptr };

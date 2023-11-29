@@ -6,33 +6,24 @@
 
 namespace Engine
 {
-    void regConstantRange( VkPushConstantRange range )
+    shadersNode::shadersNode( std::vector<types::shader> shaders )
     {
-        _const_ranges.push_back( range );
+        VkPipelineLayoutCreateInfo pipelineLayoutInfo {};
+        pipelineLayoutInfo.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+        pipelineLayoutInfo.setLayoutCount         = 1;
+        pipelineLayoutInfo.pSetLayouts            = descriptorLayout.data();
+        pipelineLayoutInfo.pushConstantRangeCount = _const_ranges.size();
+        pipelineLayoutInfo.pPushConstantRanges    = _const_ranges.data();
+
+        CHECK_RESULT( vkCreatePipelineLayout( getDevice(), &pipelineLayoutInfo, nullptr, &PipelineLayout ) );
     }
 
-    pipeline::pipeline( PipelineInfo info ) :
-        id { ++pipeline_id }, info { info }
-    {
-        _pipelines[ id ] = this;
-    }
-
-    const pipelineID pipeline::getID() const
-    {
-        return id;
-    }
-
-    VkPipeline pipeline::getHandle() const
-    {
-        return Pipeline;
-    }
-
-    void pipeline::init()
+    pipeline::pipeline( std::vector<types::shader> shaders )
     {
         std::vector<VkPipelineShaderStageCreateInfo> ShaderStages;
-        ShaderStages.reserve( info.shadersID.size() );
-        for ( auto &shader : info.shadersID )
-            ShaderStages.push_back( getShader( shader )->getInfo() );
+        ShaderStages.reserve( shaders.size() );
+        for ( auto &shader : shaders )
+            ShaderStages.emplace_back();
         VkDynamicState dStates[] { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
         VkPipelineDynamicStateCreateInfo dStatescreateInfo {};
         dStatescreateInfo.sType             = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
@@ -114,14 +105,6 @@ namespace Engine
         descriptorLayout.reserve( getDescriptorSets( descriptorSets ) );
         for ( auto descriptor : descriptorSets )
             descriptorLayout.push_back( descriptor->getLayout() );
-        VkPipelineLayoutCreateInfo pipelineLayoutInfo {};
-        pipelineLayoutInfo.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        pipelineLayoutInfo.setLayoutCount         = 1;
-        pipelineLayoutInfo.pSetLayouts            = descriptorLayout.data();
-        pipelineLayoutInfo.pushConstantRangeCount = _const_ranges.size();
-        pipelineLayoutInfo.pPushConstantRanges    = _const_ranges.data();
-
-        CHECK_RESULT( vkCreatePipelineLayout( getDevice(), &pipelineLayoutInfo, nullptr, &PipelineLayout ) );
 
         VkGraphicsPipelineCreateInfo GraphicPipeLineCreateInfo {};
         GraphicPipeLineCreateInfo.sType               = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;

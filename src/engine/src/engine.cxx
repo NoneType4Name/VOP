@@ -110,13 +110,13 @@ namespace Engine
         return createWindow( width, height, title.data() );
     }
 
-    types::link instance::CreateLink( window::types::window window, types::DeviceDescription description )
+    std::pair<types::link, types::device> instance::CreateLink( window::types::window window, types::DeviceDescription description )
     {
         data->devices.emplace_back( std::unique_ptr<device> { new device { description, window } } );
         data->links.emplace_back( std::unique_ptr<link> { new link { window, data->devices.back().get() } } );
         // auto &_data = const_cast<std::unique_ptr<link::DATA_TYPE> &>( data->links.back()->data );
         // _data.reset( new link::DATA_TYPE { window, data->devices.back().get() } );
-        return data->links.back().get();
+        return { data->links.back().get(), data->devices.back().get() };
     }
 
     types::pass instance::CreateRenderPass( types::link link )

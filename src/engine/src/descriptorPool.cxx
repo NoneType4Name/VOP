@@ -1,13 +1,36 @@
 #include <descriptorPool.hxx>
 #include <device.hxx>
+#include <EHI.hxx>
 
 namespace Engine
 {
-    descriptorPool::descriptorPool( VkDevice device, std::vector<std::vector<VkDescriptorSetLayoutBinding>> sets )
+    void InstanceSetup::descriptorPool( types::descriptorPool pool, descriptorPool::SetOfBindingsInfo &set, void *userData )
     {
-        this->device = device;
-        this->sets.resize( sets.size() );
-        this->layouts.reserve( sets.size() );
+        set.resize( 1 );
+        set.back().resize( 2, {} );
+        set.back()[ 0 ].descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        set.back()[ 0 ].binding         = 0;
+        set.back()[ 0 ].dstArrayElement = 0;
+        set.back()[ 0 ].descriptorCount = 1;
+        set.back()[ 0 ].stageFlags      = VK_SHADER_STAGE_ALL;
+        set.back()[ 0 ].pBufferInfo     = nullptr;
+
+        set.back()[ 1 ].descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        set.back()[ 1 ].binding         = 1;
+        set.back()[ 1 ].dstArrayElement = 0;
+        set.back()[ 1 ].descriptorCount = 1;
+        set.back()[ 1 ].stageFlags      = VK_SHADER_STAGE_FRAGMENT_BIT;
+        set.back()[ 1 ].pImageInfo      = nullptr;
+    }
+
+    descriptorPool::descriptorPool( types::device device, void *userData )
+    {
+        DEFINE_DATA_FIELD
+        data->device = device;
+        SetOfBindingsInfo sets {};
+        data->device->data->window->data->instance->data->setup->descriptorPool( this, sets, userData );
+        data->sets.resize( sets.size() );
+        data->layouts.reserve( sets.size() );
 
         uint32_t max { 0 };
         std::vector<VkDescriptorPoolSize> sizes;
@@ -28,23 +51,37 @@ namespace Engine
         poolCreateInfo.poolSizeCount = sizes.size();
         poolCreateInfo.pPoolSizes    = sizes.data();
         poolCreateInfo.maxSets       = max;
-        vkCreateDescriptorPool( device, &poolCreateInfo, ALLOCATION_CALLBACK, &handle );
+        vkCreateDescriptorPool( data->device->data->device, &poolCreateInfo, ALLOCATION_CALLBACK, &data->handle );
 
         for ( const auto &bindings : sets )
         {
-            this->layouts.emplace_back( nullptr );
+            data->layouts.emplace_back( nullptr );
+            std::vector<VkDescriptorSetLayoutBinding> binds;
+            binds.reserve( bindings.size() );
+            for ( const auto &info : bindings )
+                binds.push_back( { info.binding, info.descriptorType, info.descriptorCount, info.stageFlags, info.pImmutableSamplers } );
             VkDescriptorSetLayoutCreateInfo layoutsSet {};
             layoutsSet.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-            layoutsSet.bindingCount = bindings.size();
-            layoutsSet.pBindings    = bindings.data();
-            CHECK_RESULT( vkCreateDescriptorSetLayout( this->device, &layoutsSet, ALLOCATION_CALLBACK, &this->layouts.back() ) );
+            layoutsSet.bindingCount = binds.size();
+            layoutsSet.pBindings    = binds.data();
+            CHECK_RESULT( vkCreateDescriptorSetLayout( data->device->data->device, &layoutsSet, ALLOCATION_CALLBACK, &data->layouts.back() ) );
         }
         VkDescriptorSetAllocateInfo descriptorSetAllocateInfo {};
         descriptorSetAllocateInfo.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-        descriptorSetAllocateInfo.descriptorSetCount = this->layouts.size();
-        descriptorSetAllocateInfo.pSetLayouts        = this->layouts.data();
-        descriptorSetAllocateInfo.descriptorPool     = handle;
-        CHECK_RESULT( vkAllocateDescriptorSets( device, &descriptorSetAllocateInfo, this->sets.data() ) );
+        descriptorSetAllocateInfo.descriptorSetCount = data->layouts.size();
+        descriptorSetAllocateInfo.pSetLayouts        = data->layouts.data();
+        descriptorSetAllocateInfo.descriptorPool     = data->handle;
+        CHECK_RESULT( vkAllocateDescriptorSets( data->device->data->device, &descriptorSetAllocateInfo, data->sets.data() ) );
+        std::vector<VkWriteDescriptorSet> wds;
+        wds.reserve( sets.size() );
+        size_t set_index { 0 };
+        for ( const auto &set : sets )
+        {
+            for ( const auto &bind : set )
+                wds.push_back( { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, bind.pNext, data->sets[ set_index ], bind.binding, bind.dstArrayElement, bind.descriptorCount, bind.descriptorType, bind.pImageInfo, bind.pBufferInfo, bind.pTexelBufferView } );
+            ++set_index;
+        }
+        // vkUpdateDescriptorSets( data->device->data->device, wds.size(), wds.data(), 0, nullptr );
     }
 
     // std::vector<VkDescriptorPoolSize> descriptorPool::getSizes()
@@ -60,10 +97,10 @@ namespace Engine
 
     descriptorPool::~descriptorPool()
     {
-        for ( const auto layout : layouts )
-            vkDestroyDescriptorSetLayout( device, layout, ALLOCATION_CALLBACK );
-        vkFreeDescriptorSets( device, handle, sets.size(), sets.data() );
-        vkDestroyDescriptorPool( device, handle, ALLOCATION_CALLBACK );
+        for ( const auto layout : data->layouts )
+            vkDestroyDescriptorSetLayout( data->device->data->device, layout, ALLOCATION_CALLBACK );
+        vkFreeDescriptorSets( data->device->data->device, data->handle, data->sets.size(), data->sets.data() );
+        vkDestroyDescriptorPool( data->device->data->device, data->handle, ALLOCATION_CALLBACK );
     }
 
     // void createDescriptorPool()

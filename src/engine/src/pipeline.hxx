@@ -9,30 +9,15 @@
 
 namespace Engine
 {
-    namespace tools
+    // void regConstantRange( VkPushConstantRange range );
+
+    struct pipeline::DATA_TYPE
     {
-        // void regConstantRange( VkPushConstantRange range );
+      public:
+        VkPipelineLayout PipelineLayout { nullptr };
+        VkPipeline Pipeline { nullptr };
 
-        class pipeline
-        {
-          public:
-            pipeline() = default;
-            pipeline( PipelineInfo createInfo );
-            const pipelineID getID() const;
-            VkPipeline getHandle() const;
-            void init();
-            ~pipeline();
-
-          private:
-            pipelineID id;
-            std::vector<descriptorSet> descriptorSets;
-            PipelineInfo info;
-            VkPipelineLayout PipelineLayout { nullptr };
-            VkPipeline Pipeline { nullptr };
-        };
-        pipeline *getPipeline( pipelineID );
-        void createPipelines();
-        void destroyPipelines();
-    } // namespace tools
+      private:
+    };
 } // namespace Engine
 #endif
