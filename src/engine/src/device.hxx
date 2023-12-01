@@ -35,7 +35,7 @@ namespace Engine
         std::vector<std::unique_ptr<descriptorPool>> descriptorPools;
         std::vector<std::unique_ptr<shader>> shaders;
         std::vector<std::unique_ptr<layout>> layouts;
-        // std::vector<std::unique_ptr<pipeline>> pipelines;
+        std::vector<std::unique_ptr<pipeline>> pipelines;
         window::window *window { nullptr };
         queueSet queuesSet;
         DeviceDescription *description { nullptr };

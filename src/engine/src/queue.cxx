@@ -3,8 +3,8 @@
 
 namespace Engine
 {
-    void InstanceSetup::queueSetNextChain( queueSet *queueSet, const void *&pNext, std::vector<void *> &dataPointers ) {}
-    void InstanceSetup::queueSetFlags( queueSet *queueSet, VkDeviceQueueCreateFlags &flag ) {}
+    void InstanceSetup::queueSetInfo( queueSet *queueSet, VkDeviceQueueCreateFlags &flags, const void *&pNext, std::vector<void *> &dataPointers, void *userPoiner ) {}
+    void InstanceSetup::queueSetNextChainClear( queueSet *queueSet, std::vector<void *> &dataPointers, void *userPointer ) {}
     queue::queue( queueSet *pSet )
     {
         set = pSet;

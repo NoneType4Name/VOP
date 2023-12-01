@@ -88,8 +88,8 @@ namespace Engine
     link::link( window::types::window window, types::device device ) :
         data { new DATA_TYPE { window, device } }
     {
-        std::vector<void *> pData;
-        std::vector<void *> pData1;
+        std::vector<std::unique_ptr<void>> pData;
+        std::vector<std::unique_ptr<void>> pData1;
         data->window->data->instance->data->setup->swapchain( this, data->createInfo, pData1, data->window->data->instance->data->userPointer );
         data->setup( this, data->createInfo, pData, data->window->data->instance->data->userPointer );
         CHECK_RESULT( vkCreateSwapchainKHR( data->device->data->device, &data->createInfo, ALLOCATION_CALLBACK, &data->swapchain ) );
@@ -114,7 +114,7 @@ namespace Engine
         vkGetPhysicalDeviceSurfacePresentModesKHR( device->data->description->data->phDevice, window->data->surface, &c, presentModes.data() );
     }
 
-    void InstanceSetup::swapchain( types::link swapchain, VkSwapchainCreateInfoKHR &createInfo, std::vector<void *> &dataPointer, void *userPoiner )
+    void InstanceSetup::swapchain( types::link swapchain, VkSwapchainCreateInfoKHR &createInfo, std::vector<std::unique_ptr<void>> &dataPointer, void *userPoiner )
     {
         VkSurfaceFormatKHR SurfaceFormat { swapchain->data->properties.formats[ 0 ] };
         for ( const auto &format : swapchain->data->properties.formats )
@@ -140,7 +140,7 @@ namespace Engine
         createInfo.compositeAlpha     = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     }
 
-    void link::DATA_TYPE::setup( types::link link, VkSwapchainCreateInfoKHR &createInfo, std::vector<void *> &dataPointer, void *userPoiner )
+    void link::DATA_TYPE::setup( types::link link, VkSwapchainCreateInfoKHR &createInfo, std::vector<std::unique_ptr<void>> &dataPointer, void *userPoiner )
     {
         createInfo.sType   = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
         createInfo.surface = window->data->surface;

@@ -6,16 +6,17 @@
 #    include <platform.hxx>
 #    include <shader.hxx>
 #    include <descriptorPool.hxx>
+#    include <EHI.hxx>
 
 namespace Engine
 {
-    // void regConstantRange( VkPushConstantRange range );
-
     struct pipeline::DATA_TYPE
     {
       public:
-        VkPipelineLayout PipelineLayout { nullptr };
-        VkPipeline Pipeline { nullptr };
+        types::device device { nullptr };
+        types::layout layout { nullptr };
+        types::pass renderpass { nullptr };
+        VkPipeline handle { nullptr };
 
       private:
     };

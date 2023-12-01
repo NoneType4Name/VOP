@@ -99,17 +99,17 @@ namespace Engine
         const std::unique_ptr<DATA_TYPE> data;
         ~DeviceDescription();
     };
+    DEFINE_HANDLE( instance )
     DEFINE_HANDLE( DeviceDescription );
+    DEFINE_HANDLE( device );
+    DEFINE_HANDLE( link );
+    DEFINE_HANDLE( pass );
+    DEFINE_HANDLE( shader );
+    DEFINE_HANDLE( descriptorPool );
+    DEFINE_HANDLE( layout );
+    DEFINE_HANDLE( pipeline );
     DEFINE_HANDLE( texture );
     DEFINE_HANDLE( model );
-    DEFINE_HANDLE( shader );
-    DEFINE_HANDLE( pipeline );
-    DEFINE_HANDLE( descriptorPool );
-    DEFINE_HANDLE( link );
-    DEFINE_HANDLE( layout );
-    DEFINE_HANDLE( pass );
-    DEFINE_HANDLE( instance )
-    DEFINE_HANDLE( device );
 
     class ENGINE_EXPORT device
     {
@@ -124,7 +124,7 @@ namespace Engine
         types::shader CreateShader( const char *path, const char *main, ShaderStage stage );
         types::descriptorPool CreatePool( void *userData );
         types::layout CreateLayout( types::descriptorPool pool, void *userData );
-        // types::pipeline CreatePipeline( types::shaderNode node, types::pass pass );
+        types::pipeline CreatePipeline( types::layout layouts, std::vector<types::shader> shaders, types::pass pass );
         types::texture CreateTexture( const char *path );
         types::texture CreateTexture( std::string path );
         types::model CreateModel( const char *path, types::texture texture );
@@ -184,7 +184,6 @@ namespace Engine
       private:
         class DATA_TYPE;
         descriptorPool( types::device device, void *userData );
-        friend instance;
         friend device;
 
       public:
@@ -195,31 +194,18 @@ namespace Engine
         const std::unique_ptr<DATA_TYPE> data;
     };
 
-    class ENGINE_EXPORT layoutNode
+    class ENGINE_EXPORT pipeline
     {
       private:
         class DATA_TYPE;
-        layoutNode( types::device device, types::descriptorPool pool );
-        friend instance;
+        pipeline( types::device device, types::layout layout, std::vector<types::shader> shaders, types::pass pass );
+        friend device;
 
       public:
-        layoutNode();
-        ~layoutNode();
+        pipeline();
+        ~pipeline();
         const std::unique_ptr<DATA_TYPE> data;
     };
-
-    // class ENGINE_EXPORT pipeline
-    // {
-    //   private:
-    //     class DATA_TYPE;
-    //     pipeline( types::device device, std::vector<types::shader> shaders );
-    //     friend instance;
-
-    //   public:
-    //     pipeline();
-    //     ~pipeline();
-    //     const std::unique_ptr<DATA_TYPE> data;
-    // };
 
     class ENGINE_EXPORT pass
     {

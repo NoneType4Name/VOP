@@ -53,13 +53,18 @@ namespace Engine
     void InstanceSetup::deviceNextChain( types::device device, const void *&pNext, std::vector<void *> &dataPointers, void *userPoiner )
     {
         dataPointers.resize( 1 );
-        dataPointers[ 0 ] = static_cast<void *>( new VkPhysicalDeviceDescriptorIndexingFeatures {} );
+        dataPointers[ 0 ] = new VkPhysicalDeviceDescriptorIndexingFeatures {};
         VkPhysicalDeviceDescriptorIndexingFeatures *features { static_cast<VkPhysicalDeviceDescriptorIndexingFeatures *>( dataPointers[ 0 ] ) };
         pNext                                               = dataPointers[ 0 ];
         features->sType                                     = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
         features->shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
         features->runtimeDescriptorArray                    = VK_TRUE;
         features->descriptorBindingVariableDescriptorCount  = VK_TRUE;
+    }
+    void InstanceSetup::deviceNextChainClear( types::device device, std::vector<void *> &dataPointers, void *userPoiner )
+    {
+        delete static_cast<VkPhysicalDeviceDescriptorIndexingFeatures *>( dataPointers[ 0 ] );
+        dataPointers.clear();
     }
 
     void InstanceSetup::deviceExtensions( types::device device, std::vector<const char *> &deviceExtensions, void *userPoiner ) {}
@@ -110,15 +115,14 @@ namespace Engine
         data->window->data->instance->data->setup->deviceQueueSet( this, data->queuesSet, this->data->window->data->surface, data->window->data->instance->data->userPointer );
         std::vector<VkDeviceQueueCreateInfo> QueuesCreateInfo;
         QueuesCreateInfo.reserve( data->queuesSet.getUniqueIndecies().size() );
-        std::vector<std::vector<void *>> userNexChains;
-        userNexChains.reserve( data->queuesSet.getUniqueIndecies().size() );
+        std::vector<std::vector<void *>> userNextChains;
+        userNextChains.reserve( data->queuesSet.getUniqueIndecies().size() );
         auto d { data->queuesSet.getUniqueIndecies() };
         for ( const auto &index : data->queuesSet.getUniqueIndecies() )
         {
-            userNexChains.push_back( {} );
+            userNextChains.push_back( {} );
             QueuesCreateInfo.push_back( { VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO } );
-            data->window->data->instance->data->setup->queueSetNextChain( &data->queuesSet, QueuesCreateInfo.back().pNext, userNexChains.back() );
-            data->window->data->instance->data->setup->queueSetFlags( &data->queuesSet, QueuesCreateInfo.back().flags );
+            data->window->data->instance->data->setup->queueSetInfo( &data->queuesSet, QueuesCreateInfo.back().flags, QueuesCreateInfo.back().pNext, userNextChains.back(), data->window->data->instance->data->userPointer );
             QueuesCreateInfo.back().queueFamilyIndex = index.first;
             QueuesCreateInfo.back().queueCount       = index.second.second.size();
             QueuesCreateInfo.back().pQueuePriorities = index.second.second.data();
@@ -141,6 +145,7 @@ namespace Engine
         createInfo.enabledExtensionCount   = static_cast<uint32_t>( data->extensions.size() );
         createInfo.ppEnabledExtensionNames = data->extensions.size() ? data->extensions.data() : nullptr;
         CHECK_RESULT( vkCreateDevice( data->description->data->phDevice, &createInfo, ALLOCATION_CALLBACK, &data->device ) );
+        data->window->data->instance->data->setup->deviceNextChainClear( this, nextChainData, data->window->data->instance->data->userPointer );
         data->queuesSet.init( data->device );
         VkCommandPoolCreateInfo poolCI {};
         poolCI.sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -160,8 +165,10 @@ namespace Engine
         vkDestroyCommandPool( data->device, data->grapchicPool, ALLOCATION_CALLBACK );
         vkDestroyCommandPool( data->device, data->transferPool, ALLOCATION_CALLBACK );
         vkDestroyCommandPool( data->device, data->presentPool, ALLOCATION_CALLBACK );
-        data->descriptorPools.clear();
+        data->pipelines.clear();
         data->shaders.clear();
+        data->layouts.clear();
+        data->descriptorPools.clear();
         vkDestroyDevice( data->device, ALLOCATION_CALLBACK );
     }
 
@@ -186,6 +193,12 @@ namespace Engine
     {
         data->layouts.emplace_back( std::unique_ptr<layout> { new layout { this, pool, userData } } );
         return data->layouts.back().get();
+    }
+
+    types::pipeline device::CreatePipeline( types::layout layout, std::vector<types::shader> shaders, types::pass pass )
+    {
+        data->pipelines.emplace_back( std::unique_ptr<pipeline> { new pipeline { this, layout, shaders, pass } } );
+        return data->pipelines.back().get();
     }
 
     const std::vector<types::DeviceDescription> instance::GetDevices()

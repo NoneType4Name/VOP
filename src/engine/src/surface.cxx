@@ -6,8 +6,8 @@
 
 namespace Engine
 {
-    void InstanceSetup::surfaceNextChain( window::types::window window, const void *&pNext, std::vector<void *> &dataPointers, void *userPoiner ) {}
-    void InstanceSetup::surfaceFlags( window::types::window window, VkWin32SurfaceCreateFlagsKHR &flags, void *userPoiner ) {}
+    void InstanceSetup::surfaceInfo( window::types::window window, const void *&pNext, VkFlags &flags, std::vector<void *> &dataPointers, void *userPoiner ) {}
+    void InstanceSetup::surfaceInfoClear( window::types::window window, std::vector<void *> &dataPointers, void *userPoiner ) {}
 
     namespace window
     {
@@ -34,10 +34,10 @@ namespace Engine
                                         from_wnd->data->eventCallBack( key, scancode, action, mods ); } );
             const void *next { nullptr };
             std::vector<void *> nextChainData;
-            VkWin32SurfaceCreateFlagsKHR flags {};
-            data->instance->data->setup->surfaceNextChain( this, next, nextChainData, data->instance->data->userPointer );
-            data->instance->data->setup->surfaceFlags( this, flags, data->instance->data->userPointer );
+            VkFlags flags {};
+            data->instance->data->setup->surfaceInfo( this, next, flags, nextChainData, data->instance->data->userPointer );
             data->createSurface( data->instance->data->handle, next, flags );
+            data->instance->data->setup->surfaceInfoClear( this, nextChainData, data->instance->data->userPointer );
             // todo: fix bug with full screen window.
         }
         window::~window()

@@ -61,30 +61,10 @@ namespace Engine
         vkDestroyShaderModule( data->device->data->device, data->module, ALLOCATION_CALLBACK );
     }
 
-    void InstanceSetup::shader( types::shader shader, VkPipelineShaderStageCreateInfo &stageCreateInfo )
+    void InstanceSetup::shader( types::shader shader, VkPipelineShaderStageCreateInfo &stageCreateInfo, void *userPoiner )
     {
         stageCreateInfo.stage  = shader->data->stage;
         stageCreateInfo.module = shader->data->module;
         stageCreateInfo.pName  = shader->data->pName;
     }
-
-    layout::layout( types::device device, types::descriptorPool pool, void *userData )
-    {
-        data->device = device;
-        data->pool   = pool;
-        VkPipelineLayoutCreateInfo ci {};
-        ci.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        ci.setLayoutCount         = data->pool->data->layouts.size();
-        ci.pSetLayouts            = data->pool->data->layouts.data();
-        ci.pushConstantRangeCount = 0;
-        ci.pPushConstantRanges    = 0;
-        vkCreatePipelineLayout( data->device->data->device, &ci, ALLOCATION_CALLBACK, &data->handle );
-    }
-    layout::~layout()
-    {
-        vkDestroyPipelineLayout( data->device->data->device, data->handle, ALLOCATION_CALLBACK );
-    }
-
-    void InstanceSetup::layoutNextChain( types::layout layout, const void *&pNext, std::vector<void *> &dataPointer ) {}
-    void InstanceSetup::layoutFlags( types::layout layout, VkPipelineLayoutCreateFlags &flags ) {}
 } // namespace Engine

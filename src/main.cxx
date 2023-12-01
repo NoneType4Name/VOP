@@ -40,7 +40,7 @@ namespace Game
 {
     struct I : Engine::InstanceSetup
     {
-        void instanceExtensions( Engine::types::instance instance, std::vector<const char *> &rExtensions ) override
+        void instanceExtensions( Engine::types::instance instance, std::vector<const char *> &rExtensions, void *userPoiner ) override
         {
         }
     };
@@ -53,7 +53,9 @@ namespace Game
     Engine::types::descriptorPool pool { device->CreatePool( nullptr ) };
     Engine::types::shader vertexShader { device->CreateShader( "./assets/shaders/binary.vert.spv", "main", Engine::ShaderStage::VERTEX_SHADER_TYPE ) };
     Engine::types::shader fragmentShader { device->CreateShader( "./assets/shaders/binary.frag.spv", "main", Engine::ShaderStage::FRAGMENT_SHADER_TYPE ) };
-    // Engine::types::pipeline pipeline { device->CreatePipeline() };
+    Engine::types::layout layout { device->CreateLayout( pool, nullptr ) };
+    Engine::types::pass pass { engine->CreateRenderPass( link ) };
+    Engine::types::pipeline pipeline { device->CreatePipeline( layout, { vertexShader, fragmentShader }, pass ) };
 } // namespace Game
 
 int main()

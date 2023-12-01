@@ -23,7 +23,7 @@ namespace Engine
             VkSemaphore isAvailable { nullptr };
             VkSemaphore isRendered { nullptr };
         };
-        void setup( types::link swapchain, VkSwapchainCreateInfoKHR &createInfo, std::vector<void *> &userData, void *userPoiner );
+        void setup( types::link swapchain, VkSwapchainCreateInfoKHR &createInfo, std::vector<std::unique_ptr<void>> &userData, void *userPoiner );
         void setupImgs();
         ~DATA_TYPE();
 

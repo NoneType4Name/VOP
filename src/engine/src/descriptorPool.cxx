@@ -4,7 +4,7 @@
 
 namespace Engine
 {
-    void InstanceSetup::descriptorPool( types::descriptorPool pool, descriptorPool::SetOfBindingsInfo &set, void *userData )
+    void InstanceSetup::descriptorPool( types::descriptorPool pool, descriptorPool::SetOfBindingsInfo &set, void *userData, void *userPoiner )
     {
         set.resize( 1 );
         set.back().resize( 2, {} );
@@ -28,7 +28,7 @@ namespace Engine
         DEFINE_DATA_FIELD
         data->device = device;
         SetOfBindingsInfo sets {};
-        data->device->data->window->data->instance->data->setup->descriptorPool( this, sets, userData );
+        data->device->data->window->data->instance->data->setup->descriptorPool( this, sets, userData, data->device->data->window->data->instance->data->userPointer );
         data->sets.resize( sets.size() );
         data->layouts.reserve( sets.size() );
 

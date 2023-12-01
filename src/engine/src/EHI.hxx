@@ -13,7 +13,7 @@ namespace Engine
 {
     struct instance::DATA_TYPE
     {
-        void setupDebugLayerCallback( VkDebugUtilsMessengerCreateInfoEXT &createInfo, std::vector<void *> &pData );
+        void setupDebugLayerCallback( VkDebugUtilsMessengerCreateInfoEXT &createInfo, std::vector<std::unique_ptr<void>> &pData );
         void initDebugLayerCallBack( VkDebugUtilsMessengerCreateInfoEXT createInfo );
         void destroyDebugLayerCallback();
         void setLayers( std::vector<const char *> layers );
