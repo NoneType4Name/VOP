@@ -4,31 +4,32 @@
 
 namespace Engine
 {
-    void InstanceSetup::descriptorPool( types::descriptorPool pool, descriptorPool::SetOfBindingsInfo &set, void *userData, void *userPoiner )
+    void InstanceSetup::descriptorPoolInfo( types::descriptorPool pool, descriptorPool::SetOfBindingsInfo &sets, void *userData, void *userPoiner )
     {
-        set.resize( 1 );
-        set.back().resize( 2, {} );
-        set.back()[ 0 ].descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        set.back()[ 0 ].binding         = 0;
-        set.back()[ 0 ].dstArrayElement = 0;
-        set.back()[ 0 ].descriptorCount = 1;
-        set.back()[ 0 ].stageFlags      = VK_SHADER_STAGE_ALL;
-        set.back()[ 0 ].pBufferInfo     = nullptr;
+        sets.resize( 1 );
+        sets.back().resize( 2, {} );
+        sets.back()[ 0 ].descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        sets.back()[ 0 ].binding         = 0;
+        sets.back()[ 0 ].dstArrayElement = 0;
+        sets.back()[ 0 ].descriptorCount = 1;
+        sets.back()[ 0 ].stageFlags      = VK_SHADER_STAGE_ALL;
+        sets.back()[ 0 ].pBufferInfo     = nullptr;
 
-        set.back()[ 1 ].descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        set.back()[ 1 ].binding         = 1;
-        set.back()[ 1 ].dstArrayElement = 0;
-        set.back()[ 1 ].descriptorCount = 1;
-        set.back()[ 1 ].stageFlags      = VK_SHADER_STAGE_FRAGMENT_BIT;
-        set.back()[ 1 ].pImageInfo      = nullptr;
+        sets.back()[ 1 ].descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        sets.back()[ 1 ].binding         = 1;
+        sets.back()[ 1 ].dstArrayElement = 0;
+        sets.back()[ 1 ].descriptorCount = 1;
+        sets.back()[ 1 ].stageFlags      = VK_SHADER_STAGE_FRAGMENT_BIT;
+        sets.back()[ 1 ].pImageInfo      = nullptr;
     }
+    void InstanceSetup::descriptorPoolInfoClear( types::descriptorPool pool, void *dataPointer, void *userPoiner ) {}
 
     descriptorPool::descriptorPool( types::device device, void *userData )
     {
         DEFINE_DATA_FIELD
         data->device = device;
         SetOfBindingsInfo sets {};
-        data->device->data->window->data->instance->data->setup->descriptorPool( this, sets, userData, data->device->data->window->data->instance->data->userPointer );
+        data->device->data->window->data->instance->data->setup->descriptorPoolInfo( this, sets, userData, data->device->data->window->data->instance->data->userPointer );
         data->sets.resize( sets.size() );
         data->layouts.reserve( sets.size() );
 
@@ -52,6 +53,7 @@ namespace Engine
         poolCreateInfo.pPoolSizes    = sizes.data();
         poolCreateInfo.maxSets       = max;
         vkCreateDescriptorPool( data->device->data->device, &poolCreateInfo, ALLOCATION_CALLBACK, &data->handle );
+        data->device->data->window->data->instance->data->setup->descriptorPoolInfoClear( this, userData, data->device->data->window->data->instance->data->userPointer );
 
         for ( const auto &bindings : sets )
         {

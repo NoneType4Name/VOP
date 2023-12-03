@@ -88,9 +88,9 @@ namespace Engine
     link::link( window::types::window window, types::device device ) :
         data { new DATA_TYPE { window, device } }
     {
-        std::vector<std::unique_ptr<void>> pData;
-        std::vector<std::unique_ptr<void>> pData1;
-        data->window->data->instance->data->setup->swapchain( this, data->createInfo, pData1, data->window->data->instance->data->userPointer );
+        std::vector<void *> swapchainData;
+        std::vector<void *> pData;
+        data->window->data->instance->data->setup->swapchainInfo( this, data->createInfo, swapchainData, data->window->data->instance->data->userPointer );
         data->setup( this, data->createInfo, pData, data->window->data->instance->data->userPointer );
         CHECK_RESULT( vkCreateSwapchainKHR( data->device->data->device, &data->createInfo, ALLOCATION_CALLBACK, &data->swapchain ) );
         data->setupImgs();
@@ -114,11 +114,13 @@ namespace Engine
         vkGetPhysicalDeviceSurfacePresentModesKHR( device->data->description->data->phDevice, window->data->surface, &c, presentModes.data() );
     }
 
-    void InstanceSetup::swapchain( types::link swapchain, VkSwapchainCreateInfoKHR &createInfo, std::vector<std::unique_ptr<void>> &dataPointer, void *userPoiner )
+    void InstanceSetup::swapchainInfo( types::link swapchain, VkSwapchainCreateInfoKHR &createInfo, std::vector<void *> &dataPointer, void *userPoiner )
     {
         VkSurfaceFormatKHR SurfaceFormat { swapchain->data->properties.formats[ 0 ] };
         for ( const auto &format : swapchain->data->properties.formats )
         {
+            VkFormatProperties properties;
+            vkGetPhysicalDeviceFormatProperties( swapchain->data->device->data->description->data->phDevice, format.format, &properties );
             if ( format.format == VK_FORMAT_B8G8R8A8_SRGB && format.colorSpace == VK_COLORSPACE_SRGB_NONLINEAR_KHR ) SurfaceFormat = format;
         }
 
@@ -127,6 +129,8 @@ namespace Engine
         {
             if ( mode == VK_PRESENT_MODE_MAILBOX_KHR ) swapchain->data->presentMode = mode;
         }
+
+        swapchain->data->depthImageFormat = tools::formatPriority( swapchain->data->device, { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT }, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT );
         int width, height;
         glfwGetFramebufferSize( swapchain->data->window->data->window, &width, &height );
         createInfo.imageUsage         = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
@@ -140,7 +144,11 @@ namespace Engine
         createInfo.compositeAlpha     = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     }
 
-    void link::DATA_TYPE::setup( types::link link, VkSwapchainCreateInfoKHR &createInfo, std::vector<std::unique_ptr<void>> &dataPointer, void *userPoiner )
+    void InstanceSetup::swapchainInfoClear( types::link swapchain, std::vector<void *> &dataPointer, void *userPoiner )
+    {
+    }
+
+    void link::DATA_TYPE::setup( types::link link, VkSwapchainCreateInfoKHR &createInfo, std::vector<void *> &dataPointer, void *userPoiner )
     {
         createInfo.sType   = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
         createInfo.surface = window->data->surface;
@@ -170,6 +178,8 @@ namespace Engine
             createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
         }
     }
+
+    void link::DATA_TYPE::setupClear( types::link swapchain, std::vector<void *> &userData, void *userPoiner ) {}
 
     void link::DATA_TYPE::setupImgs()
     {
@@ -294,4 +304,26 @@ namespace Engine
     //     PresentInfo.pImageIndices      = &_imageIndex;
     //     vkQueuePresentKHR( tools::getQueues().present.GetHandle(), &PresentInfo );
     // }
+    VkFormat tools::formatPriority( types::device device, const std::vector<VkFormat> &formats, VkImageTiling ImageTiling, VkFormatFeatureFlags FormatFeatureFlags )
+    {
+        for ( auto format : formats )
+        {
+            VkFormatProperties FormatProperties;
+            vkGetPhysicalDeviceFormatProperties( device->data->description->data->phDevice, format, &FormatProperties );
+            switch ( ImageTiling )
+            {
+                case VK_IMAGE_TILING_LINEAR:
+                    if ( ( FormatProperties.linearTilingFeatures & FormatFeatureFlags ) == FormatFeatureFlags )
+                        return format;
+                    break;
+                case VK_IMAGE_TILING_OPTIMAL:
+                    if ( ( FormatProperties.optimalTilingFeatures & FormatFeatureFlags ) == FormatFeatureFlags )
+                        return format;
+                    break;
+                default:
+                    break;
+            }
+        }
+        return VK_FORMAT_UNDEFINED;
+    }
 } // namespace Engine

@@ -13,7 +13,7 @@ namespace Engine
 {
     struct instance::DATA_TYPE
     {
-        void setupDebugLayerCallback( VkDebugUtilsMessengerCreateInfoEXT &createInfo, std::vector<std::unique_ptr<void>> &pData );
+        void setupDebugLayerCallback( VkDebugUtilsMessengerCreateInfoEXT &createInfo, std::vector<void *> &pData );
         void initDebugLayerCallBack( VkDebugUtilsMessengerCreateInfoEXT createInfo );
         void destroyDebugLayerCallback();
         void setLayers( std::vector<const char *> layers );
@@ -30,9 +30,12 @@ namespace Engine
         VkDebugUtilsMessengerEXT debugMessenger { nullptr };
         VkInstance handle { nullptr };
         InstanceSetup *setup { nullptr };
-        std::unique_ptr<InstanceSetup> temp_setup { nullptr };
         void *userPointer { nullptr };
         ~DATA_TYPE();
+        friend instance;
+
+      private:
+        std::unique_ptr<InstanceSetup> temp_setup { nullptr };
     };
 } // namespace Engine
 #endif

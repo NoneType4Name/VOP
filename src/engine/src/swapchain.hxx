@@ -2,6 +2,7 @@
 #include <common/globals.hxx>
 #include <platform.hxx>
 #include <image.hxx>
+#include <device.hxx>
 
 namespace Engine
 {
@@ -23,7 +24,8 @@ namespace Engine
             VkSemaphore isAvailable { nullptr };
             VkSemaphore isRendered { nullptr };
         };
-        void setup( types::link swapchain, VkSwapchainCreateInfoKHR &createInfo, std::vector<std::unique_ptr<void>> &userData, void *userPoiner );
+        void setup( types::link swapchain, VkSwapchainCreateInfoKHR &createInfo, std::vector<void *> &userData, void *userPoiner );
+        void setupClear( types::link swapchain, std::vector<void *> &userData, void *userPoiner );
         void setupImgs();
         ~DATA_TYPE();
 
@@ -39,4 +41,9 @@ namespace Engine
         uint32_t semaphoreIndex { 0 };
         VkSwapchainCreateInfoKHR createInfo {};
     };
+
+    namespace tools
+    {
+        VkFormat formatPriority( types::device device, const std::vector<VkFormat> &formats, VkImageTiling ImageTiling, VkFormatFeatureFlags FormatFeatureFlags );
+    } // namespace tools
 } // namespace Engine

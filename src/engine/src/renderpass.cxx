@@ -7,8 +7,10 @@ namespace Engine
 {
     void InstanceSetup::renderpassInfo( types::pass renderpass, types::link link, VkRenderPassCreateInfo &createInfo, std::vector<void *> &dataPointer, void *userPointer )
     {
-        dataPointer.reserve( 8 );
-        VkAttachmentDescription *ColorAttachment { static_cast<VkAttachmentDescription *>( dataPointer.emplace_back( new VkAttachmentDescription {} ) ) };
+        dataPointer.reserve( 4 );
+        std::vector<VkAttachmentDescription> *attachments = static_cast<std::vector<VkAttachmentDescription> *>( dataPointer.emplace_back( new std::vector<VkAttachmentDescription>( 3 ) ) );
+
+        VkAttachmentDescription *ColorAttachment { &( *attachments )[ 0 ] };
         ColorAttachment->format         = link->data->format.format;
         ColorAttachment->samples        = VK_SAMPLE_COUNT_2_BIT;
         ColorAttachment->loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -18,9 +20,9 @@ namespace Engine
         ColorAttachment->initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
         ColorAttachment->finalLayout    = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-        VkAttachmentDescription *DepthAttachment { static_cast<VkAttachmentDescription *>( dataPointer.emplace_back( new VkAttachmentDescription {} ) ) };
+        VkAttachmentDescription *DepthAttachment { &( *attachments )[ 1 ] };
         DepthAttachment->format         = link->data->depthImageFormat;
-        DepthAttachment->samples        = VK_SAMPLE_COUNT_1_BIT;
+        DepthAttachment->samples        = ColorAttachment->samples;
         DepthAttachment->loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
         DepthAttachment->storeOp        = VK_ATTACHMENT_STORE_OP_DONT_CARE;
         DepthAttachment->stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -28,9 +30,9 @@ namespace Engine
         DepthAttachment->initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
         DepthAttachment->finalLayout    = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-        VkAttachmentDescription *ColorAttachmentResolve { static_cast<VkAttachmentDescription *>( dataPointer.emplace_back( new VkAttachmentDescription {} ) ) };
+        VkAttachmentDescription *ColorAttachmentResolve { &( *attachments )[ 2 ] };
         ColorAttachmentResolve->format         = ColorAttachment->format;
-        ColorAttachmentResolve->samples        = ColorAttachment->samples;
+        ColorAttachmentResolve->samples        = VK_SAMPLE_COUNT_1_BIT;
         ColorAttachmentResolve->loadOp         = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
         ColorAttachmentResolve->storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
         ColorAttachmentResolve->stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -54,8 +56,8 @@ namespace Engine
         subpass->pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
         subpass->colorAttachmentCount    = 1;
         subpass->pColorAttachments       = ColorAttachmentRef;
-        subpass->pResolveAttachments     = ColorAttachmentResolveRef;
         subpass->pDepthStencilAttachment = DepthAttachmentRef;
+        subpass->pResolveAttachments     = ColorAttachmentResolveRef;
 
         VkSubpassDependency *dependency { static_cast<VkSubpassDependency *>( dataPointer.emplace_back( new VkSubpassDescription {} ) ) };
         dependency->srcSubpass    = VK_SUBPASS_EXTERNAL;
@@ -66,8 +68,8 @@ namespace Engine
         dependency->dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
         createInfo.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-        createInfo.attachmentCount = 3;
-        createInfo.pAttachments    = ColorAttachment;
+        createInfo.attachmentCount = attachments->size();
+        createInfo.pAttachments    = attachments->data();
         createInfo.subpassCount    = 1;
         createInfo.pSubpasses      = subpass;
         createInfo.dependencyCount = 1;
@@ -76,14 +78,12 @@ namespace Engine
 
     void InstanceSetup::renderpassInfoClear( types::pass renderpass, types::link link, std::vector<void *> &dataPointer, void *userPointer )
     {
-        delete static_cast<VkAttachmentDescription *>( dataPointer[ 0 ] );
-        delete static_cast<VkAttachmentDescription *>( dataPointer[ 1 ] );
-        delete static_cast<VkAttachmentDescription *>( dataPointer[ 2 ] );
+        static_cast<std::vector<VkAttachmentDescription> *>( dataPointer[ 0 ] )->clear();
+        delete static_cast<VkAttachmentReference *>( dataPointer[ 1 ] );
+        delete static_cast<VkAttachmentReference *>( dataPointer[ 2 ] );
         delete static_cast<VkAttachmentReference *>( dataPointer[ 3 ] );
-        delete static_cast<VkAttachmentReference *>( dataPointer[ 4 ] );
-        delete static_cast<VkAttachmentReference *>( dataPointer[ 5 ] );
-        delete static_cast<VkSubpassDescription *>( dataPointer[ 6 ] );
-        delete static_cast<VkSubpassDependency *>( dataPointer[ 7 ] );
+        delete static_cast<VkSubpassDescription *>( dataPointer[ 4 ] );
+        delete static_cast<VkSubpassDependency *>( dataPointer[ 5 ] );
         dataPointer.clear();
     }
 
@@ -91,6 +91,7 @@ namespace Engine
 
     pass::pass( types::link link )
     {
+        DEFINE_DATA_FIELD
         data->link = link;
         std::vector<void *> pData;
         VkRenderPassCreateInfo createInfo {};

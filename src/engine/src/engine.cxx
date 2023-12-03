@@ -79,7 +79,7 @@ namespace Engine
         ApplicationInfo.applicationVersion = appVersion;
 
         std::vector<const char *> Extensions, Layers;
-        std::vector<std::unique_ptr<void>> pData;
+        std::vector<void *> pData;
         VkDebugUtilsMessengerCreateInfoEXT debugUtilsMsg {};
         data->setupDebugLayerCallback( debugUtilsMsg, pData );
         VkDebugUtilsMessengerCreateInfoEXT debugUtilsMsgCI = debugUtilsMsg;

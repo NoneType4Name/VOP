@@ -115,14 +115,11 @@ namespace Engine
         data->window->data->instance->data->setup->deviceQueueSet( this, data->queuesSet, this->data->window->data->surface, data->window->data->instance->data->userPointer );
         std::vector<VkDeviceQueueCreateInfo> QueuesCreateInfo;
         QueuesCreateInfo.reserve( data->queuesSet.getUniqueIndecies().size() );
-        std::vector<std::vector<void *>> userNextChains;
-        userNextChains.reserve( data->queuesSet.getUniqueIndecies().size() );
         auto d { data->queuesSet.getUniqueIndecies() };
         for ( const auto &index : data->queuesSet.getUniqueIndecies() )
         {
-            userNextChains.push_back( {} );
             QueuesCreateInfo.push_back( { VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO } );
-            data->window->data->instance->data->setup->queueSetInfo( &data->queuesSet, QueuesCreateInfo.back().flags, QueuesCreateInfo.back().pNext, userNextChains.back(), data->window->data->instance->data->userPointer );
+            data->window->data->instance->data->setup->queueFlags( &data->queuesSet, QueuesCreateInfo.back().flags, data->window->data->instance->data->userPointer );
             QueuesCreateInfo.back().queueFamilyIndex = index.first;
             QueuesCreateInfo.back().queueCount       = index.second.second.size();
             QueuesCreateInfo.back().pQueuePriorities = index.second.second.data();
