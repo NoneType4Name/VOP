@@ -7,6 +7,7 @@ namespace Engine
     {
         std::vector<image *> images;
     }
+
     image::image( types::device device, VkExtent3D extend, const VkBufferUsageFlags iUsage, const VkImageTiling tiling, const VkMemoryPropertyFlags mProperties, VkImageAspectFlags aspect, VkFormat format, VkImageCreateInfo ImageCreateInfo )
     {
         images.emplace_back( this );
@@ -24,22 +25,12 @@ namespace Engine
         ImageCreateInfo.sharingMode   = ImageCreateInfo.sharingMode ? ImageCreateInfo.sharingMode : VK_SHARING_MODE_EXCLUSIVE;
         ImageCreateInfo.samples       = ImageCreateInfo.samples ? ImageCreateInfo.samples : VK_SAMPLE_COUNT_1_BIT;
 
-        CHECK_RESULT( vkCreateImage( this->device->data->device, &ImageCreateInfo, ALLOCATION_CALLBACK, &handler ) );
-
-        VkMemoryRequirements MemoryRequirements {};
-        vkGetImageMemoryRequirements( this->device->data->device, handler, &MemoryRequirements );
-
-        VkMemoryAllocateInfo MemoryAllocateInfo {};
-        MemoryAllocateInfo.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-        MemoryAllocateInfo.allocationSize  = MemoryRequirements.size;
-        MemoryAllocateInfo.memoryTypeIndex = tools::requeredMemoryTypeIndex( this->device, MemoryRequirements.memoryTypeBits, mProperties );
-
-        CHECK_RESULT( vkAllocateMemory( this->device->data->device, &MemoryAllocateInfo, ALLOCATION_CALLBACK, &memory ) ); // todo: memory allocate similar as std::vector with capacity.
-        CHECK_RESULT( vkBindImageMemory( this->device->data->device, handler, memory, 0 ) );
+        CHECK_RESULT( vkCreateImage( this->device->data->device, &ImageCreateInfo, ALLOCATION_CALLBACK, &handle ) );
+        memoryIndex = this->device->data->setImageMemory( handle, mProperties );
 
         VkImageViewCreateInfo ImageViewCreateInfo {};
         ImageViewCreateInfo.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        ImageViewCreateInfo.image                           = handler;
+        ImageViewCreateInfo.image                           = handle;
         ImageViewCreateInfo.format                          = format;
         ImageViewCreateInfo.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
         ImageViewCreateInfo.components                      = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
@@ -48,7 +39,6 @@ namespace Engine
         ImageViewCreateInfo.subresourceRange.levelCount     = ImageCreateInfo.mipLevels;
         ImageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
         ImageViewCreateInfo.subresourceRange.layerCount     = ImageCreateInfo.arrayLayers;
-
         CHECK_RESULT( vkCreateImageView( this->device->data->device, &ImageViewCreateInfo, ALLOCATION_CALLBACK, &view ) );
     }
 
@@ -56,10 +46,10 @@ namespace Engine
     {
         images.emplace_back( this );
         this->device = device;
-        handler      = image;
+        handle       = image;
         VkImageViewCreateInfo ImageViewCreateInfo {};
         ImageViewCreateInfo.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        ImageViewCreateInfo.image                           = handler;
+        ImageViewCreateInfo.image                           = handle;
         ImageViewCreateInfo.format                          = format;
         ImageViewCreateInfo.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
         ImageViewCreateInfo.components                      = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
@@ -82,8 +72,8 @@ namespace Engine
         vkDestroyImageView( this->device->data->device, view, ALLOCATION_CALLBACK );
         if ( memory == nullptr )
             return;
-        vkFreeMemory( this->device->data->device, memory, ALLOCATION_CALLBACK );
-        vkDestroyImage( this->device->data->device, handler, ALLOCATION_CALLBACK );
+        device->data->resetImageMemory( handle, memoryIndex );
+        vkDestroyImage( this->device->data->device, handle, ALLOCATION_CALLBACK );
     }
 
     namespace tools

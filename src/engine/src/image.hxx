@@ -16,7 +16,8 @@ namespace Engine
         image( types::device device, const uint32_t width, const uint32_t height, const VkBufferUsageFlags iUsage, const VkImageTiling tiling, const VkMemoryPropertyFlags mProperties, VkImageAspectFlags aspect, VkFormat format, VkImageCreateInfo ImageCreateInfo = {} );
         ~image();
         types::device device { nullptr };
-        VkImage handler { nullptr };
+        uint32_t memoryIndex { 0 };
+        VkImage handle { nullptr };
         VkImageView view { nullptr };
         VkDeviceMemory memory { nullptr };
     };

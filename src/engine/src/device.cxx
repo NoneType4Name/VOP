@@ -238,6 +238,17 @@ namespace Engine
             return -1;
         }
 
+        uint32_t requeredMemoryTypeIndex( VkPhysicalDeviceMemoryProperties memProperties, uint32_t type, VkMemoryPropertyFlags properties )
+        {
+            for ( uint32_t i { 0 }; i < memProperties.memoryTypeCount; i++ )
+            {
+                if ( ( type & ( 1 << i ) ) && ( ( memProperties.memoryTypes[ i ].propertyFlags & properties ) == properties ) ) return i;
+            }
+            SPDLOG_CRITICAL( "Failed to find suitable memory type, type: {}, properties: {}.", type, properties );
+            assert( 0 );
+            return -1;
+        }
+
         inline DeviceType VkDevTypeToEngineDevType( VkPhysicalDeviceType type )
         {
             switch ( type )

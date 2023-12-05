@@ -6,6 +6,7 @@ namespace Engine
 {
     void InstanceSetup::descriptorPoolInfo( types::descriptorPool pool, descriptorPool::SetOfBindingsInfo &sets, void *userData, void *userPoiner )
     {
+        pool->data->userData = new std::tuple<std::vector<image *>, std::vector<void *>> {};
         sets.resize( 1 );
         sets.back().resize( 2, {} );
         sets.back()[ 0 ].descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -13,14 +14,14 @@ namespace Engine
         sets.back()[ 0 ].dstArrayElement = 0;
         sets.back()[ 0 ].descriptorCount = 1;
         sets.back()[ 0 ].stageFlags      = VK_SHADER_STAGE_ALL;
-        sets.back()[ 0 ].pBufferInfo     = nullptr;
+        sets.back()[ 0 ].pBufferInfo     = ;
 
         sets.back()[ 1 ].descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         sets.back()[ 1 ].binding         = 1;
         sets.back()[ 1 ].dstArrayElement = 0;
         sets.back()[ 1 ].descriptorCount = 1;
         sets.back()[ 1 ].stageFlags      = VK_SHADER_STAGE_FRAGMENT_BIT;
-        sets.back()[ 1 ].pImageInfo      = nullptr;
+        sets.back()[ 1 ].pImageInfo      = ;
     }
     void InstanceSetup::descriptorPoolInfoClear( types::descriptorPool pool, void *dataPointer, void *userPoiner ) {}
 

@@ -27,6 +27,7 @@ namespace Engine
         std::vector<VkDescriptorSet> sets;
         types::device device { nullptr };
         VkDescriptorPool handle { nullptr };
+        void *userData { nullptr };
     };
 } // namespace Engine
 #endif

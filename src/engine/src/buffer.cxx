@@ -3,10 +3,6 @@
 
 namespace Engine
 {
-    // buffer::buffer( VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertiesFlag, VkDeviceSize size )
-    // {
-    //     init( usageFlags, memoryPropertiesFlag, size );
-    // }
     buffer::buffer( types::device device ) :
         device { device }
     {
