@@ -80,6 +80,7 @@ namespace Engine
     void device::DATA_TYPE::resetBufferMemory( VkBuffer &buffer, uint32_t index )
     {
     }
+
     void device::DATA_TYPE::addBuffersMemorySize( uint32_t index, uint32_t size )
     {
         VkMemoryAllocateInfo allocateInfo {};
@@ -95,4 +96,36 @@ namespace Engine
             buffers[ allocateInfo.memoryTypeIndex ].second.first += buf.second;
         }
     }
+    void device::DATA_TYPE::allocateBufferMemory( VkBuffer buffer, VkMemoryPropertyFlags properties )
+    {
+        if ( !buffers.size() )
+            buffers.resize( description->data->memProperties.memoryTypeCount );
+        VkMemoryRequirements mReq {};
+        VkMemoryAllocateInfo allocateInfo {};
+        allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        vkGetBufferMemoryRequirements( device, buffer, &mReq );
+        allocateInfo.memoryTypeIndex                            = tools::requeredMemoryTypeIndex( description->data->memProperties, mReq.memoryTypeBits, properties );
+        buffers[ allocateInfo.memoryTypeIndex ].first[ buffer ] = mReq.size;
+        while ( !buffersMemory )
+            continue;
+        if ( buffers[ allocateInfo.memoryTypeIndex ].second.second < buffers[ allocateInfo.memoryTypeIndex ].second.first + mReq.size )
+        {
+            buffers[ allocateInfo.memoryTypeIndex ].second.second = allocateInfo.allocationSize = buffers[ allocateInfo.memoryTypeIndex ].second.first + mReq.size;
+            vkFreeMemory( device, buffersMemory, ALLOCATION_CALLBACK );
+            vkAllocateMemory( device, &allocateInfo, ALLOCATION_CALLBACK, &buffersMemory );
+            buffers[ allocateInfo.memoryTypeIndex ].second.first = 0;
+            for ( const auto img : buffers[ allocateInfo.memoryTypeIndex ].first )
+            {
+                vkBindBufferMemory( device, img.first, buffersMemory, buffers[ allocateInfo.memoryTypeIndex ].second.first );
+                buffers[ allocateInfo.memoryTypeIndex ].second.first += img.second;
+            }
+        }
+        else
+        {
+            vkBindBufferMemory( device, buffer, buffersMemory, buffers[ allocateInfo.memoryTypeIndex ].second.first );
+            buffers[ allocateInfo.memoryTypeIndex ].second.first += mReq.size;
+        }
+    }
+    // void mapBufferMemory( VkBuffer buffer, );
+    void freeBufferMemory( VkBuffer buffer );
 } // namespace Engine

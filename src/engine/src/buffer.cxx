@@ -8,15 +8,19 @@ namespace Engine
     {
     }
 
+    buffer::buffer( types::device device, VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertiesFlag, VkDeviceSize size, VkSharingMode sharingMode, VkBufferCreateFlags flags, void *pNext ) :
+        buffer( device )
+    {
+        init( usageFlags, memoryPropertiesFlag, size, sharingMode, flags, pNext );
+    }
+
     buffer::~buffer()
     {
-        if ( mapped != nullptr )
-            unmap();
-        vkFreeMemory( device->data->device, memory, ALLOCATION_CALLBACK );
+        device->data->resetBufferMemory( handle, mIndex );
         vkDestroyBuffer( device->data->device, handle, ALLOCATION_CALLBACK );
     }
 
-    void buffer::init( VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertiesFlag, VkDeviceSize size, VkSharingMode sharingMode, VkBufferCreateFlags flags, void *pNext, void *pNextAllocate )
+    void buffer::init( VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertiesFlag, VkDeviceSize size, VkSharingMode sharingMode, VkBufferCreateFlags flags, void *pNext )
     {
         VkBufferCreateInfo BufferCreateInfo {};
         BufferCreateInfo.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -27,43 +31,14 @@ namespace Engine
         BufferCreateInfo.sharingMode = sharingMode;
 
         CHECK_RESULT( vkCreateBuffer( device->data->device, &BufferCreateInfo, nullptr, &handle ) );
-        VkMemoryRequirements Requirements;
-        vkGetBufferMemoryRequirements( device->data->device, handle, &Requirements );
-        VkMemoryAllocateInfo MemoryAllocateInfo {};
-        MemoryAllocateInfo.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-        MemoryAllocateInfo.pNext           = pNextAllocate;
-        MemoryAllocateInfo.allocationSize  = Requirements.size;
-        MemoryAllocateInfo.memoryTypeIndex = tools::requeredMemoryTypeIndex( device, Requirements.memoryTypeBits, memoryPropertiesFlag );
-        CHECK_RESULT( vkAllocateMemory( device->data->device, &MemoryAllocateInfo, ALLOCATION_CALLBACK, &memory ) );
-        CHECK_RESULT( vkBindBufferMemory( device->data->device, handle, memory, 0 ) ); // allocate todo?
+        mIndex = this->device->data->setBufferMemory( handle, memoryPropertiesFlag );
     }
 
-    VkResult buffer::map( VkDeviceSize offset, VkDeviceSize size, VkMemoryMapFlags flags )
+    void buffer::copy( void *data, VkDeviceSize size, VkMemoryMapFlags flags )
     {
-        if ( memory == nullptr )
-            SPDLOG_CRITICAL( "Failed to map memory." );
-        if ( mapped != nullptr )
-            return VK_SUCCESS;
-        return vkMapMemory( device->data->device, memory, offset, size, flags, &mapped );
-    }
-
-    void buffer::copy( void *data, VkDeviceSize size )
-    {
-        if ( memory == nullptr )
-            SPDLOG_CRITICAL( "Failed to copy memory." );
-        if ( mapped == nullptr )
-            return;
+        vkMapMemory( device->data->device, device->data->buffersMemory, device->data->buffers[ mIndex ].first[ handle ], size, flags, &mapped );
         memcpy( mapped, data, size );
-    }
-
-    void buffer::unmap()
-    {
-        if ( memory == nullptr )
-            SPDLOG_CRITICAL( "Failed to unmap memory." );
-        if ( mapped == nullptr )
-            return;
-        vkUnmapMemory( device->data->device, memory );
-        mapped = nullptr;
+        vkUnmapMemory( device->data->device, device->data->buffersMemory );
     }
 
     commandBuffer::commandBuffer( types::device device, VkCommandPool commandPool, VkCommandBufferLevel level, Engine::queue *queue )

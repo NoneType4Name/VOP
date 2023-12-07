@@ -22,6 +22,7 @@ namespace Engine
         sets.back()[ 1 ].descriptorCount = 1;
         sets.back()[ 1 ].stageFlags      = VK_SHADER_STAGE_FRAGMENT_BIT;
         sets.back()[ 1 ].pImageInfo      = ;
+        vkCreateBuffer();
     }
     void InstanceSetup::descriptorPoolInfoClear( types::descriptorPool pool, void *dataPointer, void *userPoiner ) {}
 
