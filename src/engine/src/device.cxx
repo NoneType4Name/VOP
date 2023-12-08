@@ -41,8 +41,8 @@ namespace Engine
         vkGetPhysicalDeviceFeatures( device, &features );
     }
 
-    device::DATA_TYPE::DATA_TYPE( DeviceDescription *description ) :
-        description { description }, queuesSet { description }
+    device::DATA_TYPE::DATA_TYPE( Engine::device *parent, DeviceDescription *description ) :
+        parent { parent }, description { description }, queuesSet { description }
     {
     }
 
@@ -108,7 +108,7 @@ namespace Engine
     device::device( types::DeviceDescription description, window::types::window window )
     {
         auto &_data = const_cast<std ::unique_ptr<DATA_TYPE> &>( data );
-        _data.reset( new DATA_TYPE { description } );
+        _data.reset( new DATA_TYPE { this, description } );
 
         this->data->window = window;
         data->description  = description;
@@ -141,32 +141,32 @@ namespace Engine
         createInfo.pEnabledFeatures        = &features;
         createInfo.enabledExtensionCount   = static_cast<uint32_t>( data->extensions.size() );
         createInfo.ppEnabledExtensionNames = data->extensions.size() ? data->extensions.data() : nullptr;
-        CHECK_RESULT( vkCreateDevice( data->description->data->phDevice, &createInfo, ALLOCATION_CALLBACK, &data->device ) );
+        CHECK_RESULT( vkCreateDevice( data->description->data->phDevice, &createInfo, ALLOCATION_CALLBACK, &data->handle ) );
         data->window->data->instance->data->setup->deviceNextChainClear( this, nextChainData, data->window->data->instance->data->userPointer );
-        data->queuesSet.init( data->device );
+        data->queuesSet.init( data->handle );
         VkCommandPoolCreateInfo poolCI {};
         poolCI.sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
         poolCI.flags            = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
         poolCI.queueFamilyIndex = data->queuesSet.graphic.familyIndex.value();
-        CHECK_RESULT( vkCreateCommandPool( data->device, &poolCI, ALLOCATION_CALLBACK, &data->grapchicPool ) );
+        CHECK_RESULT( vkCreateCommandPool( data->handle, &poolCI, ALLOCATION_CALLBACK, &data->grapchicPool ) );
         poolCI.queueFamilyIndex = data->queuesSet.transfer.familyIndex.value();
-        CHECK_RESULT( vkCreateCommandPool( data->device, &poolCI, ALLOCATION_CALLBACK, &data->transferPool ) );
+        CHECK_RESULT( vkCreateCommandPool( data->handle, &poolCI, ALLOCATION_CALLBACK, &data->transferPool ) );
         poolCI.queueFamilyIndex = data->queuesSet.present.familyIndex.value();
-        CHECK_RESULT( vkCreateCommandPool( data->device, &poolCI, ALLOCATION_CALLBACK, &data->presentPool ) );
+        CHECK_RESULT( vkCreateCommandPool( data->handle, &poolCI, ALLOCATION_CALLBACK, &data->presentPool ) );
         // std::vector<descriptorPool> descriptors;
-        // data->window->data->instance->data->setup->deviceDescriptorPools( this, data->descriptorPools );
+        // data->window->data->instance->data->setup->handleDescriptorPools( this, data->descriptorPools );
     }
 
     device::~device()
     {
-        vkDestroyCommandPool( data->device, data->grapchicPool, ALLOCATION_CALLBACK );
-        vkDestroyCommandPool( data->device, data->transferPool, ALLOCATION_CALLBACK );
-        vkDestroyCommandPool( data->device, data->presentPool, ALLOCATION_CALLBACK );
+        vkDestroyCommandPool( data->handle, data->grapchicPool, ALLOCATION_CALLBACK );
+        vkDestroyCommandPool( data->handle, data->transferPool, ALLOCATION_CALLBACK );
+        vkDestroyCommandPool( data->handle, data->presentPool, ALLOCATION_CALLBACK );
         data->pipelines.clear();
         data->shaders.clear();
         data->layouts.clear();
         data->descriptorPools.clear();
-        vkDestroyDevice( data->device, ALLOCATION_CALLBACK );
+        vkDestroyDevice( data->handle, ALLOCATION_CALLBACK );
     }
 
     types::descriptorPool device::CreatePool( void *userData )

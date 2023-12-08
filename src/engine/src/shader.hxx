@@ -16,10 +16,13 @@ namespace Engine
 
     struct shader::DATA_TYPE
     {
+        DATA_TYPE( shader *parent ) :
+            parent { parent } {}
         types::device device { nullptr };
         VkShaderModule module { nullptr };
         const char *pName { nullptr };
         VkShaderStageFlagBits stage;
+        shader *parent { nullptr };
     };
 
     struct layout::DATA_TYPE

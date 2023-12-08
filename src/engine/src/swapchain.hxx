@@ -8,7 +8,7 @@ namespace Engine
 {
     struct link::DATA_TYPE
     {
-        DATA_TYPE( window::types::window window, types::device device );
+        DATA_TYPE( link *parent, window::types::window window, types::device device );
 
         struct properties_T
         {
@@ -40,6 +40,7 @@ namespace Engine
         uint32_t flightImgIndex { 0 };
         uint32_t semaphoreIndex { 0 };
         VkSwapchainCreateInfoKHR createInfo {};
+        link *parent { nullptr };
     };
 
     namespace tools

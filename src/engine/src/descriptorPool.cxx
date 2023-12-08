@@ -22,7 +22,6 @@ namespace Engine
         sets.back()[ 1 ].descriptorCount = 1;
         sets.back()[ 1 ].stageFlags      = VK_SHADER_STAGE_FRAGMENT_BIT;
         sets.back()[ 1 ].pImageInfo      = ;
-        vkCreateBuffer();
     }
     void InstanceSetup::descriptorPoolInfoClear( types::descriptorPool pool, void *dataPointer, void *userPoiner ) {}
 
@@ -54,7 +53,7 @@ namespace Engine
         poolCreateInfo.poolSizeCount = sizes.size();
         poolCreateInfo.pPoolSizes    = sizes.data();
         poolCreateInfo.maxSets       = max;
-        vkCreateDescriptorPool( data->device->data->device, &poolCreateInfo, ALLOCATION_CALLBACK, &data->handle );
+        vkCreateDescriptorPool( data->device->data->handle, &poolCreateInfo, ALLOCATION_CALLBACK, &data->handle );
         data->device->data->window->data->instance->data->setup->descriptorPoolInfoClear( this, userData, data->device->data->window->data->instance->data->userPointer );
 
         for ( const auto &bindings : sets )
@@ -68,14 +67,14 @@ namespace Engine
             layoutsSet.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
             layoutsSet.bindingCount = binds.size();
             layoutsSet.pBindings    = binds.data();
-            CHECK_RESULT( vkCreateDescriptorSetLayout( data->device->data->device, &layoutsSet, ALLOCATION_CALLBACK, &data->layouts.back() ) );
+            CHECK_RESULT( vkCreateDescriptorSetLayout( data->device->data->handle, &layoutsSet, ALLOCATION_CALLBACK, &data->layouts.back() ) );
         }
         VkDescriptorSetAllocateInfo descriptorSetAllocateInfo {};
         descriptorSetAllocateInfo.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
         descriptorSetAllocateInfo.descriptorSetCount = data->layouts.size();
         descriptorSetAllocateInfo.pSetLayouts        = data->layouts.data();
         descriptorSetAllocateInfo.descriptorPool     = data->handle;
-        CHECK_RESULT( vkAllocateDescriptorSets( data->device->data->device, &descriptorSetAllocateInfo, data->sets.data() ) );
+        CHECK_RESULT( vkAllocateDescriptorSets( data->device->data->handle, &descriptorSetAllocateInfo, data->sets.data() ) );
         std::vector<VkWriteDescriptorSet> wds;
         wds.reserve( sets.size() );
         size_t set_index { 0 };
@@ -85,7 +84,7 @@ namespace Engine
                 wds.push_back( { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, bind.pNext, data->sets[ set_index ], bind.binding, bind.dstArrayElement, bind.descriptorCount, bind.descriptorType, bind.pImageInfo, bind.pBufferInfo, bind.pTexelBufferView } );
             ++set_index;
         }
-        // vkUpdateDescriptorSets( data->device->data->device, wds.size(), wds.data(), 0, nullptr );
+        // vkUpdateDescriptorSets( data->device->data->handle, wds.size(), wds.data(), 0, nullptr );
     }
 
     // std::vector<VkDescriptorPoolSize> descriptorPool::getSizes()
@@ -102,9 +101,9 @@ namespace Engine
     descriptorPool::~descriptorPool()
     {
         for ( const auto layout : data->layouts )
-            vkDestroyDescriptorSetLayout( data->device->data->device, layout, ALLOCATION_CALLBACK );
-        vkFreeDescriptorSets( data->device->data->device, data->handle, data->sets.size(), data->sets.data() );
-        vkDestroyDescriptorPool( data->device->data->device, data->handle, ALLOCATION_CALLBACK );
+            vkDestroyDescriptorSetLayout( data->device->data->handle, layout, ALLOCATION_CALLBACK );
+        vkFreeDescriptorSets( data->device->data->handle, data->handle, data->sets.size(), data->sets.data() );
+        vkDestroyDescriptorPool( data->device->data->handle, data->handle, ALLOCATION_CALLBACK );
     }
 
     // void createDescriptorPool()

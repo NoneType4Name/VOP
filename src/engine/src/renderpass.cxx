@@ -97,12 +97,12 @@ namespace Engine
         VkRenderPassCreateInfo createInfo {};
         data->link->data->window->data->instance->data->setup->renderpassInfo( this, data->link, createInfo, pData, data->link->data->window->data->instance->data->userPointer );
         createInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-        CHECK_RESULT( vkCreateRenderPass( link->data->device->data->device, &createInfo, ALLOCATION_CALLBACK, &data->handle ) );
+        CHECK_RESULT( vkCreateRenderPass( link->data->device->data->handle, &createInfo, ALLOCATION_CALLBACK, &data->handle ) );
         data->link->data->window->data->instance->data->setup->renderpassInfoClear( this, data->link, pData, data->link->data->window->data->instance->data->userPointer );
     }
 
     pass::~pass()
     {
-        vkDestroyRenderPass( data->link->data->device->data->device, data->handle, ALLOCATION_CALLBACK );
+        vkDestroyRenderPass( data->link->data->device->data->handle, data->handle, ALLOCATION_CALLBACK );
     }
 } // namespace Engine

@@ -9,8 +9,11 @@ namespace Engine
 {
     struct pass::DATA_TYPE
     {
+        DATA_TYPE( pass *parent ) :
+            parent { parent } {}
         VkRenderPass handle { nullptr };
         Engine::types::link link { nullptr };
+        pass *parent { nullptr };
     };
 } // namespace Engine
 #endif

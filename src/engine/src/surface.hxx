@@ -9,6 +9,8 @@ namespace Engine
 {
     struct window::window::DATA_TYPE
     {
+        DATA_TYPE( window *parent ) :
+            parent { parent } {}
         void createSurface( VkInstance instance, const void *pNext, VkWin32SurfaceCreateFlagsKHR flags );
         void destroySurface( VkInstance instance );
         RESOLUTION_TYPE width { 0 };
@@ -19,6 +21,7 @@ namespace Engine
         GLFWwindow *window { nullptr };
         VkSurfaceKHR surface { nullptr };
         Engine::types::instance instance { nullptr };
+        Engine::window::window *parent { nullptr };
     };
 } // namespace Engine
 #endif

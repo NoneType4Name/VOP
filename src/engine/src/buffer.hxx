@@ -1,10 +1,10 @@
 #pragma once
 #ifndef BUFFER_HXX
 #    define BUFFER_HXX
+#    include <platform.hxx>
 #    include <common/globals.hxx>
 #    include <common/logging.hxx>
-#    include <platform.hxx>
-#    include <queue.hxx>
+#    include <EHI.hxx>
 
 namespace Engine
 {
@@ -17,7 +17,6 @@ namespace Engine
         void copy( void *data, VkDeviceSize size, VkMemoryMapFlags flags = 0 );
         types::device device { nullptr };
         void *mapped { nullptr };
-        uint32_t mIndex { 0 };
         VkBuffer handle { nullptr };
         ~buffer();
     };

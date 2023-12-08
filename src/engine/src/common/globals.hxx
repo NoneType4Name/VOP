@@ -21,7 +21,7 @@
 #    define ALLOCATION_CALLBACK nullptr
 #    define DEFINE_DATA_FIELD                                           \
         auto &_data = const_cast<std::unique_ptr<DATA_TYPE> &>( data ); \
-        _data.reset( new DATA_TYPE );
+        _data.reset( new DATA_TYPE { this } );
 #    define CHECK_RESULT( ret_result )                                                                                                                                        \
         {                                                                                                                                                                     \
             const VkResult result { ret_result };                                                                                                                             \

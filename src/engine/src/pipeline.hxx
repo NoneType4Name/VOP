@@ -12,11 +12,13 @@ namespace Engine
 {
     struct pipeline::DATA_TYPE
     {
-      public:
+        DATA_TYPE( pipeline *parent ) :
+            parent { parent } {}
         types::device device { nullptr };
         types::layout layout { nullptr };
         types::pass renderpass { nullptr };
         VkPipeline handle { nullptr };
+        pipeline *parent { nullptr };
 
       private:
     };

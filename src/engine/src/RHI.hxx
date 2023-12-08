@@ -10,10 +10,5 @@
 
 namespace Engine
 {
-    namespace tools
-    {
-        std::vector<VkPhysicalDevice> getAviliableDevices();
-        std::vector<VkPhysicalDeviceProperties> getAviliableDevicesProperties();
-    } // namespace tools
 } // namespace Engine
 #endif

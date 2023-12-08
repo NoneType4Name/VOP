@@ -86,19 +86,19 @@ namespace Engine
 
     link::link() = default;
     link::link( window::types::window window, types::device device ) :
-        data { new DATA_TYPE { window, device } }
+        data { new DATA_TYPE { this, window, device } }
     {
         std::vector<void *> swapchainData;
         std::vector<void *> pData;
         data->window->data->instance->data->setup->swapchainInfo( this, data->createInfo, swapchainData, data->window->data->instance->data->userPointer );
         data->setup( this, data->createInfo, pData, data->window->data->instance->data->userPointer );
-        CHECK_RESULT( vkCreateSwapchainKHR( data->device->data->device, &data->createInfo, ALLOCATION_CALLBACK, &data->swapchain ) );
+        CHECK_RESULT( vkCreateSwapchainKHR( data->device->data->handle, &data->createInfo, ALLOCATION_CALLBACK, &data->swapchain ) );
         data->setupImgs();
     }
 
     link::~link()
     {
-        vkDestroySwapchainKHR( data->device->data->device, data->swapchain, ALLOCATION_CALLBACK );
+        vkDestroySwapchainKHR( data->device->data->handle, data->swapchain, ALLOCATION_CALLBACK );
     };
 
     link::DATA_TYPE::properties_T::properties_T( window::types::window window, types::device device )
@@ -184,22 +184,22 @@ namespace Engine
     void link::DATA_TYPE::setupImgs()
     {
         uint32_t c;
-        vkGetSwapchainImagesKHR( device->data->device, swapchain, &c, nullptr );
+        vkGetSwapchainImagesKHR( device->data->handle, swapchain, &c, nullptr );
         std::vector<VkImage> imgs { c };
         images.resize( c );
-        vkGetSwapchainImagesKHR( device->data->device, swapchain, &c, imgs.data() );
+        vkGetSwapchainImagesKHR( device->data->handle, swapchain, &c, imgs.data() );
         VkSemaphoreCreateInfo semaphoreInfo {};
         semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
         for ( size_t i { 0 }; i < imgs.size(); i++ )
         {
             images[ i ].image.reset( new image( device, { createInfo.imageExtent.width, createInfo.imageExtent.height }, imgs[ i ], VK_IMAGE_ASPECT_COLOR_BIT, createInfo.imageFormat, 1, createInfo.imageArrayLayers ) );
-            CHECK_RESULT( vkCreateSemaphore( device->data->device, &semaphoreInfo, ALLOCATION_CALLBACK, &images[ i ].isAvailable ) );
-            CHECK_RESULT( vkCreateSemaphore( device->data->device, &semaphoreInfo, ALLOCATION_CALLBACK, &images[ i ].isRendered ) );
+            CHECK_RESULT( vkCreateSemaphore( device->data->handle, &semaphoreInfo, ALLOCATION_CALLBACK, &images[ i ].isAvailable ) );
+            CHECK_RESULT( vkCreateSemaphore( device->data->handle, &semaphoreInfo, ALLOCATION_CALLBACK, &images[ i ].isRendered ) );
         }
     }
 
-    link::DATA_TYPE::DATA_TYPE( window::types::window window, types::device device ) :
-        properties( window, device )
+    link::DATA_TYPE::DATA_TYPE( link *parent, window::types::window window, types::device device ) :
+        parent { parent }, properties( window, device )
     {
         this->window = window;
         this->device = device;
@@ -209,8 +209,8 @@ namespace Engine
     {
         for ( auto &img : images )
         {
-            vkDestroySemaphore( device->data->device, img.isAvailable, ALLOCATION_CALLBACK );
-            vkDestroySemaphore( device->data->device, img.isRendered, ALLOCATION_CALLBACK );
+            vkDestroySemaphore( device->data->handle, img.isAvailable, ALLOCATION_CALLBACK );
+            vkDestroySemaphore( device->data->handle, img.isRendered, ALLOCATION_CALLBACK );
         }
     }
 

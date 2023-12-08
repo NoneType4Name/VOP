@@ -13,6 +13,8 @@ namespace Engine
 {
     struct instance::DATA_TYPE
     {
+        DATA_TYPE( instance *parent ) :
+            parent { parent } {}
         void setupDebugLayerCallback( VkDebugUtilsMessengerCreateInfoEXT &createInfo, std::vector<void *> &pData );
         void initDebugLayerCallBack( VkDebugUtilsMessengerCreateInfoEXT createInfo );
         void destroyDebugLayerCallback();
@@ -31,6 +33,7 @@ namespace Engine
         VkInstance handle { nullptr };
         InstanceSetup *setup { nullptr };
         void *userPointer { nullptr };
+        instance *parent { nullptr };
         ~DATA_TYPE();
         friend instance;
 
