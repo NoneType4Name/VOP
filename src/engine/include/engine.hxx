@@ -109,6 +109,7 @@ namespace Engine
     DEFINE_HANDLE( layout );
     DEFINE_HANDLE( pipeline );
     DEFINE_HANDLE( texture );
+    DEFINE_HANDLE( buffer );
     DEFINE_HANDLE( model );
 
     class ENGINE_EXPORT device
@@ -179,26 +180,26 @@ namespace Engine
         const std::unique_ptr<DATA_TYPE> data;
     };
 
-    class ENGINE_EXPORT descriptorPool
-    {
-      private:
-        class DATA_TYPE;
-        descriptorPool( types::device device, void *userData );
-        friend device;
+    // class ENGINE_EXPORT descriptorPool
+    // {
+    //   private:
+    //     class DATA_TYPE;
+    //     descriptorPool( types::device device, void *userData );
+    //     friend device;
 
-      public:
-        descriptorPool();
-        ~descriptorPool();
-        struct descriptorSetLayoutInfo;
-        typedef std::vector<std::vector<descriptorSetLayoutInfo>> SetOfBindingsInfo;
-        const std::unique_ptr<DATA_TYPE> data;
-    };
+    //   public:
+    //     descriptorPool();
+    //     ~descriptorPool();
+    //     struct descriptorSetLayoutInfo;
+    //     typedef std::vector<std::vector<descriptorSetLayoutInfo>> SetOfBindingsInfo;
+    //     const std::unique_ptr<DATA_TYPE> data;
+    // };
 
     class ENGINE_EXPORT pipeline
     {
       private:
         class DATA_TYPE;
-        pipeline( types::device device, types::layout layout, std::vector<types::shader> shaders, types::pass pass );
+        pipeline( types::device device, types::modelsPool pool, std::vector<types::shader> shaders, types::pass pass );
         friend device;
 
       public:
@@ -219,6 +220,25 @@ namespace Engine
         ~pass();
 
         const std::unique_ptr<DATA_TYPE> data;
+    };
+
+    class ENGINE_EXPORT model
+    {
+      private:
+        model( types::instance device );
+        class DATA_TYPE;
+
+      public:
+        model( const char *path );
+        void draw( where );
+        types::texture getTexture() const;
+        types::texture bindTexture( types::texture texture );
+        types::buffer getBuffer() const;
+        types::buffer bindBuffer( types::buffer buffer );
+        void setPosition( glm::vec3 positionVector );
+        void setScale( glm::mat4 scaleMatrix );
+        void setRotation( glm::mat4 rotateMatrix );
+        ~model();
     };
 
     class ENGINE_EXPORT instance

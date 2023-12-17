@@ -28,8 +28,11 @@ namespace Engine
         virtual void surfaceInfoClear( window::types::window window, std::vector<void *> &dataPointers, void *userPoiner );
         virtual void swapchainInfo( types::link swapchain, VkSwapchainCreateInfoKHR &createInfo, std::vector<void *> &dataPointer, void *userPoiner );
         virtual void swapchainInfoClear( types::link swapchain, std::vector<void *> &dataPointer, void *userPoiner );
-        virtual void descriptorPoolInfo( types::descriptorPool pool, descriptorPool::SetOfBindingsInfo &sets, void *userData, void *userPoiner );
-        virtual void descriptorPoolInfoClear( types::descriptorPool pool, void *userData, void *userPoiner );
+        // virtual void descriptorPoolInfo( types::descriptorPool pool, descriptorPool::SetOfBindingsInfo &sets, void *userData, void *userPoiner );
+        // virtual void descriptorPoolInfoClear( types::descriptorPool pool, void *userData, void *userPoiner );
+        virtual void modelVertexInputBindingDescription( types::model model, VkVertexInputBindingDescription &description );
+        virtual void modelVertexInputAttributeDescription( types::model model, std::vector<VkVertexInputAttributeDescription> &descriptions );
+        virtual void modelDescriptorSetLayout( types::model model, descriptorPool::SetOfBindingsInfo &sets );
         virtual void layoutInfo( types::layout layout, const void *&pNext, VkPipelineLayoutCreateFlags &flags, std::vector<void *> &dataPointer, void *userPoiner );
         virtual void layoutInfoClear( types::layout layout, std::vector<void *> &dataPointer, void *userPoiner );
         virtual void pipelineInfo( types::pipeline pipeline, VkGraphicsPipelineCreateInfo &createInfo, std::vector<void *> &dataPointer, void *userPoiner );

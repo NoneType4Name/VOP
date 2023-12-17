@@ -6,22 +6,23 @@ namespace Engine
 {
     void InstanceSetup::descriptorPoolInfo( types::descriptorPool pool, descriptorPool::SetOfBindingsInfo &sets, void *userData, void *userPoiner )
     {
-        pool->data->userData = new std::tuple<std::vector<image *>, std::vector<void *>> {};
-        sets.resize( 1 );
-        sets.back().resize( 2, {} );
-        sets.back()[ 0 ].descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        sets.back()[ 0 ].binding         = 0;
-        sets.back()[ 0 ].dstArrayElement = 0;
-        sets.back()[ 0 ].descriptorCount = 1;
-        sets.back()[ 0 ].stageFlags      = VK_SHADER_STAGE_ALL;
-        sets.back()[ 0 ].pBufferInfo     = ;
+        // pool->data->userData = new std::tuple<std::vector<image *>, std::vector<void *>> {};
+        // sets.resize( 1 );
+        // sets.back().resize( 2, {} );
+        // sets.back()[ 0 ].descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        // sets.back()[ 0 ].binding         = 0;
+        // sets.back()[ 0 ].dstArrayElement = 0;
+        // sets.back()[ 0 ].descriptorCount = 1;
+        // sets.back()[ 0 ].stageFlags      = VK_SHADER_STAGE_ALL;
+        // sets.back()[ 0 ].pBufferInfo     = ;
 
-        sets.back()[ 1 ].descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        sets.back()[ 1 ].binding         = 1;
-        sets.back()[ 1 ].dstArrayElement = 0;
-        sets.back()[ 1 ].descriptorCount = 1;
-        sets.back()[ 1 ].stageFlags      = VK_SHADER_STAGE_FRAGMENT_BIT;
-        sets.back()[ 1 ].pImageInfo      = ;
+        // sets.back()[ 1 ].descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        // sets.back()[ 1 ].binding         = 1;
+        // sets.back()[ 1 ].dstArrayElement = 0;
+        // sets.back()[ 1 ].descriptorCount = 1;
+        // sets.back()[ 1 ].stageFlags      = VK_SHADER_STAGE_FRAGMENT_BIT;
+        // sets.back()[ 1 ].pImageInfo      = ;
+        create by model;
     }
     void InstanceSetup::descriptorPoolInfoClear( types::descriptorPool pool, void *dataPointer, void *userPoiner ) {}
 

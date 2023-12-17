@@ -169,11 +169,11 @@ namespace Engine
         vkDestroyDevice( data->handle, ALLOCATION_CALLBACK );
     }
 
-    types::descriptorPool device::CreatePool( void *userData )
-    {
-        data->descriptorPools.emplace_back( std::unique_ptr<descriptorPool> { new descriptorPool { this, userData } } );
-        return data->descriptorPools.back().get();
-    }
+    // types::descriptorPool device::CreatePool( void *userData )
+    // {
+    //     data->descriptorPools.emplace_back( std::unique_ptr<descriptorPool> { new descriptorPool { this, userData } } );
+    //     return data->descriptorPools.back().get();
+    // }
 
     types::shader device::CreateShader( std::string path, std::string main, ShaderStage stage )
     {
