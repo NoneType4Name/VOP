@@ -18,35 +18,36 @@ namespace Engine
     //     glm::mat4 model;
     // };
 
-    // bool vertex::operator==( const vertex &other ) const
-    // {
-    //     return coordinate == other.coordinate && color == other.color && texture_coordinate == other.texture_coordinate;
-    // }
+    bool vertex::operator==( const vertex &other ) const
+    {
+        return coordinate == other.coordinate && color == other.color && texture_coordinate == other.texture_coordinate;
+    }
 
-    // VkVertexInputBindingDescription vertexInputBindingDescription()
-    // {
-    //     return { 0, sizeof( vertex ), VK_VERTEX_INPUT_RATE_VERTEX };
-    // }
+    void InstanceSetup::modelVertexInputBindingDescription( types::model model, VkVertexInputBindingDescription &description )
+    {
+        description.binding   = 0;
+        description.stride    = sizeof( Engine::vertex );
+        description.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+    }
 
-    // std::array<VkVertexInputAttributeDescription, 3> vertexInputAttributeDescription()
-    // {
-    //     std::array<VkVertexInputAttributeDescription, 3> VertexInputAttributeDescription {};
-    //     VertexInputAttributeDescription[ 0 ].binding  = 0;
-    //     VertexInputAttributeDescription[ 0 ].location = 0;
-    //     VertexInputAttributeDescription[ 0 ].format   = VK_FORMAT_R32G32B32_SFLOAT;
-    //     VertexInputAttributeDescription[ 0 ].offset   = offsetof( vertex, coordinate );
+    void InstanceSetup::modelVertexInputAttributeDescription( types::model model, std::vector<VkVertexInputAttributeDescription> &descriptions )
+    {
+        descriptions.resize( 3 );
+        descriptions[ 0 ].binding  = 0;
+        descriptions[ 0 ].location = 0;
+        descriptions[ 0 ].format   = VK_FORMAT_R32G32B32_SFLOAT;
+        descriptions[ 0 ].offset   = offsetof( Engine::vertex, coordinate );
 
-    //     VertexInputAttributeDescription[ 1 ].binding  = 0;
-    //     VertexInputAttributeDescription[ 1 ].location = 1;
-    //     VertexInputAttributeDescription[ 1 ].format   = VK_FORMAT_R32G32B32A32_SFLOAT;
-    //     VertexInputAttributeDescription[ 1 ].offset   = offsetof( vertex, color );
+        descriptions[ 1 ].binding  = 0;
+        descriptions[ 1 ].location = 1;
+        descriptions[ 1 ].format   = VK_FORMAT_R32G32B32A32_SFLOAT;
+        descriptions[ 1 ].offset   = offsetof( Engine::vertex, color );
 
-    //     VertexInputAttributeDescription[ 2 ].binding  = 0;
-    //     VertexInputAttributeDescription[ 2 ].location = 2;
-    //     VertexInputAttributeDescription[ 2 ].format   = VK_FORMAT_R32G32_SFLOAT;
-    //     VertexInputAttributeDescription[ 2 ].offset   = offsetof( vertex, texture_coordinate );
-    //     return VertexInputAttributeDescription;
-    // }
+        descriptions[ 2 ].binding  = 0;
+        descriptions[ 2 ].location = 2;
+        descriptions[ 2 ].format   = VK_FORMAT_R32G32_SFLOAT;
+        descriptions[ 2 ].offset   = offsetof( Engine::vertex, texture_coordinate );
+    }
 
     model::model( const char *path )
     {

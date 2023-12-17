@@ -6,11 +6,17 @@
 
 namespace Engine
 {
-    VkVertexInputBindingDescription vertexInputBindingDescription();
-    std::array<VkVertexInputAttributeDescription, 3> vertexInputAttributeDescription();
-    struct PushConstant
+    struct pushConstant
     {
         glm::mat4 tranfromation;
+    };
+
+    struct vertex
+    {
+        glm::vec3 coordinate;
+        glm::vec4 color;
+        glm::vec2 texture_coordinate;
+        bool operator==( const vertex &other ) const;
     };
 
     class model::DATA_TYPE
@@ -29,7 +35,6 @@ namespace Engine
             const VkSampler *pImmutableSamplers;
             const VkBufferView *pTexelBufferView;
         };
-        // descriptorSet *descriptorSet_id { nullptr };
         void *descriptorSetStructure { nullptr };
         Engine::texture *texture { nullptr };
         // std::vector<vertex> vertecies;

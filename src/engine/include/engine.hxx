@@ -82,8 +82,19 @@ namespace Engine
         VERTEX_SHADER_TYPE,
         FRAGMENT_SHADER_TYPE
     };
-
     typedef uint32_t ShaderStageFlags;
+
+    DEFINE_HANDLE( instance )
+    DEFINE_HANDLE( DeviceDescription );
+    DEFINE_HANDLE( device );
+    DEFINE_HANDLE( link );
+    DEFINE_HANDLE( pass );
+    DEFINE_HANDLE( shader );
+    DEFINE_HANDLE( layout );
+    DEFINE_HANDLE( pipeline );
+    DEFINE_HANDLE( texture );
+    DEFINE_HANDLE( buffer );
+    DEFINE_HANDLE( model );
 
     struct ENGINE_EXPORT DeviceDescription
     {
@@ -99,18 +110,6 @@ namespace Engine
         const std::unique_ptr<DATA_TYPE> data;
         ~DeviceDescription();
     };
-    DEFINE_HANDLE( instance )
-    DEFINE_HANDLE( DeviceDescription );
-    DEFINE_HANDLE( device );
-    DEFINE_HANDLE( link );
-    DEFINE_HANDLE( pass );
-    DEFINE_HANDLE( shader );
-    DEFINE_HANDLE( descriptorPool );
-    DEFINE_HANDLE( layout );
-    DEFINE_HANDLE( pipeline );
-    DEFINE_HANDLE( texture );
-    DEFINE_HANDLE( buffer );
-    DEFINE_HANDLE( model );
 
     class ENGINE_EXPORT device
     {
@@ -123,8 +122,6 @@ namespace Engine
         device();
         types::shader CreateShader( std::string path, std::string main, ShaderStage stage );
         types::shader CreateShader( const char *path, const char *main, ShaderStage stage );
-        types::descriptorPool CreatePool( void *userData );
-        types::layout CreateLayout( types::descriptorPool pool, void *userData );
         types::pipeline CreatePipeline( types::layout layouts, std::vector<types::shader> shaders, types::pass pass );
         types::texture CreateTexture( const char *path );
         types::texture CreateTexture( std::string path );
