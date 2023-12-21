@@ -6,7 +6,9 @@
 #    define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_CRITICAL
 #endif
 
-#include <engine_setup.hxx>
+// #include <engine_setup.hxx>
+#include <engine.hxx>
+#include <EHI.hxx>
 #include <spdlog/spdlog.h>
 #include <iostream>
 
@@ -38,30 +40,36 @@ namespace
 
 namespace Game
 {
-    struct I : Engine::InstanceSetup
+    struct E : public Engine::instance
     {
-        void instanceExtensions( Engine::types::instance instance, std::vector<const char *> &rExtensions, void *userPoiner ) override
+      public:
+        using Engine::instance::instance;
+        // Engine::window::types::window createWindow( RESOLUTION_TYPE width, RESOLUTION_TYPE height, const char *title ) override
+        // {
+        // }
+      protected:
+        void setup( const char *appName, uint32_t appVersion ) override
         {
+            data->init( {} );
         }
     };
-    std::unique_ptr<I> test;
 
-    std::unique_ptr<Engine::instance> engine { new Engine::instance { "test", 0, test.get() } };
-    Engine::window::types::window window { engine->createWindow( 100, 100, "window#1" ) };
-    const std::vector<Engine::types::DeviceDescription> devices = engine->GetDevices();
-    auto [ link, device ] { engine->CreateLink( window, devices.back() ) };
-    Engine::types::shader vertexShader { device->CreateShader( "./assets/shaders/binary.vert.spv", "main", Engine::ShaderStage::VERTEX_SHADER_TYPE ) };
-    Engine::types::shader fragmentShader { device->CreateShader( "./assets/shaders/binary.frag.spv", "main", Engine::ShaderStage::FRAGMENT_SHADER_TYPE ) };
-    Engine::types::pass pass { engine->CreateRenderPass( link ) };
-    Engine::types::pipeline pipeline { device->CreatePipeline( layout, { vertexShader, fragmentShader }, pass ) };
+    std::unique_ptr<E> engine { new E { "test", 0 } };
+    // Engine::window::types::window window { engine->createWindow( 100, 100, "window#1" ) };
+    // const std::vector<Engine::types::DeviceDescription> devices = engine->GetDevices();
+    // auto [ link, device ] { engine->CreateLink( window, devices.back() ) };
+    // Engine::types::shader vertexShader { device->CreateShader( "./assets/shaders/binary.vert.spv", "main", Engine::ShaderStage::VERTEX_SHADER_TYPE ) };
+    // Engine::types::shader fragmentShader { device->CreateShader( "./assets/shaders/binary.frag.spv", "main", Engine::ShaderStage::FRAGMENT_SHADER_TYPE ) };
+    // Engine::types::pass pass { engine->CreateRenderPass( link ) };
+    // Engine::types::pipeline pipeline { device->CreatePipeline( layout, { vertexShader, fragmentShader }, pass ) };
 } // namespace Game
 
 int main()
 {
-    while ( !Game::window->shouldClose() )
-    {
-        Game::window->updateEvents();
-    }
+    // while ( !Game::window->shouldClose() )
+    // {
+    //     Game::window->updateEvents();
+    // }
     // Engine::types::device device { engine->CreateDevice( devices[ 0 ] ) };
     // Engine::types::Device
     // engine.InitDevice( devices[ 0 ] );

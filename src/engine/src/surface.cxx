@@ -6,13 +6,13 @@
 
 namespace Engine
 {
-    void InstanceSetup::surfaceInfo( window::types::window window, const void *&pNext, VkFlags &flags, std::vector<void *> &dataPointers, void *userPoiner ) {}
-    void InstanceSetup::surfaceInfoClear( window::types::window window, std::vector<void *> &dataPointers, void *userPoiner ) {}
+    // void InstanceSetup::surfaceInfo( window::types::window window, const void *&pNext, VkFlags &flags, std::vector<void *> &dataPointers, void *userPoiner ) {}
+    // void InstanceSetup::surfaceInfoClear( window::types::window window, std::vector<void *> &dataPointers, void *userPoiner ) {}
 
     namespace window
     {
         window::window() = default;
-        window::window( RESOLUTION_TYPE width, RESOLUTION_TYPE height, const char *title, instance *instance )
+        window::window( Engine::instance *instance, RESOLUTION_TYPE width, RESOLUTION_TYPE height, const char *title )
         {
             DEFINE_DATA_FIELD;
             data->instance = instance;
