@@ -31,10 +31,18 @@ namespace
 
 namespace Engine
 {
-    instance::instance() = default;
-    instance::instance( const char *appName, uint32_t appVersion )
+    instance::instance()
     {
-        DEFINE_DATA_FIELD
+        DEFINE_DATA_FIELD;
+    }
+
+    void instance::init( const char *appName, uint32_t appVersion )
+    {
+        if ( data->handle )
+        {
+            SPDLOG_CRITICAL( "Allready setuped." );
+            return;
+        }
         setup( appName, appVersion );
     }
 
@@ -51,15 +59,15 @@ namespace Engine
         VkDebugUtilsMessengerCreateInfoEXT debugUtilsMsgCI = debugUtilsMsg;
         VkValidationFeaturesEXT ValidationFeatures {};
         debugUtilsMsgCI.pNext = &ValidationFeatures;
-        std::vector<VkValidationFeatureEnableEXT> enabledVFeatures { VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT,
-                                                                     VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT,
-                                                                     VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT,
-                                                                     VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT };
+        std::vector<VkValidationFeatureEnableEXT> enabledVFeatures { VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT };
         ValidationFeatures.sType                          = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
         ValidationFeatures.enabledValidationFeatureCount  = enabledVFeatures.size();
         ValidationFeatures.pEnabledValidationFeatures     = enabledVFeatures.data();
         ValidationFeatures.disabledValidationFeatureCount = 0;
         ValidationFeatures.pDisabledValidationFeatures    = nullptr;
+
+        std::vector<const char *> ext {};
+        std::vector<const char *> lays {};
 
         VkInstanceCreateInfo InstanceCreateInfo {};
         InstanceCreateInfo.sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -83,6 +91,10 @@ namespace Engine
         setExtensions( _extensions );
         assert( supportExtensions() );
         assert( supportLayers() );
+        createInfo.enabledLayerCount       = layers.size();
+        createInfo.ppEnabledLayerNames     = layers.data();
+        createInfo.enabledExtensionCount   = extensions.size();
+        createInfo.ppEnabledExtensionNames = extensions.data();
         CHECK_RESULT( vkCreateInstance( &createInfo, ALLOCATION_CALLBACK, &handle ) );
     }
 
@@ -90,12 +102,12 @@ namespace Engine
     {
     }
 
-    // window::types::window instance::DATA_TYPE::createWindow( RESOLUTION_TYPE width, RESOLUTION_TYPE height, const char *title )
+    // window::types::window instance::DATA_TYPE::createWindow( ENGINE_RESOLUTION_TYPE width, ENGINE_RESOLUTION_TYPE height, const char *title )
     // {
     //     return new window::window { this->parent, width, height, title };
     // }
 
-    // window::types::window Engine::instance::createWindow( RESOLUTION_TYPE width, RESOLUTION_TYPE height, const char *title )
+    // window::types::window Engine::instance::createWindow( ENGINE_RESOLUTION_TYPE width, ENGINE_RESOLUTION_TYPE height, const char *title )
     // {
     //     return data->windows.emplace_back( new window::window { this, width, height, title } ).get();
     // }

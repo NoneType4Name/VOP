@@ -11,17 +11,19 @@ namespace Engine
     {
         DATA_TYPE( window *parent ) :
             parent { parent } {}
-        void createSurface( VkInstance instance, const void *pNext, VkWin32SurfaceCreateFlagsKHR flags );
+        void init( settings settings );
+        void createSurface( VkInstance instance, const void *pNext, VkFlags flags );
         void destroySurface( VkInstance instance );
-        RESOLUTION_TYPE width { 0 };
-        RESOLUTION_TYPE height { 0 };
+        ENGINE_RESOLUTION_TYPE width { 0 };
+        ENGINE_RESOLUTION_TYPE height { 0 };
         std::string title;
         ResizeCallback resizeCallBack { nullptr };
         KeyEventCallBack eventCallBack { nullptr };
         GLFWwindow *window { nullptr };
         VkSurfaceKHR surface { nullptr };
         Engine::types::instance instance { nullptr };
-        Engine::window::window *parent { nullptr };
+        settings settings;
+        Engine::window::types::window parent { nullptr };
     };
 } // namespace Engine
 #endif

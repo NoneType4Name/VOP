@@ -2,7 +2,7 @@
 #define VK_USE_PLATFORM_WIN32_KHR
 // #define GLFW_INCLUDE_VULKAN
 #define GLFW_EXPOSE_NATIVE_WIN32
-#define RESOLUTION_TYPE uint16_t
+#define ENGINE_RESOLUTION_TYPE uint16_t
 
 // #include <vulkan/vulkan.hpp>
 #include <stddef.h>

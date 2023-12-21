@@ -1,11 +1,13 @@
 #pragma once
 #ifndef ENGINE_HXX
 #    define ENGINE_HXX
+#    ifndef ENGINE_RESOLUTION_TYPE
+#        define ENGINE_RESOLUTION_TYPE uint16_t
+#    endif
 #    define TINYOBJLOADER_IMPLEMENTATION
 #    define GLM_FORCE_RADIANS
 #    define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #    define STB_IMAGE_IMPLEMENTATION
-#    define RESOLUTION_TYPE uint16_t
 #    define DEFINE_HANDLE( object ) \
         class ENGINE_EXPORT object; \
         namespace types             \
@@ -26,41 +28,47 @@
 namespace Engine
 {
     class instance;
-    // namespace window
-    // {
-    //     struct ENGINE_EXPORT resolution
-    //     {
-    //         RESOLUTION_TYPE width { 0 };
-    //         RESOLUTION_TYPE height { 0 };
-    //     };
+    namespace window
+    {
+        struct ENGINE_EXPORT resolution
+        {
+            ENGINE_RESOLUTION_TYPE width { 800 };
+            ENGINE_RESOLUTION_TYPE height { 600 };
+        };
 
-    //     typedef void ( *ResizeCallback )( int width, int height );
-    //     typedef void ( *KeyEventCallBack )( int key, int scancode, int action, int mods );
+        struct ENGINE_EXPORT settings
+        {
+            resolution size;
+            std::string title;
+            bool fullScreen { false };
+            // bool vsync { false };
+        };
 
-    //     class ENGINE_EXPORT window
-    //     {
-    //       protected:
-    //         class DATA_TYPE;
-    //         window( Engine::instance *instance, RESOLUTION_TYPE width, RESOLUTION_TYPE height, const char *title );
-    //         friend class Engine::instance;
+        typedef void ( *ResizeCallback )( int width, int height );
+        typedef void ( *KeyEventCallBack )( int key, int scancode, int action, int mods );
 
-    //       public:
-    //         window();
-    //         resolution getResolution();
-    //         resolution getDisplayResolution();
-    //         void cenralize();
-    //         void setTitle( const char *title );
-    //         void setTitle( std::string title );
-    //         void setWindowResolution( RESOLUTION_TYPE width, RESOLUTION_TYPE height );
-    //         void setResizeCallBack( ResizeCallback callback );
-    //         void setKeyEventsCallback( KeyEventCallBack callback );
-    //         void updateEvents();
-    //         bool shouldClose();
-    //         const std::unique_ptr<DATA_TYPE> data;
-    //         ~window();
-    //     };
-    //     DEFINE_HANDLE( window );
-    // } // namespace window
+        class ENGINE_EXPORT window
+        {
+          protected:
+            class DATA_TYPE;
+            window( Engine::instance *instance, settings settings );
+            friend class Engine::instance;
+
+          public:
+            window();
+            resolution getResolution();
+            resolution getDisplayResolution();
+            void setTitle( const char *title );
+            void setWindowResolution( ENGINE_RESOLUTION_TYPE width, ENGINE_RESOLUTION_TYPE height );
+            void setResizeCallBack( ResizeCallback callback );
+            void setKeyEventsCallback( KeyEventCallBack callback );
+            void updateEvents();
+            bool shouldClose();
+            const std::unique_ptr<DATA_TYPE> data;
+            ~window();
+        };
+        DEFINE_HANDLE( window );
+    } // namespace window
 
     // enum DeviceType
     // {
@@ -79,8 +87,8 @@ namespace Engine
     // };
     // typedef uint32_t ShaderStageFlags;
 
-    // DEFINE_HANDLE( instance )
-    // DEFINE_HANDLE( DeviceDescription );
+    DEFINE_HANDLE( instance )
+    DEFINE_HANDLE( DeviceDescription );
     // DEFINE_HANDLE( device );
     // DEFINE_HANDLE( link );
     // DEFINE_HANDLE( pass );
@@ -236,13 +244,13 @@ namespace Engine
     class ENGINE_EXPORT instance
     {
       protected:
-        class DATA_TYPE;
+        class ENGINE_EXPORT DATA_TYPE;
         virtual void setup( const char *appName, uint32_t appVersion );
 
       public:
         instance();
-        instance( const char *appName, uint32_t appVersion = 0 );
-        // virtual window::types::window createWindow( RESOLUTION_TYPE width, RESOLUTION_TYPE height, const char *title );
+        void init( const char *appName, uint32_t appVersion );
+        // virtual window::types::window createWindow( ENGINE_RESOLUTION_TYPE width, ENGINE_RESOLUTION_TYPE height, const char *title );
         // virtual std::pair<types::link, types::device> makeLink( window::types::window window, types::DeviceDescription description );
         // ? virtual types::pass createRenderPass( types::link link );
         // const std::vector<types::DeviceDescription> getDevices();

@@ -12,26 +12,29 @@ namespace Engine
     namespace window
     {
         window::window() = default;
-        window::window( Engine::instance *instance, RESOLUTION_TYPE width, RESOLUTION_TYPE height, const char *title )
+        window::window( Engine::instance *instance, settings settings )
         {
             DEFINE_DATA_FIELD;
             data->instance = instance;
-            resolution displayRes { getDisplayResolution() };
+            data->settings = settings;
+            resolution displayRes { data->parent->getDisplayResolution() };
             glfwWindowHint( GLFW_CLIENT_API, GLFW_NO_API );
-            data->window = glfwCreateWindow( width ? width : displayRes.width, height ? height : displayRes.height, title, nullptr, nullptr );
+            data->window = glfwCreateWindow( settings.fullScreen ? displayRes.width : data->settings.size.width, !data->settings.fullScreen ? displayRes.height : data->settings.size.height, data->settings.title.c_str(), data->settings.fullScreen ? glfwGetPrimaryMonitor() : nullptr, nullptr );
             glfwSetWindowUserPointer( data->window, this );
-            glfwGetWindowSize( data->window, reinterpret_cast<int *>( &this->data->width ), reinterpret_cast<int *>( &this->data->height ) );
-            cenralize();
+            glfwGetWindowSize( data->window, reinterpret_cast<int *>( &this->data->settings.size.width ), reinterpret_cast<int *>( &this->data->settings.size.height ) );
             glfwSetFramebufferSizeCallback( data->window, []( GLFWwindow *wnd, int w, int h )
                                             {auto from_wnd    = reinterpret_cast<window *>( glfwGetWindowUserPointer( wnd ) );
-                                        from_wnd->data->width = static_cast<RESOLUTION_TYPE>( w );
-                                        from_wnd->data->height = static_cast<RESOLUTION_TYPE>( h );
+                                        from_wnd->data->width = static_cast<ENGINE_RESOLUTION_TYPE>( w );
+                                        from_wnd->data->height = static_cast<ENGINE_RESOLUTION_TYPE>( h );
                                         from_wnd->data->resizeCallBack(w, h); } );
             glfwSetKeyCallback( data->window, []( GLFWwindow *wnd, int key, int scancode, int action, int mods )
                                 {   
                                     auto from_wnd    = reinterpret_cast<window *>( glfwGetWindowUserPointer( wnd ) );
                                     if (from_wnd->data->eventCallBack)
                                         from_wnd->data->eventCallBack( key, scancode, action, mods ); } );
+        }
+        void window::DATA_TYPE::init()
+        {
             const void *next { nullptr };
             std::vector<void *> nextChainData;
             VkFlags flags {};
@@ -53,14 +56,7 @@ namespace Engine
         resolution window::getDisplayResolution()
         {
             auto mode = glfwGetVideoMode( glfwGetPrimaryMonitor() );
-            return { static_cast<RESOLUTION_TYPE>( mode->width ), static_cast<RESOLUTION_TYPE>( mode->height ) };
-        }
-
-        void window::cenralize()
-        {
-            auto monitor_resolution { getDisplayResolution() };
-            auto window_resolution { getResolution() };
-            glfwSetWindowPos( data->window, ( monitor_resolution.width / 2 ) - ( window_resolution.width / 2 ), ( monitor_resolution.height / 2 ) - ( window_resolution.height / 2 ) );
+            return { static_cast<ENGINE_RESOLUTION_TYPE>( mode->width ), static_cast<ENGINE_RESOLUTION_TYPE>( mode->height ) };
         }
 
         void window::setTitle( const char *title )
@@ -74,7 +70,7 @@ namespace Engine
             setTitle( title.c_str() );
         }
 
-        void window::setWindowResolution( RESOLUTION_TYPE width, RESOLUTION_TYPE height )
+        void window::setWindowResolution( ENGINE_RESOLUTION_TYPE width, ENGINE_RESOLUTION_TYPE height )
         {
             resolution displayRes { getDisplayResolution() };
             if ( width + height )
@@ -95,15 +91,15 @@ namespace Engine
             if ( data->resizeCallBack ) data->resizeCallBack( width, height );
         }
 
-        void window::setResizeCallBack( ResizeCallback callback )
-        {
-            data->resizeCallBack = callback;
-        }
+        // void window::setResizeCallBack( ResizeCallback callback )
+        // {
+        //     data->resizeCallBack = callback;
+        // }
 
-        void window::setKeyEventsCallback( KeyEventCallBack callback )
-        {
-            data->eventCallBack = callback;
-        }
+        // void window::setKeyEventsCallback( KeyEventCallBack callback )
+        // {
+        //     data->eventCallBack = callback;
+        // }
 
         void window::updateEvents()
         {

@@ -42,11 +42,6 @@ namespace Game
 {
     struct E : public Engine::instance
     {
-      public:
-        using Engine::instance::instance;
-        // Engine::window::types::window createWindow( RESOLUTION_TYPE width, RESOLUTION_TYPE height, const char *title ) override
-        // {
-        // }
       protected:
         void setup( const char *appName, uint32_t appVersion ) override
         {
@@ -54,7 +49,8 @@ namespace Game
         }
     };
 
-    std::unique_ptr<E> engine { new E { "test", 0 } };
+    std::unique_ptr<Engine::instance> engine { new Engine::instance };
+
     // Engine::window::types::window window { engine->createWindow( 100, 100, "window#1" ) };
     // const std::vector<Engine::types::DeviceDescription> devices = engine->GetDevices();
     // auto [ link, device ] { engine->CreateLink( window, devices.back() ) };
@@ -66,6 +62,7 @@ namespace Game
 
 int main()
 {
+    Game::engine->init( "test", 0 );
     // while ( !Game::window->shouldClose() )
     // {
     //     Game::window->updateEvents();
