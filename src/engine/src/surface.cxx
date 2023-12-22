@@ -11,12 +11,13 @@ namespace Engine
 
     namespace window
     {
-        window::window() = default;
+        // window::window() {}
         window::window( Engine::instance *instance, settings settings )
         {
             DEFINE_DATA_FIELD;
             data->instance = instance;
             data->settings = settings;
+            data->instance->data->windows.emplace_back( this );
             resolution displayRes { data->parent->getDisplayResolution() };
             glfwWindowHint( GLFW_CLIENT_API, GLFW_NO_API );
             data->window = glfwCreateWindow( settings.fullScreen ? displayRes.width : data->settings.size.width, !data->settings.fullScreen ? displayRes.height : data->settings.size.height, data->settings.title.c_str(), data->settings.fullScreen ? glfwGetPrimaryMonitor() : nullptr, nullptr );
@@ -33,15 +34,10 @@ namespace Engine
                                     if (from_wnd->data->eventCallBack)
                                         from_wnd->data->eventCallBack( key, scancode, action, mods ); } );
         }
-        void window::DATA_TYPE::init()
+
+        void window::setup( settings settings )
         {
-            const void *next { nullptr };
-            std::vector<void *> nextChainData;
-            VkFlags flags {};
-            data->instance->data->setup->surfaceInfo( this, next, flags, nextChainData, data->instance->data->userPointer );
-            data->createSurface( data->instance->data->handle, next, flags );
-            data->instance->data->setup->surfaceInfoClear( this, nextChainData, data->instance->data->userPointer );
-            // todo: fix bug with full screen window.
+            data->createSurface( data->instance->data->handle, 0, 0 );
         }
         window::~window()
         {
@@ -63,11 +59,6 @@ namespace Engine
         {
             data->title = title;
             glfwSetWindowTitle( data->window, title );
-        }
-
-        void window::setTitle( std::string title )
-        {
-            setTitle( title.c_str() );
         }
 
         void window::setWindowResolution( ENGINE_RESOLUTION_TYPE width, ENGINE_RESOLUTION_TYPE height )

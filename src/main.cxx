@@ -42,6 +42,11 @@ namespace Game
 {
     struct E : public Engine::instance
     {
+        Engine::window::types::window createWindow( ENGINE_RESOLUTION_TYPE width, ENGINE_RESOLUTION_TYPE height, const char *title ) override
+        {
+            return data->windows.emplace_back( new Engine::window::window { this, { width, height, title, 1 } } ).get();
+        }
+
       protected:
         void setup( const char *appName, uint32_t appVersion ) override
         {

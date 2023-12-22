@@ -52,20 +52,23 @@ namespace Engine
           protected:
             class DATA_TYPE;
             window( Engine::instance *instance, settings settings );
-            friend class Engine::instance;
+            virtual void setup( settings settings );
+            friend Engine::instance;
 
           public:
-            window();
-            resolution getResolution();
+            window() {}
             resolution getDisplayResolution();
             void setTitle( const char *title );
             void setWindowResolution( ENGINE_RESOLUTION_TYPE width, ENGINE_RESOLUTION_TYPE height );
-            void setResizeCallBack( ResizeCallback callback );
-            void setKeyEventsCallback( KeyEventCallBack callback );
+            // void setResizeCallBack( ResizeCallback callback );
+            // void setKeyEventsCallback( KeyEventCallBack callback );
             void updateEvents();
             bool shouldClose();
             const std::unique_ptr<DATA_TYPE> data;
             ~window();
+            resolution size;
+            const settings settings;
+            const std::string title;
         };
         DEFINE_HANDLE( window );
     } // namespace window
@@ -250,7 +253,7 @@ namespace Engine
       public:
         instance();
         void init( const char *appName, uint32_t appVersion );
-        // virtual window::types::window createWindow( ENGINE_RESOLUTION_TYPE width, ENGINE_RESOLUTION_TYPE height, const char *title );
+        virtual window::types::window createWindow( ENGINE_RESOLUTION_TYPE width, ENGINE_RESOLUTION_TYPE height, const char *title );
         // virtual std::pair<types::link, types::device> makeLink( window::types::window window, types::DeviceDescription description );
         // ? virtual types::pass createRenderPass( types::link link );
         // const std::vector<types::DeviceDescription> getDevices();

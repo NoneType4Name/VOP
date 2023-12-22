@@ -24,22 +24,23 @@ namespace Engine
         bool supportLayers();
         bool supportExtensions();
         void init( VkInstanceCreateInfo createInfo );
+        window::types::window regWindow( window::types::window window );
         std::vector<const char *> layers;
         std::vector<const char *> extensions;
         VkDebugUtilsMessengerEXT debugMessenger { nullptr };
         VkInstance handle { nullptr };
         instance *parent { nullptr };
-        ~DATA_TYPE();
-        friend instance;
-
-      private:
-        void setLayers( std::vector<const char *> layers );
-        void setExtensions( std::vector<const char *> extrensions );
-        // std::vector<std::unique_ptr<window::window>> windows;
+        std::vector<std::unique_ptr<window::window>> windows;
         // std::vector<std::unique_ptr<DeviceDescription>> deviceDescriptions;
         // std::vector<std::unique_ptr<device>> devices;
         // std::vector<std::unique_ptr<link>> links;
         // std::vector<std::unique_ptr<pass>> passes;
+        ~DATA_TYPE();
+
+      private:
+        friend instance;
+        void setLayers( std::vector<const char *> layers );
+        void setExtensions( std::vector<const char *> extrensions );
     };
 } // namespace Engine
 #endif

@@ -11,7 +11,6 @@ namespace Engine
     {
         DATA_TYPE( window *parent ) :
             parent { parent } {}
-        void init( settings settings );
         void createSurface( VkInstance instance, const void *pNext, VkFlags flags );
         void destroySurface( VkInstance instance );
         ENGINE_RESOLUTION_TYPE width { 0 };

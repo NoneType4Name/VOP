@@ -1,6 +1,7 @@
 #include <platform.hxx>
 #include <engine.hxx>
 #include <EHI.hxx>
+#include <surface.hxx>
 // #include <RHI.hxx>
 // #include <surface.hxx>
 // #include <device.hxx>
@@ -31,9 +32,14 @@ namespace
 
 namespace Engine
 {
+    namespace
+    {
+        std::vector<std::unique_ptr<instance>> instances;
+    } // namespace
     instance::instance()
     {
         DEFINE_DATA_FIELD;
+        instances.emplace_back( this );
     }
 
     void instance::init( const char *appName, uint32_t appVersion )
@@ -98,14 +104,20 @@ namespace Engine
         CHECK_RESULT( vkCreateInstance( &createInfo, ALLOCATION_CALLBACK, &handle ) );
     }
 
+    window::types::window instance::DATA_TYPE::regWindow( window::types::window window )
+    {
+        window->setup();
+        return windows.emplace_back( window ).get();
+    }
+
     instance::DATA_TYPE::~DATA_TYPE()
     {
     }
 
-    // window::types::window instance::DATA_TYPE::createWindow( ENGINE_RESOLUTION_TYPE width, ENGINE_RESOLUTION_TYPE height, const char *title )
-    // {
-    //     return new window::window { this->parent, width, height, title };
-    // }
+    window::types::window instance::createWindow( ENGINE_RESOLUTION_TYPE width, ENGINE_RESOLUTION_TYPE height, const char *title )
+    {
+        return data->regWindow( new window::window { this, { width, height, title, 1 } } );
+    }
 
     // window::types::window Engine::instance::createWindow( ENGINE_RESOLUTION_TYPE width, ENGINE_RESOLUTION_TYPE height, const char *title )
     // {
@@ -129,9 +141,9 @@ namespace Engine
 
     instance::~instance()
     {
+        data->windows.clear();
         // data->passes.clear();
         // data->links.clear();
-        // data->windows.clear();
         // data->devices.clear();
         // data->deviceDescriptions.clear();
         data->destroyDebugLayerCallback();

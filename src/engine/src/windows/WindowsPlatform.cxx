@@ -1,8 +1,8 @@
 #include "WindowsPlatform.hxx"
 #include <common/logging.hxx>
 #include <engine.hxx>
+#include <surface.hxx>
 // #include <RHI.hxx>
-// #include <surface.hxx>
 
 namespace Engine
 {
