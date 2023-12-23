@@ -9,6 +9,7 @@
 // #include <engine_setup.hxx>
 #include <engine.hxx>
 #include <EHI.hxx>
+#include <surface.hxx>
 #include <spdlog/spdlog.h>
 #include <iostream>
 
@@ -40,21 +41,67 @@ namespace
 
 namespace Game
 {
+    class E;
+
+    struct W : public Engine::window::window
+    {
+      protected:
+        void setup() override
+        {
+            data->createSurface( data->instance->data->handle, 0, 0 );
+        }
+
+        void eventCallBack( int key, int scancode, int action, int mods ) override
+        {
+            switch ( key )
+            {
+                case GLFW_KEY_F11:
+                    if ( action == GLFW_RELEASE )
+                        if ( properties.size.width == getDisplayResolution().width )
+                        {
+                            setResolution( getDisplayResolution().width, getDisplayResolution().height, 60, 0 );
+                            break;
+                        }
+                    setResolution( 800, 600, 0, 1 );
+            }
+        }
+
+        void resizeCallBack( int width, int height ) override
+        {
+        }
+        friend E;
+
+      public:
+        using Engine::window::window::window;
+    };
+
     struct E : public Engine::instance
     {
-        Engine::window::types::window createWindow( ENGINE_RESOLUTION_TYPE width, ENGINE_RESOLUTION_TYPE height, const char *title ) override
+        Engine::window::types::window createWindow( ENGINE_RESOLUTION_TYPE width, ENGINE_RESOLUTION_TYPE height, const char *title, int fullScreenRefreshRate, bool resize ) override
         {
-            return data->windows.emplace_back( new Engine::window::window { this, { width, height, title, 1 } } ).get();
+            return data->regWindow( new W { this, { width, height, title, fullScreenRefreshRate, resize } } );
         }
 
       protected:
         void setup( const char *appName, uint32_t appVersion ) override
         {
-            data->init( {} );
+            VkApplicationInfo ApplicationInfo {};
+            ApplicationInfo.sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+            ApplicationInfo.apiVersion         = VK_API_VERSION_1_0;
+            ApplicationInfo.pApplicationName   = appName;
+            ApplicationInfo.applicationVersion = appVersion;
+            VkInstanceCreateInfo InstanceCreateInfo {};
+            InstanceCreateInfo.sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+            InstanceCreateInfo.pNext                   = nullptr;
+            InstanceCreateInfo.enabledLayerCount       = 0;
+            InstanceCreateInfo.ppEnabledLayerNames     = nullptr;
+            InstanceCreateInfo.enabledExtensionCount   = 0;
+            InstanceCreateInfo.ppEnabledExtensionNames = nullptr;
+            InstanceCreateInfo.pApplicationInfo        = &ApplicationInfo;
+            data->init( InstanceCreateInfo );
         }
     };
-
-    std::unique_ptr<Engine::instance> engine { new Engine::instance };
+    std::unique_ptr<E> engine { new E };
 
     // Engine::window::types::window window { engine->createWindow( 100, 100, "window#1" ) };
     // const std::vector<Engine::types::DeviceDescription> devices = engine->GetDevices();
@@ -68,10 +115,11 @@ namespace Game
 int main()
 {
     Game::engine->init( "test", 0 );
-    // while ( !Game::window->shouldClose() )
-    // {
-    //     Game::window->updateEvents();
-    // }
+    auto wnd { Game::engine->createWindow( 800, 600, "test", 0, 1 ) };
+    while ( !wnd->shouldClose() )
+    {
+        wnd->updateEvents();
+    }
     // Engine::types::device device { engine->CreateDevice( devices[ 0 ] ) };
     // Engine::types::Device
     // engine.InitDevice( devices[ 0 ] );

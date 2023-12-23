@@ -18,8 +18,8 @@ namespace Engine
     {
         DATA_TYPE( instance *parent ) :
             parent { parent } {}
-        void setupDebugLayerCallback( VkDebugUtilsMessengerCreateInfoEXT &createInfo );
-        void initDebugLayerCallBack( VkDebugUtilsMessengerCreateInfoEXT createInfo );
+        void setupDebugLayerCallback( VkDebugUtilsMessengerCreateInfoEXT &createInfo ); //
+        void initDebugLayerCallBack( VkDebugUtilsMessengerCreateInfoEXT createInfo );   //
         void destroyDebugLayerCallback();
         bool supportLayers();
         bool supportExtensions();
@@ -29,12 +29,12 @@ namespace Engine
         std::vector<const char *> extensions;
         VkDebugUtilsMessengerEXT debugMessenger { nullptr };
         VkInstance handle { nullptr };
-        instance *parent { nullptr };
-        std::vector<std::unique_ptr<window::window>> windows;
-        // std::vector<std::unique_ptr<DeviceDescription>> deviceDescriptions;
-        // std::vector<std::unique_ptr<device>> devices;
-        // std::vector<std::unique_ptr<link>> links;
-        // std::vector<std::unique_ptr<pass>> passes;
+        instance *parent;
+        std::vector<std::shared_ptr<window::window>> windows;
+        // std::vector<std::shared_ptr<DeviceDescription>> deviceDescriptions;
+        // std::vector<std::shared_ptr<device>> devices;
+        // std::vector<std::shared_ptr<link>> links;
+        // std::vector<std::shared_ptr<pass>> passes;
         ~DATA_TYPE();
 
       private:

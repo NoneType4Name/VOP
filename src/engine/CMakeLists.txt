@@ -11,7 +11,7 @@ endif()
 # "./${ENGINE_PLATFORM_INCLUDE}/*.cxx"
 # )
 set(ENGINE_SOURCE_FILES
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/windows/WindowsPlatform.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/engine.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/LayersAndExtensions.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/debug.cxx"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/windows/WindowsPlatform.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/engine.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/LayersAndExtensions.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/debug.cxx;${CMAKE_CURRENT_SOURCE_DIR}/src/surface.cxx;"
 )
 
 add_library(engine SHARED ${ENGINE_SOURCE_FILES})

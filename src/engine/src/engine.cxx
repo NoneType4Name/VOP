@@ -32,21 +32,16 @@ namespace
 
 namespace Engine
 {
-    namespace
-    {
-        std::vector<std::unique_ptr<instance>> instances;
-    } // namespace
     instance::instance()
     {
         DEFINE_DATA_FIELD;
-        instances.emplace_back( this );
     }
 
     void instance::init( const char *appName, uint32_t appVersion )
     {
         if ( data->handle )
         {
-            SPDLOG_CRITICAL( "Allready setuped." );
+            SPDLOG_CRITICAL( "Allready inited." );
             return;
         }
         setup( appName, appVersion );
@@ -78,10 +73,10 @@ namespace Engine
         VkInstanceCreateInfo InstanceCreateInfo {};
         InstanceCreateInfo.sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
         InstanceCreateInfo.pNext                   = &debugUtilsMsgCI;
-        InstanceCreateInfo.enabledLayerCount       = 0;
-        InstanceCreateInfo.ppEnabledLayerNames     = nullptr;
-        InstanceCreateInfo.enabledExtensionCount   = 0;
-        InstanceCreateInfo.ppEnabledExtensionNames = nullptr;
+        InstanceCreateInfo.enabledLayerCount       = lays.size();
+        InstanceCreateInfo.ppEnabledLayerNames     = lays.data();
+        InstanceCreateInfo.enabledExtensionCount   = ext.size();
+        InstanceCreateInfo.ppEnabledExtensionNames = ext.data();
         InstanceCreateInfo.pApplicationInfo        = &ApplicationInfo;
         data->init( InstanceCreateInfo );
         data->initDebugLayerCallBack( debugUtilsMsg );
@@ -114,9 +109,9 @@ namespace Engine
     {
     }
 
-    window::types::window instance::createWindow( ENGINE_RESOLUTION_TYPE width, ENGINE_RESOLUTION_TYPE height, const char *title )
+    window::types::window instance::createWindow( ENGINE_RESOLUTION_TYPE width, ENGINE_RESOLUTION_TYPE height, const char *title, int fullScreenRefreshRate, bool resize )
     {
-        return data->regWindow( new window::window { this, { width, height, title, 1 } } );
+        return data->regWindow( new window::window { this, { width, height, title, fullScreenRefreshRate, resize } } );
     }
 
     // window::types::window Engine::instance::createWindow( ENGINE_RESOLUTION_TYPE width, ENGINE_RESOLUTION_TYPE height, const char *title )
@@ -142,10 +137,6 @@ namespace Engine
     instance::~instance()
     {
         data->windows.clear();
-        // data->passes.clear();
-        // data->links.clear();
-        // data->devices.clear();
-        // data->deviceDescriptions.clear();
         data->destroyDebugLayerCallback();
         vkDestroyInstance( data->handle, ALLOCATION_CALLBACK );
     }

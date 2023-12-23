@@ -15,6 +15,7 @@
             typedef object *object; \
         }
 #    define DATA_TYPE data_T
+#    define DATA_PTR  const std::unique_ptr<DATA_TYPE>
 #    include <array>
 #    include <memory>
 #    include <vector>
@@ -39,56 +40,52 @@ namespace Engine
         struct ENGINE_EXPORT settings
         {
             resolution size;
-            std::string title;
-            bool fullScreen { false };
+            const char *title;
+            int fullScreenRefreshRate { 0 };
+            bool resize { true };
             // bool vsync { false };
         };
-
-        typedef void ( *ResizeCallback )( int width, int height );
-        typedef void ( *KeyEventCallBack )( int key, int scancode, int action, int mods );
 
         class ENGINE_EXPORT window
         {
           protected:
-            class DATA_TYPE;
+            class ENGINE_EXPORT DATA_TYPE;
             window( Engine::instance *instance, settings settings );
-            virtual void setup( settings settings );
+            virtual void setup();
+            virtual void eventCallBack( int key, int scancode, int action, int mods );
+            virtual void resizeCallBack( int width, int height );
             friend Engine::instance;
 
           public:
-            window() {}
+            window();
             resolution getDisplayResolution();
             void setTitle( const char *title );
-            void setWindowResolution( ENGINE_RESOLUTION_TYPE width, ENGINE_RESOLUTION_TYPE height );
-            // void setResizeCallBack( ResizeCallback callback );
-            // void setKeyEventsCallback( KeyEventCallBack callback );
+            void setResolution( ENGINE_RESOLUTION_TYPE width, ENGINE_RESOLUTION_TYPE height, int fullScreenRefreshRate = 0, bool resize = 0 );
             void updateEvents();
             bool shouldClose();
-            const std::unique_ptr<DATA_TYPE> data;
+            DATA_PTR data;
             ~window();
-            resolution size;
-            const settings settings;
-            const std::string title;
+            const settings properties {};
         };
         DEFINE_HANDLE( window );
     } // namespace window
 
-    // enum DeviceType
-    // {
-    //     OTHER          = 0x0ui8,
-    //     CPU            = 0x1ui8,
-    //     VIRTUAL_GPU    = 0x2ui8,
-    //     INTEGRATED_GPU = 0x3ui8,
-    //     DISCRETE_GPU   = 0x4ui8,
-    // };
+    enum DeviceType
+    {
+        OTHER          = 0x0ui8,
+        CPU            = 0x1ui8,
+        VIRTUAL_GPU    = 0x2ui8,
+        INTEGRATED_GPU = 0x3ui8,
+        DISCRETE_GPU   = 0x4ui8,
+    };
 
-    // enum ShaderStage
-    // {
-    //     ALL_SHADER_TYPE,
-    //     VERTEX_SHADER_TYPE,
-    //     FRAGMENT_SHADER_TYPE
-    // };
-    // typedef uint32_t ShaderStageFlags;
+    enum ShaderStage
+    {
+        ALL_SHADER_TYPE,
+        VERTEX_SHADER_TYPE,
+        FRAGMENT_SHADER_TYPE
+    };
+    typedef uint32_t ShaderStageFlags;
 
     DEFINE_HANDLE( instance )
     DEFINE_HANDLE( DeviceDescription );
@@ -105,7 +102,7 @@ namespace Engine
     // struct ENGINE_EXPORT DeviceDescription
     // {
     //   private:
-    //     class DATA_TYPE;
+    //     class ENGINE_EXPORT DATA_TYPE;
     //     friend struct queue;
 
     //   public:
@@ -113,14 +110,14 @@ namespace Engine
     //     const char *name;
     //     DeviceType type;
     //     uint32_t grade;
-    //     const std::unique_ptr<DATA_TYPE> data;
+    //     DATA_PTR data;
     //     ~DeviceDescription();
     // };
 
     // class ENGINE_EXPORT device
     // {
     //   private:
-    //     class DATA_TYPE;
+    //     class ENGINE_EXPORT DATA_TYPE;
     //     device( types::DeviceDescription description, window::types::window window );
     //     friend class instance;
 
@@ -133,40 +130,40 @@ namespace Engine
     //     types::texture CreateTexture( std::string path );
     //     types::model CreateModel( const char *path, types::texture texture );
     //     types::model CreateModel( std::string path, types::texture texture );
-    //     const std::unique_ptr<DATA_TYPE> data;
+    //     DATA_PTR data;
     //     ~device();
     // };
 
     // class ENGINE_EXPORT link
     // {
     //   private:
-    //     class DATA_TYPE;
+    //     class ENGINE_EXPORT DATA_TYPE;
     //     link( window::types::window window, types::device device );
     //     friend instance;
 
     //   public:
     //     link();
     //     ~link();
-    //     const std::unique_ptr<DATA_TYPE> data;
+    //     DATA_PTR data;
     // };
 
     // class ENGINE_EXPORT shader
     // {
     //   private:
-    //     class DATA_TYPE;
+    //     class ENGINE_EXPORT DATA_TYPE;
     //     shader( types::device device, const char *path, const char *mainFuncName, ShaderStage stage );
     //     friend device;
 
     //   public:
     //     shader();
     //     ~shader();
-    //     const std::unique_ptr<DATA_TYPE> data;
+    //     DATA_PTR data;
     // };
 
     // class ENGINE_EXPORT layout
     // {
     //   private:
-    //     class DATA_TYPE;
+    //     class ENGINE_EXPORT DATA_TYPE;
     //     layout( types::device device, types::descriptorPool pool, void *userData );
     //     friend device;
 
@@ -180,13 +177,13 @@ namespace Engine
 
     //     layout();
     //     ~layout();
-    //     const std::unique_ptr<DATA_TYPE> data;
+    //     DATA_PTR data;
     // };
 
     // class ENGINE_EXPORT descriptorPool
     // {
     //   private:
-    //     class DATA_TYPE;
+    //     class ENGINE_EXPORT DATA_TYPE;
     //     descriptorPool( types::device device, void *userData );
     //     friend device;
 
@@ -195,41 +192,41 @@ namespace Engine
     //     ~descriptorPool();
     //     struct descriptorSetLayoutInfo;
     //     typedef std::vector<std::vector<descriptorSetLayoutInfo>> SetOfBindingsInfo;
-    //     const std::unique_ptr<DATA_TYPE> data;
+    //     DATA_PTR data;
     // };
 
     // class ENGINE_EXPORT pipeline
     // {
     //   private:
-    //     class DATA_TYPE;
+    //     class ENGINE_EXPORT DATA_TYPE;
     //     pipeline( types::device device, types::modelsPool pool, std::vector<types::shader> shaders, types::pass pass );
     //     friend device;
 
     //   public:
     //     pipeline();
     //     ~pipeline();
-    //     const std::unique_ptr<DATA_TYPE> data;
+    //     DATA_PTR data;
     // };
 
     // class ENGINE_EXPORT pass
     // {
     //   private:
     //     pass( Engine::types::link link );
-    //     class DATA_TYPE;
+    //     class ENGINE_EXPORT DATA_TYPE;
     //     friend instance;
 
     //   public:
     //     pass();
     //     ~pass();
 
-    //     const std::unique_ptr<DATA_TYPE> data;
+    //     DATA_PTR data;
     // };
 
     // class ENGINE_EXPORT model
     // {
     //   private:
     //     model( types::instance device );
-    //     class DATA_TYPE;
+    //     class ENGINE_EXPORT DATA_TYPE;
 
     //   public:
     //     model( const char *path );
@@ -253,13 +250,13 @@ namespace Engine
       public:
         instance();
         void init( const char *appName, uint32_t appVersion );
-        virtual window::types::window createWindow( ENGINE_RESOLUTION_TYPE width, ENGINE_RESOLUTION_TYPE height, const char *title );
+        virtual window::types::window createWindow( ENGINE_RESOLUTION_TYPE width, ENGINE_RESOLUTION_TYPE height, const char *title, int fullScreenRefreshRate = 0, bool resize = 0 );
         // virtual std::pair<types::link, types::device> makeLink( window::types::window window, types::DeviceDescription description );
         // ? virtual types::pass createRenderPass( types::link link );
         // const std::vector<types::DeviceDescription> getDevices();
         ~instance();
 
-        const std::unique_ptr<DATA_TYPE> data;
+        DATA_PTR data;
     };
     // DEFINE_RENDER_ATTACHMENT_TEMPLATE( RENDER_ATTACHMENT_DEFAULT_COLOR )
     // DEFINE_RENDER_ATTACHMENT_TEMPLATE( RENDER_ATTACHMENT_DEFAULT_DEPTH )

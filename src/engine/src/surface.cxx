@@ -11,42 +11,37 @@ namespace Engine
 
     namespace window
     {
-        // window::window() {}
-        window::window( Engine::instance *instance, settings settings )
+        window::window()
+        {
+        }
+
+        window::window( Engine::instance *instance, struct settings settings ) :
+            properties { settings }
         {
             DEFINE_DATA_FIELD;
             data->instance = instance;
-            data->settings = settings;
-            data->instance->data->windows.emplace_back( this );
-            resolution displayRes { data->parent->getDisplayResolution() };
+            resolution displayRes { getDisplayResolution() };
             glfwWindowHint( GLFW_CLIENT_API, GLFW_NO_API );
-            data->window = glfwCreateWindow( settings.fullScreen ? displayRes.width : data->settings.size.width, !data->settings.fullScreen ? displayRes.height : data->settings.size.height, data->settings.title.c_str(), data->settings.fullScreen ? glfwGetPrimaryMonitor() : nullptr, nullptr );
+            glfwWindowHint( GLFW_RESIZABLE, properties.resize );
+            data->window = glfwCreateWindow( properties.fullScreenRefreshRate ? displayRes.width : properties.size.width, properties.fullScreenRefreshRate ? displayRes.height : properties.size.height, properties.title, properties.fullScreenRefreshRate ? glfwGetPrimaryMonitor() : nullptr, nullptr );
+            glfwGetWindowSize( data->window, reinterpret_cast<int *>( const_cast<ENGINE_RESOLUTION_TYPE *>( &properties.size.width ) ), reinterpret_cast<int *>( const_cast<ENGINE_RESOLUTION_TYPE *>( &properties.size.height ) ) );
+            if ( properties.fullScreenRefreshRate )
+                glfwSetWindowMonitor( data->window, glfwGetPrimaryMonitor(), 0, 0, properties.size.width, properties.size.height, properties.fullScreenRefreshRate );
             glfwSetWindowUserPointer( data->window, this );
-            glfwGetWindowSize( data->window, reinterpret_cast<int *>( &this->data->settings.size.width ), reinterpret_cast<int *>( &this->data->settings.size.height ) );
             glfwSetFramebufferSizeCallback( data->window, []( GLFWwindow *wnd, int w, int h )
                                             {auto from_wnd    = reinterpret_cast<window *>( glfwGetWindowUserPointer( wnd ) );
-                                        from_wnd->data->width = static_cast<ENGINE_RESOLUTION_TYPE>( w );
-                                        from_wnd->data->height = static_cast<ENGINE_RESOLUTION_TYPE>( h );
-                                        from_wnd->data->resizeCallBack(w, h); } );
+                                        const_cast<struct settings*>(&from_wnd->properties)->size.width = static_cast<ENGINE_RESOLUTION_TYPE>( w );
+                                        const_cast<struct settings*>(&from_wnd->properties)->size.height = static_cast<ENGINE_RESOLUTION_TYPE>( h );
+                                        from_wnd->resizeCallBack(w, h); } );
             glfwSetKeyCallback( data->window, []( GLFWwindow *wnd, int key, int scancode, int action, int mods )
                                 {   
                                     auto from_wnd    = reinterpret_cast<window *>( glfwGetWindowUserPointer( wnd ) );
-                                    if (from_wnd->data->eventCallBack)
-                                        from_wnd->data->eventCallBack( key, scancode, action, mods ); } );
+                                    from_wnd->eventCallBack( key, scancode, action, mods ); } );
         }
 
-        void window::setup( settings settings )
+        void window::setup()
         {
             data->createSurface( data->instance->data->handle, 0, 0 );
-        }
-        window::~window()
-        {
-            data->destroySurface( data->instance->data->handle );
-        }
-
-        resolution window::getResolution()
-        {
-            return { data->width, data->height };
         }
 
         resolution window::getDisplayResolution()
@@ -57,40 +52,35 @@ namespace Engine
 
         void window::setTitle( const char *title )
         {
-            data->title = title;
-            glfwSetWindowTitle( data->window, title );
+            *const_cast<const char **>( &properties.title ) = title;
+            glfwSetWindowTitle( data->window, properties.title );
         }
 
-        void window::setWindowResolution( ENGINE_RESOLUTION_TYPE width, ENGINE_RESOLUTION_TYPE height )
+        void window::setResolution( ENGINE_RESOLUTION_TYPE width, ENGINE_RESOLUTION_TYPE height, int fullScreenRefreshRate, bool resize )
         {
-            resolution displayRes { getDisplayResolution() };
-            if ( width + height )
+            *const_cast<int *>( &properties.fullScreenRefreshRate )          = fullScreenRefreshRate;
+            *const_cast<bool *>( &properties.resize )                        = resize;
+            *const_cast<ENGINE_RESOLUTION_TYPE *>( &properties.size.width )  = width;
+            *const_cast<ENGINE_RESOLUTION_TYPE *>( &properties.size.height ) = height;
+
+            if ( properties.fullScreenRefreshRate )
             {
-                glfwSetWindowAttrib( data->window, GLFW_RESIZABLE, GLFW_TRUE );
-                glfwSetWindowAttrib( data->window, GLFW_DECORATED, GLFW_TRUE );
+                glfwSetWindowMonitor( data->window, glfwGetPrimaryMonitor(), 0, 0, properties.size.width, properties.size.height, properties.fullScreenRefreshRate );
             }
             else
             {
-                glfwSetWindowAttrib( data->window, GLFW_RESIZABLE, GLFW_FALSE );
-                glfwSetWindowAttrib( data->window, GLFW_DECORATED, GLFW_FALSE );
+                glfwSetWindowMonitor( data->window, 0, 0, 0, properties.size.width, properties.size.height, GLFW_DONT_CARE );
+                glfwSetWindowAttrib( data->window, GLFW_RESIZABLE, properties.resize );
             }
-            if ( !width ) width = displayRes.width;
-            if ( !height ) height = displayRes.height;
-            data->width  = width;
-            data->height = height;
-            glfwSetWindowSize( data->window, static_cast<int>( width ), static_cast<int>( height ) );
-            if ( data->resizeCallBack ) data->resizeCallBack( width, height );
         }
 
-        // void window::setResizeCallBack( ResizeCallback callback )
-        // {
-        //     data->resizeCallBack = callback;
-        // }
+        void window::eventCallBack( int key, int scancode, int action, int mods )
+        {
+        }
 
-        // void window::setKeyEventsCallback( KeyEventCallBack callback )
-        // {
-        //     data->eventCallBack = callback;
-        // }
+        void window::resizeCallBack( int width, int height )
+        {
+        }
 
         void window::updateEvents()
         {
@@ -101,5 +91,11 @@ namespace Engine
         {
             return glfwWindowShouldClose( data->window );
         }
+
+        window::~window()
+        {
+            data->destroySurface( data->instance->data->handle );
+        }
+
     } // namespace window
 } // namespace Engine
