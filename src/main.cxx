@@ -56,13 +56,16 @@ namespace Game
             switch ( key )
             {
                 case GLFW_KEY_F11:
+                    auto d { getDisplayResolution() };
                     if ( action == GLFW_RELEASE )
-                        if ( properties.size.width == getDisplayResolution().width )
+                    {
+                        if ( properties.size.width != getDisplayResolution().width )
                         {
-                            setResolution( getDisplayResolution().width, getDisplayResolution().height, 60, 0 );
+                            updateProperties( { .size = d, .fullScreenRefreshRate = 60 } );
                             break;
                         }
-                    setResolution( 800, 600, 0, 1 );
+                        updateProperties( { .size = { .width = 800, .height = 600 }, .fullScreenRefreshRate = 0 } );
+                    }
             }
         }
 

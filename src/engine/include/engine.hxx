@@ -43,6 +43,9 @@ namespace Engine
             const char *title;
             int fullScreenRefreshRate { 0 };
             bool resize { true };
+            bool decorated { true };
+            bool floating { false };
+            bool visible { true };
             // bool vsync { false };
         };
 
@@ -60,7 +63,7 @@ namespace Engine
             window();
             resolution getDisplayResolution();
             void setTitle( const char *title );
-            void setResolution( ENGINE_RESOLUTION_TYPE width, ENGINE_RESOLUTION_TYPE height, int fullScreenRefreshRate = 0, bool resize = 0 );
+            void updateProperties( settings properties );
             void updateEvents();
             bool shouldClose();
             DATA_PTR data;

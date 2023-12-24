@@ -21,9 +21,23 @@ namespace Engine
             DEFINE_DATA_FIELD;
             data->instance = instance;
             resolution displayRes { getDisplayResolution() };
+            auto mode = glfwGetVideoMode( glfwGetPrimaryMonitor() );
+            glfwWindowHint( GLFW_RED_BITS, mode->redBits );
+            glfwWindowHint( GLFW_GREEN_BITS, mode->greenBits );
+            glfwWindowHint( GLFW_BLUE_BITS, mode->blueBits );
+            glfwWindowHint( GLFW_REFRESH_RATE, mode->refreshRate );
             glfwWindowHint( GLFW_CLIENT_API, GLFW_NO_API );
             glfwWindowHint( GLFW_RESIZABLE, properties.resize );
-            data->window = glfwCreateWindow( properties.fullScreenRefreshRate ? displayRes.width : properties.size.width, properties.fullScreenRefreshRate ? displayRes.height : properties.size.height, properties.title, properties.fullScreenRefreshRate ? glfwGetPrimaryMonitor() : nullptr, nullptr );
+            glfwWindowHint( GLFW_DECORATED, properties.decorated );
+            glfwWindowHint( GLFW_FLOATING, properties.floating );
+            glfwWindowHint( GLFW_VISIBLE, properties.visible );
+            if ( !properties.size.width or !properties.size.height )
+            {
+                glfwWindowHint( GLFW_MAXIMIZED, 1 );
+                data->window = glfwCreateWindow( displayRes.width, displayRes.height, properties.title, nullptr, nullptr );
+            }
+            else
+                data->window = glfwCreateWindow( properties.fullScreenRefreshRate ? displayRes.width : properties.size.width, properties.fullScreenRefreshRate ? displayRes.height : properties.size.height, properties.title, properties.fullScreenRefreshRate ? glfwGetPrimaryMonitor() : nullptr, nullptr );
             glfwGetWindowSize( data->window, reinterpret_cast<int *>( const_cast<ENGINE_RESOLUTION_TYPE *>( &properties.size.width ) ), reinterpret_cast<int *>( const_cast<ENGINE_RESOLUTION_TYPE *>( &properties.size.height ) ) );
             if ( properties.fullScreenRefreshRate )
                 glfwSetWindowMonitor( data->window, glfwGetPrimaryMonitor(), 0, 0, properties.size.width, properties.size.height, properties.fullScreenRefreshRate );
@@ -56,22 +70,23 @@ namespace Engine
             glfwSetWindowTitle( data->window, properties.title );
         }
 
-        void window::setResolution( ENGINE_RESOLUTION_TYPE width, ENGINE_RESOLUTION_TYPE height, int fullScreenRefreshRate, bool resize )
+        void window::updateProperties( settings properties )
         {
-            *const_cast<int *>( &properties.fullScreenRefreshRate )          = fullScreenRefreshRate;
-            *const_cast<bool *>( &properties.resize )                        = resize;
-            *const_cast<ENGINE_RESOLUTION_TYPE *>( &properties.size.width )  = width;
-            *const_cast<ENGINE_RESOLUTION_TYPE *>( &properties.size.height ) = height;
+            *const_cast<settings *>( &this->properties )         = properties;
+            const_cast<settings *>( &this->properties )->visible = 1;
 
-            if ( properties.fullScreenRefreshRate )
+            if ( this->properties.fullScreenRefreshRate )
             {
-                glfwSetWindowMonitor( data->window, glfwGetPrimaryMonitor(), 0, 0, properties.size.width, properties.size.height, properties.fullScreenRefreshRate );
+                const_cast<settings *>( &this->properties )->size = getDisplayResolution();
+                glfwSetWindowMonitor( data->window, glfwGetPrimaryMonitor(), 0, 0, this->properties.size.width, this->properties.size.height, this->properties.fullScreenRefreshRate );
             }
             else
             {
-                glfwSetWindowMonitor( data->window, 0, 0, 0, properties.size.width, properties.size.height, GLFW_DONT_CARE );
-                glfwSetWindowAttrib( data->window, GLFW_RESIZABLE, properties.resize );
+                glfwSetWindowMonitor( data->window, 0, 0, 0, this->properties.size.width, this->properties.size.height, GLFW_DONT_CARE );
             }
+            glfwSetWindowAttrib( data->window, GLFW_RESIZABLE, this->properties.resize );
+            glfwSetWindowAttrib( data->window, GLFW_DECORATED, this->properties.decorated );
+            glfwSetWindowAttrib( data->window, GLFW_FLOATING, this->properties.floating );
         }
 
         void window::eventCallBack( int key, int scancode, int action, int mods )
