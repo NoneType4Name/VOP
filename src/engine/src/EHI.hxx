@@ -23,7 +23,7 @@ namespace Engine
         void destroyDebugLayerCallback();
         bool supportLayers();
         bool supportExtensions();
-        void init( VkInstanceCreateInfo createInfo );
+        void create( VkInstanceCreateInfo createInfo );
         window::types::window regWindow( window::types::window window );
         std::vector<const char *> layers;
         std::vector<const char *> extensions;
@@ -31,7 +31,7 @@ namespace Engine
         VkInstance handle { nullptr };
         instance *parent;
         std::vector<std::shared_ptr<window::window>> windows;
-        // std::vector<std::shared_ptr<DeviceDescription>> deviceDescriptions;
+        std::vector<std::shared_ptr<DeviceDescription>> deviceDescriptions;
         // std::vector<std::shared_ptr<device>> devices;
         // std::vector<std::shared_ptr<link>> links;
         // std::vector<std::shared_ptr<pass>> passes;

@@ -78,11 +78,11 @@ namespace Engine
         InstanceCreateInfo.enabledExtensionCount   = ext.size();
         InstanceCreateInfo.ppEnabledExtensionNames = ext.data();
         InstanceCreateInfo.pApplicationInfo        = &ApplicationInfo;
-        data->init( InstanceCreateInfo );
+        data->create( InstanceCreateInfo );
         data->initDebugLayerCallBack( debugUtilsMsg );
     }
 
-    void instance::DATA_TYPE::init( VkInstanceCreateInfo createInfo )
+    void instance::DATA_TYPE::create( VkInstanceCreateInfo createInfo )
     {
         const_cast<VkApplicationInfo *>( createInfo.pApplicationInfo )->engineVersion = ENGINE_VERSION;
         const_cast<VkApplicationInfo *>( createInfo.pApplicationInfo )->pEngineName   = "NoneTypeName's Engine";

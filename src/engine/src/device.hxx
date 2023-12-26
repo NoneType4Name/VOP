@@ -4,7 +4,6 @@
 #    include <platform.hxx>
 #    include <common/globals.hxx>
 #    include <common/logging.hxx>
-#    include <descriptorPool.hxx>
 #    include <surface.hxx>
 #    include <queue.hxx>
 #    include <buffer.hxx>
@@ -14,7 +13,7 @@ namespace Engine
     struct DeviceDescription::DATA_TYPE
     {
         DATA_TYPE() = default;
-        DATA_TYPE( DeviceDescription *parent ) :
+        DATA_TYPE( types::DeviceDescription parent ) :
             parent { parent } {}
         void init( VkPhysicalDevice device );
         std::vector<VkQueueFamilyProperties> queueFamilyProperties;
@@ -22,44 +21,45 @@ namespace Engine
         VkPhysicalDeviceProperties properties {};
         VkPhysicalDeviceFeatures features {};
         VkPhysicalDevice phDevice { nullptr };
-        DeviceDescription *parent { nullptr };
+        types::DeviceDescription parent { nullptr };
     };
 
     struct device::DATA_TYPE
     {
-        DATA_TYPE( device *parent, DeviceDescription *description );
-        void setExtensions( std::vector<const char *> &deviceExtensions );
-        bool supportExtensions();
-        void addImagesMemorySize( uint32_t index, uint32_t size );
-        void addBuffersMemorySize( uint32_t index, uint32_t size );
+        DATA_TYPE( device *parent, types::DeviceDescription description );
+        // void addImagesMemorySize( uint32_t index, uint32_t size );
+        // void addBuffersMemorySize( uint32_t index, uint32_t size );
+        void create( VkDeviceCreateInfo createInfo );
         ~DATA_TYPE();
         VkDevice handle { nullptr };
         VkCommandPool grapchicPool { nullptr };
         VkCommandPool transferPool { nullptr };
         VkCommandPool presentPool { nullptr };
         std::vector<const char *> extensions;
-        std::vector<std::unique_ptr<descriptorPool>> descriptorPools;
-        std::vector<std::unique_ptr<shader>> shaders;
-        std::vector<std::unique_ptr<layout>> layouts;
-        std::vector<std::unique_ptr<pipeline>> pipelines;
+        // std::vector<std::unique_ptr<descriptorPool>> descriptorPools;
+        // std::vector<std::unique_ptr<shader>> shaders;
+        // std::vector<std::unique_ptr<layout>> layouts;
+        // std::vector<std::unique_ptr<pipeline>> pipelines;
         // memoryTypeIndex<<handle, offset>, <size, oversize>>;
-        window::window *window { nullptr };
+        window::types::window window { nullptr };
         queueSet queuesSet;
-        DeviceDescription *description { nullptr };
-        Engine::device *parent { nullptr };
+        types::DeviceDescription description { nullptr };
+        types::device parent { nullptr };
 
       private:
+        void setExtensions( std::vector<const char *> &deviceExtensions );
+        bool supportExtensions();
         // uint32_t setImageMemory( VkImage image, VkMemoryPropertyFlags properties );
         // void resetImageMemory( VkImage image, uint32_t index );
-        std::vector<std::pair<std::unordered_map<VkImage, uint32_t>, std::pair<uint32_t, uint32_t>>> images;
-        std::unordered_map<VkImage, uint32_t> imageMemoryIndecies;
-        VkDeviceMemory imagesMemory { nullptr };
-        std::vector<std::pair<std::unordered_map<VkBuffer, uint32_t>, std::pair<uint32_t, uint32_t>>> buffers;
-        std::unordered_map<VkBuffer, uint32_t> bufferMemoryIndecies;
-        VkDeviceMemory buffersMemory { nullptr };
-        void allocateBufferMemory( VkBuffer buffer, VkMemoryPropertyFlags properties );
-        void writeBufferMemory( VkBuffer buffer, VkMemoryMapFlags flags, void **data, VkDeviceSize size );
-        void freeBufferMemory( VkBuffer buffer );
+        // std::vector<std::pair<std::unordered_map<VkImage, uint32_t>, std::pair<uint32_t, uint32_t>>> images;
+        // std::unordered_map<VkImage, uint32_t> imageMemoryIndecies;
+        // VkDeviceMemory imagesMemory { nullptr };
+        // std::vector<std::pair<std::unordered_map<VkBuffer, uint32_t>, std::pair<uint32_t, uint32_t>>> buffers;
+        // std::unordered_map<VkBuffer, uint32_t> bufferMemoryIndecies;
+        // VkDeviceMemory buffersMemory { nullptr };
+        // void allocateBufferMemory( VkBuffer buffer, VkMemoryPropertyFlags properties );
+        // void writeBufferMemory( VkBuffer buffer, VkMemoryMapFlags flags, void **data, VkDeviceSize size );
+        // void freeBufferMemory( VkBuffer buffer );
         friend class buffer;
     };
 

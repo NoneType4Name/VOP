@@ -101,7 +101,7 @@ namespace Game
             InstanceCreateInfo.enabledExtensionCount   = 0;
             InstanceCreateInfo.ppEnabledExtensionNames = nullptr;
             InstanceCreateInfo.pApplicationInfo        = &ApplicationInfo;
-            data->init( InstanceCreateInfo );
+            data->create( InstanceCreateInfo );
         }
     };
     std::unique_ptr<E> engine { new E };

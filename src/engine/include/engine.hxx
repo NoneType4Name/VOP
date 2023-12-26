@@ -92,7 +92,7 @@ namespace Engine
 
     DEFINE_HANDLE( instance )
     DEFINE_HANDLE( DeviceDescription );
-    // DEFINE_HANDLE( device );
+    DEFINE_HANDLE( device );
     // DEFINE_HANDLE( link );
     // DEFINE_HANDLE( pass );
     // DEFINE_HANDLE( shader );
@@ -102,40 +102,39 @@ namespace Engine
     // DEFINE_HANDLE( buffer );
     // DEFINE_HANDLE( model );
 
-    // struct ENGINE_EXPORT DeviceDescription
-    // {
-    //   private:
-    //     class ENGINE_EXPORT DATA_TYPE;
-    //     friend struct queue;
+    struct ENGINE_EXPORT DeviceDescription
+    {
+      private:
+        class ENGINE_EXPORT DATA_TYPE;
+        friend struct queue;
 
-    //   public:
-    //     DeviceDescription();
-    //     const char *name;
-    //     DeviceType type;
-    //     uint32_t grade;
-    //     DATA_PTR data;
-    //     ~DeviceDescription();
-    // };
+      public:
+        DeviceDescription();
+        const char *name;
+        DeviceType type;
+        uint32_t grade;
+        DATA_PTR data;
+        ~DeviceDescription();
+    };
 
-    // class ENGINE_EXPORT device
-    // {
-    //   private:
-    //     class ENGINE_EXPORT DATA_TYPE;
-    //     device( types::DeviceDescription description, window::types::window window );
-    //     friend class instance;
+    class ENGINE_EXPORT device
+    {
+      private:
+        class ENGINE_EXPORT DATA_TYPE;
+        device( types::DeviceDescription description, window::types::window window );
+        virtual void setup( types::DeviceDescription description, window::types::window window );
+        friend class instance;
 
-    //   public:
-    //     device();
-    //     types::shader CreateShader( std::string path, std::string main, ShaderStage stage );
-    //     types::shader CreateShader( const char *path, const char *main, ShaderStage stage );
-    //     types::pipeline CreatePipeline( types::layout layouts, std::vector<types::shader> shaders, types::pass pass );
-    //     types::texture CreateTexture( const char *path );
-    //     types::texture CreateTexture( std::string path );
-    //     types::model CreateModel( const char *path, types::texture texture );
-    //     types::model CreateModel( std::string path, types::texture texture );
-    //     DATA_PTR data;
-    //     ~device();
-    // };
+      public:
+        device();
+
+        // types::shader CreateShader( const char *path, const char *main, ShaderStage stage );
+        // types::pipeline CreatePipeline( types::layout layouts, std::vector<types::shader> shaders, types::pass pass );
+        // types::texture CreateTexture( const char *path );
+        // types::model CreateModel( const char *path, types::texture texture );
+        DATA_PTR data;
+        ~device();
+    };
 
     // class ENGINE_EXPORT link
     // {
@@ -254,9 +253,10 @@ namespace Engine
         instance();
         void init( const char *appName, uint32_t appVersion );
         virtual window::types::window createWindow( ENGINE_RESOLUTION_TYPE width, ENGINE_RESOLUTION_TYPE height, const char *title, int fullScreenRefreshRate = 0, bool resize = 0 );
+        virtual types::device createDevice();
         // virtual std::pair<types::link, types::device> makeLink( window::types::window window, types::DeviceDescription description );
         // ? virtual types::pass createRenderPass( types::link link );
-        // const std::vector<types::DeviceDescription> getDevices();
+        const std::vector<types::DeviceDescription> getDevices();
         ~instance();
 
         DATA_PTR data;
