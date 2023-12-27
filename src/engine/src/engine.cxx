@@ -2,6 +2,7 @@
 #include <engine.hxx>
 #include <EHI.hxx>
 #include <surface.hxx>
+#include <device.hxx>
 // #include <RHI.hxx>
 // #include <surface.hxx>
 // #include <device.hxx>
@@ -35,6 +36,14 @@ namespace Engine
     instance::instance()
     {
         DEFINE_DATA_FIELD;
+    }
+
+    instance::~instance()
+    {
+        data->devices.clear();
+        data->windows.clear();
+        data->destroyDebugLayerCallback();
+        vkDestroyInstance( data->handle, ALLOCATION_CALLBACK );
     }
 
     void instance::init( const char *appName, uint32_t appVersion )
@@ -105,6 +114,18 @@ namespace Engine
         return windows.emplace_back( window ).get();
     }
 
+    types::device instance::DATA_TYPE::regDevice( types::device device, window::types::window window )
+    {
+        device->setup( window );
+        return devices.emplace_back( device ).get();
+    }
+
+    types::device instance::DATA_TYPE::regDevice( types::device device )
+    {
+        device->setup();
+        return devices.emplace_back( device ).get();
+    }
+
     instance::DATA_TYPE::~DATA_TYPE()
     {
     }
@@ -114,30 +135,33 @@ namespace Engine
         return data->regWindow( new window::window { this, { width, height, title, fullScreenRefreshRate, resize } } );
     }
 
+    types::device instance::createDevice( types::DeviceDescription description, window::types::window window )
+    {
+        return data->regDevice( new device { description, window }, window );
+    }
+
+    types::device instance::createDevice( types::DeviceDescription description )
+    {
+        return data->regDevice( new device { description } );
+    }
+
     // window::types::window Engine::instance::createWindow( ENGINE_RESOLUTION_TYPE width, ENGINE_RESOLUTION_TYPE height, const char *title )
     // {
     //     return data->windows.emplace_back( new window::window { this, width, height, title } ).get();
     // }
 
-    // std::pair<types::link, types::device> instance::makeLink( window::types::window window, types::DeviceDescription description )
+    // std::pair<types::swapchain, types::device> instance::makeLink( window::types::window window, types::DeviceDescription description )
     // {
     //     data->devices.emplace_back( std::unique_ptr<device> { new device { description, window } } );
-    //     data->links.emplace_back( std::unique_ptr<link> { new link { window, data->devices.back().get() } } );
-    //     // auto &_data = const_cast<std::unique_ptr<link::DATA_TYPE> &>( data->links.back()->data );
-    //     // _data.reset( new link::DATA_TYPE { window, data->devices.back().get() } );
+    //     data->links.emplace_back( std::unique_ptr<swapchain> { new swapchain { window, data->devices.back().get() } } );
+    //     // auto &_data = const_cast<std::unique_ptr<swapchain::DATA_TYPE> &>( data->links.back()->data );
+    //     // _data.reset( new swapchain::DATA_TYPE { window, data->devices.back().get() } );
     //     return { data->links.back().get(), data->devices.back().get() };
     // }
 
-    // types::pass instance::CreateRenderPass( types::link link )
+    // types::pass instance::CreateRenderPass( types::swapchain swapchain )
     // {
-    //     data->passes.emplace_back( std::unique_ptr<pass> { new pass { link } } );
+    //     data->passes.emplace_back( std::unique_ptr<pass> { new pass { swapchain } } );
     //     return data->passes.back().get();
     // }
-
-    instance::~instance()
-    {
-        data->windows.clear();
-        data->destroyDebugLayerCallback();
-        vkDestroyInstance( data->handle, ALLOCATION_CALLBACK );
-    }
 } // namespace Engine

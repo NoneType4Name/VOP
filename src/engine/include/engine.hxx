@@ -93,7 +93,7 @@ namespace Engine
     DEFINE_HANDLE( instance )
     DEFINE_HANDLE( DeviceDescription );
     DEFINE_HANDLE( device );
-    // DEFINE_HANDLE( link );
+    DEFINE_HANDLE( swapchain );
     // DEFINE_HANDLE( pass );
     // DEFINE_HANDLE( shader );
     // DEFINE_HANDLE( layout );
@@ -122,12 +122,14 @@ namespace Engine
       private:
         class ENGINE_EXPORT DATA_TYPE;
         device( types::DeviceDescription description, window::types::window window );
-        virtual void setup( types::DeviceDescription description, window::types::window window );
-        friend class instance;
+        device( types::DeviceDescription description );
+        virtual void setup();
+        virtual void setup( window::types::window window );
+        friend instance;
 
       public:
         device();
-
+        virtual types::swapchain bindWindow( window::types::window window );
         // types::shader CreateShader( const char *path, const char *main, ShaderStage stage );
         // types::pipeline CreatePipeline( types::layout layouts, std::vector<types::shader> shaders, types::pass pass );
         // types::texture CreateTexture( const char *path );
@@ -136,18 +138,19 @@ namespace Engine
         ~device();
     };
 
-    // class ENGINE_EXPORT link
-    // {
-    //   private:
-    //     class ENGINE_EXPORT DATA_TYPE;
-    //     link( window::types::window window, types::device device );
-    //     friend instance;
+    class ENGINE_EXPORT swapchain
+    {
+      private:
+        class ENGINE_EXPORT DATA_TYPE;
+        swapchain( types::device device, window::types::window window );
+        virtual void setup();
+        friend device;
 
-    //   public:
-    //     link();
-    //     ~link();
-    //     DATA_PTR data;
-    // };
+      public:
+        swapchain();
+        ~swapchain();
+        DATA_PTR data;
+    };
 
     // class ENGINE_EXPORT shader
     // {
@@ -213,7 +216,7 @@ namespace Engine
     // class ENGINE_EXPORT pass
     // {
     //   private:
-    //     pass( Engine::types::link link );
+    //     pass( Engine::types::swapchain swapchain );
     //     class ENGINE_EXPORT DATA_TYPE;
     //     friend instance;
 
@@ -253,9 +256,10 @@ namespace Engine
         instance();
         void init( const char *appName, uint32_t appVersion );
         virtual window::types::window createWindow( ENGINE_RESOLUTION_TYPE width, ENGINE_RESOLUTION_TYPE height, const char *title, int fullScreenRefreshRate = 0, bool resize = 0 );
-        virtual types::device createDevice();
-        // virtual std::pair<types::link, types::device> makeLink( window::types::window window, types::DeviceDescription description );
-        // ? virtual types::pass createRenderPass( types::link link );
+        virtual types::device createDevice( types::DeviceDescription description );
+        virtual types::device createDevice( types::DeviceDescription description, window::types::window window );
+        // virtual std::pair<types::swapchain, types::device> makeLink( window::types::window window, types::DeviceDescription description );
+        // ? virtual types::pass createRenderPass( types::swapchain swapchain );
         const std::vector<types::DeviceDescription> getDevices();
         ~instance();
 

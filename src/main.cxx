@@ -104,14 +104,14 @@ namespace Game
             data->create( InstanceCreateInfo );
         }
     };
-    std::unique_ptr<E> engine { new E };
+    std::unique_ptr<Engine::instance> engine { new Engine::instance };
 
     // Engine::window::types::window window { engine->createWindow( 100, 100, "window#1" ) };
     // const std::vector<Engine::types::DeviceDescription> devices = engine->GetDevices();
-    // auto [ link, device ] { engine->CreateLink( window, devices.back() ) };
+    // auto [ swapchain, device ] { engine->CreateLink( window, devices.back() ) };
     // Engine::types::shader vertexShader { device->CreateShader( "./assets/shaders/binary.vert.spv", "main", Engine::ShaderStage::VERTEX_SHADER_TYPE ) };
     // Engine::types::shader fragmentShader { device->CreateShader( "./assets/shaders/binary.frag.spv", "main", Engine::ShaderStage::FRAGMENT_SHADER_TYPE ) };
-    // Engine::types::pass pass { engine->CreateRenderPass( link ) };
+    // Engine::types::pass pass { engine->CreateRenderPass( swapchain ) };
     // Engine::types::pipeline pipeline { device->CreatePipeline( layout, { vertexShader, fragmentShader }, pass ) };
 } // namespace Game
 
@@ -119,6 +119,7 @@ int main()
 {
     Game::engine->init( "test", 0 );
     auto wnd { Game::engine->createWindow( 800, 600, "test", 0, 1 ) };
+    Game::engine->createDevice( Game::engine->getDevices()[ 0 ], wnd );
     while ( !wnd->shouldClose() )
     {
         wnd->updateEvents();

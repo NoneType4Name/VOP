@@ -12,7 +12,7 @@ namespace Engine
         DATA_TYPE( pass *parent ) :
             parent { parent } {}
         VkRenderPass handle { nullptr };
-        Engine::types::link link { nullptr };
+        Engine::types::swapchain swapchain { nullptr };
         pass *parent { nullptr };
     };
 } // namespace Engine

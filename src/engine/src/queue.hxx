@@ -41,9 +41,9 @@ namespace Engine
     {
       public:
         Engine::queue graphic;
-        Engine::queue present;
         Engine::queue transfer;
         // Engine::queue compute;
+        Engine::queue present;
         queueSet();
         queueSet( types::device parent );
         void init( VkDevice device );

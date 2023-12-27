@@ -25,6 +25,8 @@ namespace Engine
         bool supportExtensions();
         void create( VkInstanceCreateInfo createInfo );
         window::types::window regWindow( window::types::window window );
+        types::device regDevice( types::device device );
+        types::device regDevice( types::device device, window::types::window window );
         std::vector<const char *> layers;
         std::vector<const char *> extensions;
         VkDebugUtilsMessengerEXT debugMessenger { nullptr };
@@ -32,8 +34,8 @@ namespace Engine
         instance *parent;
         std::vector<std::shared_ptr<window::window>> windows;
         std::vector<std::shared_ptr<DeviceDescription>> deviceDescriptions;
-        // std::vector<std::shared_ptr<device>> devices;
-        // std::vector<std::shared_ptr<link>> links;
+        std::vector<std::shared_ptr<device>> devices;
+        // std::vector<std::shared_ptr<swapchain>> links;
         // std::vector<std::shared_ptr<pass>> passes;
         ~DATA_TYPE();
 

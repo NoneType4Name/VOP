@@ -30,12 +30,16 @@ namespace Engine
         // void addImagesMemorySize( uint32_t index, uint32_t size );
         // void addBuffersMemorySize( uint32_t index, uint32_t size );
         void create( VkDeviceCreateInfo createInfo );
+        VkFormat formatPriority( const std::vector<VkFormat> &formats, VkImageTiling ImageTiling, VkFormatFeatureFlags FormatFeatureFlags );
+        types::swapchain regSwapchain( types::swapchain swapchain );
+        uint32_t requeredMemoryTypeIndex( uint32_t type, VkMemoryPropertyFlags properties );
         ~DATA_TYPE();
         VkDevice handle { nullptr };
         VkCommandPool grapchicPool { nullptr };
         VkCommandPool transferPool { nullptr };
         VkCommandPool presentPool { nullptr };
         std::vector<const char *> extensions;
+        std::unordered_set<std::shared_ptr<swapchain>> swapchains;
         // std::vector<std::unique_ptr<descriptorPool>> descriptorPools;
         // std::vector<std::unique_ptr<shader>> shaders;
         // std::vector<std::unique_ptr<layout>> layouts;
@@ -66,8 +70,6 @@ namespace Engine
     namespace tools
     {
         inline DeviceType VkDevTypeToEngineDevType( VkPhysicalDeviceType type );
-        uint32_t requeredMemoryTypeIndex( types::device device, uint32_t type, VkMemoryPropertyFlags properties );
-        uint32_t requeredMemoryTypeIndex( VkPhysicalDeviceMemoryProperties memProperties, uint32_t type, VkMemoryPropertyFlags properties );
     } // namespace tools
 } // namespace Engine
 #endif

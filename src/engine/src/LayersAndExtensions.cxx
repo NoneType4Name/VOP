@@ -1,6 +1,6 @@
 #include <platform.hxx>
 #include <EHI.hxx>
-// #include <device.hxx>
+#include <device.hxx>
 
 namespace Engine
 {
@@ -27,36 +27,36 @@ namespace Engine
 
     } // namespace tools
 
-    // void device::DATA_TYPE::setExtensions( std::vector<const char *> &rExtensions )
-    // {
-    //     extensions.insert( extensions.end(), rExtensions.begin(), rExtensions.end() );
-    //     extensions.insert( extensions.end(), tools::DefaultDeviceExtensions.begin(), tools::DefaultDeviceExtensions.end() );
-    // }
+    void device::DATA_TYPE::setExtensions( std::vector<const char *> &rExtensions )
+    {
+        extensions.insert( extensions.end(), rExtensions.begin(), rExtensions.end() );
+        extensions.insert( extensions.end(), tools::DefaultDeviceExtensions.begin(), tools::DefaultDeviceExtensions.end() );
+    }
 
-    // bool device::DATA_TYPE::supportExtensions()
-    // {
-    //     uint32_t _c { 0 };
-    //     vkEnumerateDeviceExtensionProperties( description->data->phDevice, nullptr, &_c, nullptr );
-    //     std::vector<VkExtensionProperties> AvailableExtNames { _c };
-    //     vkEnumerateDeviceExtensionProperties( description->data->phDevice, nullptr, &_c, AvailableExtNames.data() );
-    //     std::set<std::string> tmpRequeredDeviceExts { extensions.begin(), extensions.end() };
-    //     for ( const auto &ext : AvailableExtNames )
-    //     {
-    //         tmpRequeredDeviceExts.erase( ext.extensionName );
-    //     }
+    bool device::DATA_TYPE::supportExtensions()
+    {
+        uint32_t _c { 0 };
+        vkEnumerateDeviceExtensionProperties( description->data->phDevice, nullptr, &_c, nullptr );
+        std::vector<VkExtensionProperties> AvailableExtNames { _c };
+        vkEnumerateDeviceExtensionProperties( description->data->phDevice, nullptr, &_c, AvailableExtNames.data() );
+        std::unordered_set<std::string> tmpRequeredDeviceExts { extensions.begin(), extensions.end() };
+        for ( const auto &ext : AvailableExtNames )
+        {
+            tmpRequeredDeviceExts.erase( ext.extensionName );
+        }
 
-    //     if ( tmpRequeredDeviceExts.size() )
-    //     {
-    //         std::string e { "Not avilable device extensions:\n" };
-    //         for ( const auto &ext : tmpRequeredDeviceExts )
-    //         {
-    //             auto s { std::format( "\t{}\n", ext ) };
-    //         }
-    //         SPDLOG_CRITICAL( e );
-    //     }
+        if ( tmpRequeredDeviceExts.size() )
+        {
+            std::string e { "Not avilable device extensions:\n" };
+            for ( const auto &ext : tmpRequeredDeviceExts )
+            {
+                auto s { std::format( "\t{}\n", ext ) };
+            }
+            SPDLOG_CRITICAL( e );
+        }
 
-    //     return tmpRequeredDeviceExts.empty();
-    // }
+        return tmpRequeredDeviceExts.empty();
+    }
 
     void instance::DATA_TYPE::setLayers( std::vector<const char *> nLayers )
     {
@@ -81,7 +81,7 @@ namespace Engine
         vkEnumerateInstanceLayerProperties( &_c, nullptr );
         std::vector<VkLayerProperties> AvailableLNames { _c };
         vkEnumerateInstanceLayerProperties( &_c, AvailableLNames.data() );
-        std::set<std::string> tmpRequeredDeviceL { layers.begin(), layers.end() };
+        std::unordered_set<std::string> tmpRequeredDeviceL { layers.begin(), layers.end() };
         for ( const auto &l : AvailableLNames )
         {
             tmpRequeredDeviceL.erase( l.layerName );
@@ -105,7 +105,7 @@ namespace Engine
         vkEnumerateInstanceExtensionProperties( nullptr, &_c, nullptr );
         std::vector<VkExtensionProperties> AvailableExtNames { _c };
         vkEnumerateInstanceExtensionProperties( nullptr, &_c, AvailableExtNames.data() );
-        std::set<std::string> tmpRequeredDeviceExts { extensions.begin(), extensions.end() };
+        std::unordered_set<std::string> tmpRequeredDeviceExts { extensions.begin(), extensions.end() };
         for ( const auto &ext : AvailableExtNames )
         {
             tmpRequeredDeviceExts.erase( ext.extensionName );

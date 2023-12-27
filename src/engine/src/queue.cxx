@@ -121,7 +121,8 @@ namespace Engine
     {
         for ( uint32_t i { 0 }; i < count(); i++ )
         {
-            operator[]( i )->init( device );
+            if ( operator[]( i )->familyIndex.has_value() )
+                operator[]( i )->init( device );
         }
     }
 } // namespace Engine

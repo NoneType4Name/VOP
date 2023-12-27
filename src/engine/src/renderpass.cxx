@@ -5,13 +5,13 @@
 
 namespace Engine
 {
-    void InstanceSetup::renderpassInfo( types::pass renderpass, types::link link, VkRenderPassCreateInfo &createInfo, std::vector<void *> &dataPointer, void *userPointer )
+    void InstanceSetup::renderpassInfo( types::pass renderpass, types::swapchain swapchain, VkRenderPassCreateInfo &createInfo, std::vector<void *> &dataPointer, void *userPointer )
     {
         dataPointer.reserve( 4 );
         std::vector<VkAttachmentDescription> *attachments = static_cast<std::vector<VkAttachmentDescription> *>( dataPointer.emplace_back( new std::vector<VkAttachmentDescription>( 3 ) ) );
 
         VkAttachmentDescription *ColorAttachment { &( *attachments )[ 0 ] };
-        ColorAttachment->format         = link->data->format.format;
+        ColorAttachment->format         = swapchain->data->format.format;
         ColorAttachment->samples        = VK_SAMPLE_COUNT_2_BIT;
         ColorAttachment->loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
         ColorAttachment->storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
@@ -21,7 +21,7 @@ namespace Engine
         ColorAttachment->finalLayout    = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
         VkAttachmentDescription *DepthAttachment { &( *attachments )[ 1 ] };
-        DepthAttachment->format         = link->data->depthImageFormat;
+        DepthAttachment->format         = swapchain->data->depthImageFormat;
         DepthAttachment->samples        = ColorAttachment->samples;
         DepthAttachment->loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
         DepthAttachment->storeOp        = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -76,7 +76,7 @@ namespace Engine
         createInfo.pDependencies   = dependency;
     }
 
-    void InstanceSetup::renderpassInfoClear( types::pass renderpass, types::link link, std::vector<void *> &dataPointer, void *userPointer )
+    void InstanceSetup::renderpassInfoClear( types::pass renderpass, types::swapchain swapchain, std::vector<void *> &dataPointer, void *userPointer )
     {
         static_cast<std::vector<VkAttachmentDescription> *>( dataPointer[ 0 ] )->clear();
         delete static_cast<VkAttachmentReference *>( dataPointer[ 1 ] );
@@ -89,20 +89,20 @@ namespace Engine
 
     pass::pass() = default;
 
-    pass::pass( types::link link )
+    pass::pass( types::swapchain swapchain )
     {
         DEFINE_DATA_FIELD
-        data->link = link;
+        data->swapchain = swapchain;
         std::vector<void *> pData;
         VkRenderPassCreateInfo createInfo {};
-        data->link->data->window->data->instance->data->setup->renderpassInfo( this, data->link, createInfo, pData, data->link->data->window->data->instance->data->userPointer );
+        data->swapchain->data->window->data->instance->data->setup->renderpassInfo( this, data->swapchain, createInfo, pData, data->swapchain->data->window->data->instance->data->userPointer );
         createInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-        CHECK_RESULT( vkCreateRenderPass( link->data->device->data->handle, &createInfo, ALLOCATION_CALLBACK, &data->handle ) );
-        data->link->data->window->data->instance->data->setup->renderpassInfoClear( this, data->link, pData, data->link->data->window->data->instance->data->userPointer );
+        CHECK_RESULT( vkCreateRenderPass( swapchain->data->device->data->handle, &createInfo, ALLOCATION_CALLBACK, &data->handle ) );
+        data->swapchain->data->window->data->instance->data->setup->renderpassInfoClear( this, data->swapchain, pData, data->swapchain->data->window->data->instance->data->userPointer );
     }
 
     pass::~pass()
     {
-        vkDestroyRenderPass( data->link->data->device->data->handle, data->handle, ALLOCATION_CALLBACK );
+        vkDestroyRenderPass( data->swapchain->data->device->data->handle, data->handle, ALLOCATION_CALLBACK );
     }
 } // namespace Engine

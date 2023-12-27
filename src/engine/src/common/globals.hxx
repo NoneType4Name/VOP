@@ -1,7 +1,7 @@
 #pragma once
 #ifndef GLOBALS_HXX
 #    define GLOBALS_HXX
-#    include <set>
+#    include <unordered_set>
 #    include <array>
 #    include <format>
 #    include <memory>

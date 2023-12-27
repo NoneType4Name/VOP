@@ -6,13 +6,13 @@
 
 namespace Engine
 {
-    struct link::DATA_TYPE
+    struct swapchain::DATA_TYPE
     {
-        DATA_TYPE( link *parent, window::types::window window, types::device device );
+        DATA_TYPE( swapchain *parent, types::device device, window::types::window window );
 
         struct properties_T
         {
-            properties_T( window::types::window window, types::device device );
+            properties_T( types::device device, window::types::window window );
             VkSurfaceCapabilitiesKHR capabilities {};
             std::vector<VkSurfaceFormatKHR> formats;
             std::vector<VkPresentModeKHR> presentModes;
@@ -20,18 +20,18 @@ namespace Engine
 
         struct image_T
         {
-            std::unique_ptr<image> image { nullptr };
+            std::shared_ptr<image> image { nullptr };
             VkSemaphore isAvailable { nullptr };
             VkSemaphore isRendered { nullptr };
         };
-        void setup( types::link swapchain, VkSwapchainCreateInfoKHR &createInfo, std::vector<void *> &userData, void *userPoiner );
-        void setupClear( types::link swapchain, std::vector<void *> &userData, void *userPoiner );
-        void setupImgs();
+
+        void create( VkSwapchainCreateInfoKHR createInfo );
+        // void setupImgs();
         ~DATA_TYPE();
 
         window::types::window window { nullptr };
         types::device device { nullptr };
-        VkSwapchainKHR swapchain { nullptr };
+        VkSwapchainKHR handle { nullptr };
         VkSurfaceFormatKHR format { VK_FORMAT_MAX_ENUM };
         VkPresentModeKHR presentMode { VK_PRESENT_MODE_MAX_ENUM_KHR };
         VkFormat depthImageFormat { VK_FORMAT_MAX_ENUM };
@@ -40,11 +40,11 @@ namespace Engine
         uint32_t flightImgIndex { 0 };
         uint32_t semaphoreIndex { 0 };
         VkSwapchainCreateInfoKHR createInfo {};
-        link *parent { nullptr };
+        types::swapchain parent { nullptr };
     };
 
-    namespace tools
-    {
-        VkFormat formatPriority( types::device device, const std::vector<VkFormat> &formats, VkImageTiling ImageTiling, VkFormatFeatureFlags FormatFeatureFlags );
-    } // namespace tools
+    // namespace tools
+    // {
+    //     VkFormat formatPriority( types::device device, const std::vector<VkFormat> &formats, VkImageTiling ImageTiling, VkFormatFeatureFlags FormatFeatureFlags );
+    // } // namespace tools
 } // namespace Engine

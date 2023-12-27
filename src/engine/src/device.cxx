@@ -50,20 +50,32 @@ namespace Engine
 
     device::DATA_TYPE::~DATA_TYPE()
     {
+        vkDestroyCommandPool( handle, grapchicPool, ALLOCATION_CALLBACK );
+        vkDestroyCommandPool( handle, transferPool, ALLOCATION_CALLBACK );
+        vkDestroyCommandPool( handle, presentPool, ALLOCATION_CALLBACK );
+        // data->pipelines.clear();
+        // data->shaders.clear();
+        // data->layouts.clear();
+        // data->descriptorPools.clear();
+        vkDestroyDevice( handle, ALLOCATION_CALLBACK );
     }
 
     device::device() {};
 
-    device::device( types::DeviceDescription description, window::types::window window )
+    device::device( types::DeviceDescription description, window::types::window window ) :
+        device { description }
+    {
+        this->data->window = window;
+    }
+
+    device::device( types::DeviceDescription description )
     {
         auto &_data = const_cast<std ::unique_ptr<DATA_TYPE> &>( data );
         _data.reset( new DATA_TYPE { this, description } );
-
-        this->data->window = window;
-        data->description  = description;
+        data->description = description;
     }
 
-    void device::setup( types::DeviceDescription description, window::types::window window )
+    void device::setup( window::types::window window )
     {
         VkDeviceCreateInfo DeviceCreateInfo {};
         VkPhysicalDeviceDescriptorIndexingFeatures indexFeatures {};
@@ -80,7 +92,7 @@ namespace Engine
             for ( uint32_t i { 0 }; i < data->description->data->queueFamilyProperties.size(); i++ )
             {
                 VkBool32 presentSupport { false };
-                vkGetPhysicalDeviceSurfaceSupportKHR( data->description->data->phDevice, i, data->window->data->surface, &presentSupport );
+                vkGetPhysicalDeviceSurfaceSupportKHR( data->description->data->phDevice, i, window->data->surface, &presentSupport );
                 if ( !data->queuesSet.graphic.familyIndex.has_value() && data->description->data->queueFamilyProperties[ i ].queueFlags & VK_QUEUE_GRAPHICS_BIT )
                     data->queuesSet.graphic = { i, 1.f };
                 if ( !data->queuesSet.present.familyIndex.has_value() && presentSupport )
@@ -96,7 +108,7 @@ namespace Engine
         else
         {
             VkBool32 presentSupport { false };
-            vkGetPhysicalDeviceSurfaceSupportKHR( data->description->data->phDevice, 0, data->window->data->surface, &presentSupport );
+            vkGetPhysicalDeviceSurfaceSupportKHR( data->description->data->phDevice, 0, window->data->surface, &presentSupport );
             if ( data->description->data->queueFamilyProperties[ 0 ].queueFlags & ( VK_QUEUE_TRANSFER_BIT | VK_QUEUE_GRAPHICS_BIT ) && presentSupport )
             {
                 data->queuesSet = { { 0, 0, 1.f }, { 0, 0, 1.f }, { 0, 0, 1.f } };
@@ -107,16 +119,56 @@ namespace Engine
         data->create( DeviceCreateInfo );
     }
 
+    void device::setup()
+    {
+        VkDeviceCreateInfo DeviceCreateInfo {};
+        VkPhysicalDeviceDescriptorIndexingFeatures indexFeatures {};
+        DeviceCreateInfo.pNext                                  = &indexFeatures;
+        indexFeatures.sType                                     = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
+        indexFeatures.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
+        indexFeatures.runtimeDescriptorArray                    = VK_TRUE;
+        indexFeatures.descriptorBindingVariableDescriptorCount  = VK_TRUE;
+        VkPhysicalDeviceFeatures features {};
+        features.samplerAnisotropy        = VK_TRUE;
+        features.sampleRateShading        = VK_TRUE;
+        DeviceCreateInfo.pEnabledFeatures = &features;
+        if ( data->description->data->queueFamilyProperties.size() - 1 )
+        {
+            for ( uint32_t i { 0 }; i < data->description->data->queueFamilyProperties.size(); i++ )
+            {
+                if ( !data->queuesSet.graphic.familyIndex.has_value() && data->description->data->queueFamilyProperties[ i ].queueFlags & VK_QUEUE_GRAPHICS_BIT )
+                    data->queuesSet.graphic = { i, 1.f };
+                else if ( !data->queuesSet.transfer.familyIndex.has_value() && data->description->data->queueFamilyProperties[ i ].queueFlags & VK_QUEUE_TRANSFER_BIT )
+                    data->queuesSet.transfer = { i, 1.f };
+                // else if ( !data->queuesSet.compute.familyIndex.has_value() && data->description->data->queueFamilyProperties[ i ].queueFlags & VK_QUEUE_COMPUTE_BIT )
+                //     data->queuesSet.compute = i;
+                else
+                    break;
+            }
+        }
+        else
+        {
+            if ( data->description->data->queueFamilyProperties[ 0 ].queueFlags & ( VK_QUEUE_TRANSFER_BIT | VK_QUEUE_GRAPHICS_BIT ) )
+            {
+                data->queuesSet = { { 0, 0, 1.f }, { 0, 0, 1.f } };
+            }
+        }
+        data->create( DeviceCreateInfo );
+    }
+
+    types::swapchain device::bindWindow( window::types::window window )
+    {
+        return data->regSwapchain( new swapchain { this, window } );
+    }
+
+    types::swapchain device::DATA_TYPE::regSwapchain( types::swapchain swapchain )
+    {
+        swapchain->setup();
+        return swapchains.emplace( swapchain ).first->get();
+    }
+
     device::~device()
     {
-        vkDestroyCommandPool( data->handle, data->grapchicPool, ALLOCATION_CALLBACK );
-        vkDestroyCommandPool( data->handle, data->transferPool, ALLOCATION_CALLBACK );
-        vkDestroyCommandPool( data->handle, data->presentPool, ALLOCATION_CALLBACK );
-        // data->pipelines.clear();
-        // data->shaders.clear();
-        // data->layouts.clear();
-        // data->descriptorPools.clear();
-        vkDestroyDevice( data->handle, ALLOCATION_CALLBACK );
     }
 
     void device::DATA_TYPE::create( VkDeviceCreateInfo createInfo )
@@ -151,6 +203,40 @@ namespace Engine
         CHECK_RESULT( vkCreateCommandPool( handle, &poolCI, ALLOCATION_CALLBACK, &transferPool ) );
         poolCI.queueFamilyIndex = queuesSet.present.familyIndex.value();
         CHECK_RESULT( vkCreateCommandPool( handle, &poolCI, ALLOCATION_CALLBACK, &presentPool ) );
+    }
+
+    VkFormat device::DATA_TYPE::formatPriority( const std::vector<VkFormat> &formats, VkImageTiling ImageTiling, VkFormatFeatureFlags FormatFeatureFlags )
+    {
+        for ( auto format : formats )
+        {
+            VkFormatProperties FormatProperties;
+            vkGetPhysicalDeviceFormatProperties( description->data->phDevice, format, &FormatProperties );
+            switch ( ImageTiling )
+            {
+                case VK_IMAGE_TILING_LINEAR:
+                    if ( ( FormatProperties.linearTilingFeatures & FormatFeatureFlags ) == FormatFeatureFlags )
+                        return format;
+                    break;
+                case VK_IMAGE_TILING_OPTIMAL:
+                    if ( ( FormatProperties.optimalTilingFeatures & FormatFeatureFlags ) == FormatFeatureFlags )
+                        return format;
+                    break;
+                default:
+                    break;
+            }
+        }
+        return VK_FORMAT_UNDEFINED;
+    }
+
+    uint32_t device::DATA_TYPE::requeredMemoryTypeIndex( uint32_t type, VkMemoryPropertyFlags properties )
+    {
+        for ( uint32_t i { 0 }; i < description->data->memProperties.memoryTypeCount; i++ )
+        {
+            if ( ( type & ( 1 << i ) ) && ( ( description->data->memProperties.memoryTypes[ i ].propertyFlags & properties ) == properties ) ) return i;
+        }
+        SPDLOG_CRITICAL( "Failed to find suitable memory type, type: {}, properties: {}.", type, properties );
+        assert( 0 );
+        return -1;
     }
 
     // types::descriptorPool device::CreatePool( void *userData )
@@ -211,28 +297,6 @@ namespace Engine
 
     namespace tools
     {
-        uint32_t requeredMemoryTypeIndex( types::device device, uint32_t type, VkMemoryPropertyFlags properties )
-        {
-            for ( uint32_t i { 0 }; i < device->data->description->data->memProperties.memoryTypeCount; i++ )
-            {
-                if ( ( type & ( 1 << i ) ) && ( ( device->data->description->data->memProperties.memoryTypes[ i ].propertyFlags & properties ) == properties ) ) return i;
-            }
-            SPDLOG_CRITICAL( "Failed to find suitable memory type, type: {}, properties: {}.", type, properties );
-            assert( 0 );
-            return -1;
-        }
-
-        uint32_t requeredMemoryTypeIndex( VkPhysicalDeviceMemoryProperties memProperties, uint32_t type, VkMemoryPropertyFlags properties )
-        {
-            for ( uint32_t i { 0 }; i < memProperties.memoryTypeCount; i++ )
-            {
-                if ( ( type & ( 1 << i ) ) && ( ( memProperties.memoryTypes[ i ].propertyFlags & properties ) == properties ) ) return i;
-            }
-            SPDLOG_CRITICAL( "Failed to find suitable memory type, type: {}, properties: {}.", type, properties );
-            assert( 0 );
-            return -1;
-        }
-
         inline DeviceType VkDevTypeToEngineDevType( VkPhysicalDeviceType type )
         {
             switch ( type )
