@@ -119,7 +119,8 @@ int main()
 {
     Game::engine->init( "test", 0 );
     auto wnd { Game::engine->createWindow( 800, 600, "test", 0, 1 ) };
-    Game::engine->createDevice( Game::engine->getDevices()[ 0 ], wnd );
+    auto device { Game::engine->createDevice( Game::engine->getDevices()[ 0 ] ) };
+    auto swapchain { device->bindWindow( wnd ) };
     while ( !wnd->shouldClose() )
     {
         wnd->updateEvents();

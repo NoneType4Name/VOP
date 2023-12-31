@@ -86,6 +86,8 @@ namespace Engine
     swapchain::swapchain( types::device device, window::types::window window )
     {
         *const_cast<std::unique_ptr<DATA_TYPE> *>( &data ) = std::make_unique<DATA_TYPE>( this, device, window );
+        data->device->data->swapchains.emplace( this );
+        data->window->data->swapchains.emplace( this );
         // std::vector<void *> swapchainData;
         // std::vector<void *> pData;
         // data->window->data->instance->data->setup->swapchainInfo( this, data->createInfo, swapchainData, data->window->data->instance->data->userPointer );
@@ -93,6 +95,13 @@ namespace Engine
         // CHECK_RESULT( vkCreateSwapchainKHR( data->device->data->handle, &data->createInfo, ALLOCATION_CALLBACK, &data->swapchain ) );
         // data->setupImgs();
     }
+
+    swapchain::~swapchain()
+    {
+        vkDestroySwapchainKHR( data->device->data->handle, data->handle, ALLOCATION_CALLBACK );
+        data->device->data->swapchains.erase( this );
+        data->window->data->swapchains.erase( this );
+    };
 
     void swapchain::setup()
     {
@@ -123,12 +132,8 @@ namespace Engine
         createInfo.oldSwapchain       = data->handle;
         createInfo.preTransform       = data->properties.capabilities.currentTransform;
         createInfo.compositeAlpha     = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+        data->create( createInfo );
     }
-
-    swapchain::~swapchain()
-    {
-        vkDestroySwapchainKHR( data->device->data->handle, data->handle, ALLOCATION_CALLBACK );
-    };
 
     swapchain::DATA_TYPE::properties_T::properties_T( types::device device, window::types::window window )
     {
@@ -142,36 +147,6 @@ namespace Engine
         presentModes.resize( c );
         vkGetPhysicalDeviceSurfacePresentModesKHR( device->data->description->data->phDevice, window->data->surface, &c, presentModes.data() );
     }
-
-    // void InstanceSetup::swapchainInfo( types::swapchain swapchain, VkSwapchainCreateInfoKHR &createInfo, std::vector<void *> &dataPointer, void *userPoiner )
-    // {
-    //     VkSurfaceFormatKHR SurfaceFormat { swapchain->data->properties.formats[ 0 ] };
-    //     for ( const auto &format : swapchain->data->properties.formats )
-    //     {
-    //         VkFormatProperties properties;
-    //         vkGetPhysicalDeviceFormatProperties( swapchain->data->device->data->description->data->phDevice, format.format, &properties );
-    //         if ( format.format == VK_FORMAT_B8G8R8A8_SRGB && format.colorSpace == VK_COLORSPACE_SRGB_NONLINEAR_KHR ) SurfaceFormat = format;
-    //     }
-
-    //     swapchain->data->presentMode = VK_PRESENT_MODE_FIFO_KHR;
-    //     for ( const auto &mode : swapchain->data->properties.presentModes )
-    //     {
-    //         if ( mode == VK_PRESENT_MODE_MAILBOX_KHR ) swapchain->data->presentMode = mode;
-    //     }
-
-    //     swapchain->data->depthImageFormat = tools::formatPriority( swapchain->data->device, { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT }, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT );
-    //     int width, height;
-    //     glfwGetFramebufferSize( swapchain->data->window->data->window, &width, &height );
-    //     createInfo.imageUsage         = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-    //     createInfo.imageFormat        = SurfaceFormat.format;
-    //     createInfo.imageExtent.width  = std::clamp( static_cast<uint32_t>( width ), swapchain->data->properties.capabilities.minImageExtent.width, swapchain->data->properties.capabilities.maxImageExtent.width );
-    //     createInfo.imageExtent.height = std::clamp( static_cast<uint32_t>( height ), swapchain->data->properties.capabilities.minImageExtent.height, swapchain->data->properties.capabilities.maxImageExtent.height );
-    //     createInfo.minImageCount      = swapchain->data->properties.capabilities.minImageCount;
-    //     createInfo.clipped            = VK_FALSE;
-    //     createInfo.oldSwapchain       = swapchain->data->swapchain;
-    //     createInfo.preTransform       = swapchain->data->properties.capabilities.currentTransform;
-    //     createInfo.compositeAlpha     = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-    // }
 
     void swapchain::DATA_TYPE::create( VkSwapchainCreateInfoKHR createInfo )
     {
@@ -202,27 +177,22 @@ namespace Engine
         {
             createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
         }
+        createInfo.oldSwapchain = handle;
         vkCreateSwapchainKHR( device->data->handle, &createInfo, ALLOCATION_CALLBACK, &handle );
+        // uint32_t c;
+        // vkGetSwapchainImagesKHR( device->data->handle, handle, &c, nullptr );
+        // std::vector<VkImage> imgs { c };
+        // images.resize( c );
+        // vkGetSwapchainImagesKHR( device->data->handle, handle, &c, imgs.data() );
+        // VkSemaphoreCreateInfo semaphoreInfo {};
+        // semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+        // for ( size_t i { 0 }; i < imgs.size(); i++ )
+        // {
+        //     images[ i ].image.reset( new image { device, { createInfo.imageExtent.width, createInfo.imageExtent.height }, imgs[ i ], VK_IMAGE_ASPECT_COLOR_BIT, createInfo.imageFormat, 1, createInfo.imageArrayLayers } );
+        //     CHECK_RESULT( vkCreateSemaphore( device->data->handle, &semaphoreInfo, ALLOCATION_CALLBACK, &images[ i ].isAvailable ) );
+        //     CHECK_RESULT( vkCreateSemaphore( device->data->handle, &semaphoreInfo, ALLOCATION_CALLBACK, &images[ i ].isRendered ) );
+        // }
     }
-
-    // void swapchain::DATA_TYPE::setupClear( types::swapchain swapchain, std::vector<void *> &userData, void *userPoiner ) {}
-
-    // void swapchain::DATA_TYPE::setupImgs()
-    // {
-    //     uint32_t c;
-    //     vkGetSwapchainImagesKHR( device->data->handle, handle, &c, nullptr );
-    //     std::vector<VkImage> imgs { c };
-    //     images.resize( c );
-    //     vkGetSwapchainImagesKHR( device->data->handle, handle, &c, imgs.data() );
-    //     VkSemaphoreCreateInfo semaphoreInfo {};
-    //     semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-    //     for ( size_t i { 0 }; i < imgs.size(); i++ )
-    //     {
-    //         images[ i ].image.reset( new image( device, { createInfo.imageExtent.width, createInfo.imageExtent.height }, imgs[ i ], VK_IMAGE_ASPECT_COLOR_BIT, createInfo.imageFormat, 1, createInfo.imageArrayLayers ) );
-    //         CHECK_RESULT( vkCreateSemaphore( device->data->handle, &semaphoreInfo, ALLOCATION_CALLBACK, &images[ i ].isAvailable ) );
-    //         CHECK_RESULT( vkCreateSemaphore( device->data->handle, &semaphoreInfo, ALLOCATION_CALLBACK, &images[ i ].isRendered ) );
-    //     }
-    // }
 
     swapchain::DATA_TYPE::DATA_TYPE( types::swapchain parent, types::device device, window::types::window window ) :
         parent { parent }, properties( device, window )
@@ -239,77 +209,6 @@ namespace Engine
             vkDestroySemaphore( device->data->handle, img.isRendered, ALLOCATION_CALLBACK );
         }
     }
-
-    // void reCreateSwapchain()
-    // {
-    //     _imageIndex = 0;
-    //     for ( const auto &img : _swapchainImages )
-    //     {
-    //         delete getImage( img.image );
-    //     }
-    //     _swapchainSurfaceFormat.format = VK_FORMAT_MAX_ENUM;
-    //     _swapchainSurfacePresentMode   = VK_PRESENT_MODE_MAX_ENUM_KHR;
-    //     _depthImageFormat              = VK_FORMAT_MAX_ENUM;
-    //     _swapchainProperties           = getSwapchainProperties();
-    //     _swapchainSurfaceFormat        = getSwapchainSurfaceFormat();
-    //     _swapchainSurfacePresentMode   = getSwapchainSurfacePresentMode();
-    //     _depthImageFormat              = getSwapchainDepthImageFormat();
-    //     glfwSetWindowSizeLimits( tools::getWindow(), _swapchainProperties.Capabilities.minImageExtent.width, _swapchainProperties.Capabilities.minImageExtent.height, _swapchainProperties.Capabilities.maxImageExtent.width, _swapchainProperties.Capabilities.maxImageExtent.height );
-    //     VkSwapchainCreateInfoKHR SwapchainCreateInfo {};
-    //     SwapchainCreateInfo.sType            = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-    //     SwapchainCreateInfo.surface          = tools::getSurface();
-    //     SwapchainCreateInfo.minImageCount    = _swapchainProperties.Capabilities.minImageCount; // imgs count
-    //     SwapchainCreateInfo.imageFormat      = _swapchainSurfaceFormat.format;
-    //     SwapchainCreateInfo.imageColorSpace  = _swapchainSurfaceFormat.colorSpace;
-    //     SwapchainCreateInfo.presentMode      = _swapchainSurfacePresentMode;
-    //     SwapchainCreateInfo.imageExtent      = _swapchainProperties.Capabilities.currentExtent;
-    //     SwapchainCreateInfo.imageArrayLayers = 1;
-    //     SwapchainCreateInfo.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-    //     auto queues { tools::getQueues() };
-    //     if ( queues.count() == queues.getUniqueIndeciesCount().size() )
-    //     {
-    //         std::vector<uint32_t> indecies {};
-    //         indecies.reserve( queues.getUniqueIndeciesCount().size() );
-    //         for ( const auto &ind : queues.getUniqueIndeciesCount() )
-    //             indecies.push_back( ind.first );
-    //         SwapchainCreateInfo.imageSharingMode      = VK_SHARING_MODE_CONCURRENT;
-    //         SwapchainCreateInfo.queueFamilyIndexCount = static_cast<uint32_t>( indecies.size() );
-    //         SwapchainCreateInfo.pQueueFamilyIndices   = indecies.data();
-    //     }
-    //     else
-    //     {
-    //         SwapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    //     }
-    //     SwapchainCreateInfo.preTransform   = _swapchainProperties.Capabilities.supportedTransforms & VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR ? VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR : _swapchainProperties.Capabilities.currentTransform;
-    //     SwapchainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-    //     SwapchainCreateInfo.clipped        = VK_TRUE;
-    //     SwapchainCreateInfo.oldSwapchain   = _swapchain;
-    //     CHECK_RESULT( vkCreateSwapchainKHR( tools::getDevice(), &SwapchainCreateInfo, ALLOCATION_CALLBACK, &_swapchain ) );
-    //     vkDestroySwapchainKHR( tools::getDevice(), SwapchainCreateInfo.oldSwapchain, ALLOCATION_CALLBACK );
-    //     uint32_t _c { 0 };
-    //     vkGetSwapchainImagesKHR( tools::getDevice(), _swapchain, &_c, nullptr );
-    //     std::vector<VkImage> imgs { _c };
-    //     _swapchainImages.resize( _c );
-    //     vkGetSwapchainImagesKHR( tools::getDevice(), _swapchain, &_c, imgs.data() );
-    //     for ( size_t i { 0 }; i < imgs.size(); i++ )
-    //     {
-    //         _swapchainImages[ i ].image = ( new image( { SwapchainCreateInfo.imageExtent.width, SwapchainCreateInfo.imageExtent.height }, imgs[ i ], VK_IMAGE_ASPECT_COLOR_BIT, SwapchainCreateInfo.imageFormat, 1, SwapchainCreateInfo.imageArrayLayers ) )->getID();
-    //     }
-    // }
-
-    // void destroySwapchain()
-    // {
-    //     _swapchainSurfaceFormat.format = VK_FORMAT_MAX_ENUM;
-    //     _swapchainSurfacePresentMode   = VK_PRESENT_MODE_MAX_ENUM_KHR;
-    //     _depthImageFormat              = VK_FORMAT_MAX_ENUM;
-    //     for ( const auto &img : _swapchainImages )
-    //     {
-    //         vkDestroySemaphore( tools::getDevice(), img.isAvailable, ALLOCATION_CALLBACK );
-    //         vkDestroySemaphore( tools::getDevice(), img.isRendered, ALLOCATION_CALLBACK );
-    //         delete getImage( img.image );
-    //     }
-    //     vkDestroySwapchainKHR( tools::getDevice(), _swapchain, ALLOCATION_CALLBACK );
-    // }
 
     // uint32_t AcquireImageIndex( VkSemaphore &semaphore )
     // {

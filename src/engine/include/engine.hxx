@@ -15,7 +15,10 @@
             typedef object *object; \
         }
 #    define DATA_TYPE data_T
-#    define DATA_PTR  const std::unique_ptr<DATA_TYPE>
+#    define DEFINE_DATA                \
+      public:                          \
+        class ENGINE_EXPORT DATA_TYPE; \
+        const std::unique_ptr<DATA_TYPE> data;
 #    include <array>
 #    include <memory>
 #    include <vector>
@@ -51,8 +54,9 @@ namespace Engine
 
         class ENGINE_EXPORT window
         {
+            DEFINE_DATA;
+
           protected:
-            class ENGINE_EXPORT DATA_TYPE;
             window( Engine::instance *instance, settings settings );
             virtual void setup();
             virtual void eventCallBack( int key, int scancode, int action, int mods );
@@ -66,7 +70,6 @@ namespace Engine
             void updateProperties( settings properties );
             void updateEvents();
             bool shouldClose();
-            DATA_PTR data;
             ~window();
             const settings properties {};
         };
@@ -104,8 +107,9 @@ namespace Engine
 
     struct ENGINE_EXPORT DeviceDescription
     {
+        DEFINE_DATA;
+
       private:
-        class ENGINE_EXPORT DATA_TYPE;
         friend struct queue;
 
       public:
@@ -113,15 +117,14 @@ namespace Engine
         const char *name;
         DeviceType type;
         uint32_t grade;
-        DATA_PTR data;
         ~DeviceDescription();
     };
 
     class ENGINE_EXPORT device
     {
+        DEFINE_DATA;
+
       private:
-        class ENGINE_EXPORT DATA_TYPE;
-        device( types::DeviceDescription description, window::types::window window );
         device( types::DeviceDescription description );
         virtual void setup();
         virtual void setup( window::types::window window );
@@ -134,14 +137,14 @@ namespace Engine
         // types::pipeline CreatePipeline( types::layout layouts, std::vector<types::shader> shaders, types::pass pass );
         // types::texture CreateTexture( const char *path );
         // types::model CreateModel( const char *path, types::texture texture );
-        DATA_PTR data;
         ~device();
     };
 
     class ENGINE_EXPORT swapchain
     {
+        DEFINE_DATA;
+
       private:
-        class ENGINE_EXPORT DATA_TYPE;
         swapchain( types::device device, window::types::window window );
         virtual void setup();
         friend device;
@@ -149,7 +152,6 @@ namespace Engine
       public:
         swapchain();
         ~swapchain();
-        DATA_PTR data;
     };
 
     // class ENGINE_EXPORT shader
@@ -248,8 +250,9 @@ namespace Engine
 
     class ENGINE_EXPORT instance
     {
+        DEFINE_DATA;
+
       protected:
-        class ENGINE_EXPORT DATA_TYPE;
         virtual void setup( const char *appName, uint32_t appVersion );
 
       public:
@@ -257,13 +260,10 @@ namespace Engine
         void init( const char *appName, uint32_t appVersion );
         virtual window::types::window createWindow( ENGINE_RESOLUTION_TYPE width, ENGINE_RESOLUTION_TYPE height, const char *title, int fullScreenRefreshRate = 0, bool resize = 0 );
         virtual types::device createDevice( types::DeviceDescription description );
-        virtual types::device createDevice( types::DeviceDescription description, window::types::window window );
         // virtual std::pair<types::swapchain, types::device> makeLink( window::types::window window, types::DeviceDescription description );
         // ? virtual types::pass createRenderPass( types::swapchain swapchain );
-        const std::vector<types::DeviceDescription> getDevices();
+        const std::vector<types::DeviceDescription> &getDevices();
         ~instance();
-
-        DATA_PTR data;
     };
     // DEFINE_RENDER_ATTACHMENT_TEMPLATE( RENDER_ATTACHMENT_DEFAULT_COLOR )
     // DEFINE_RENDER_ATTACHMENT_TEMPLATE( RENDER_ATTACHMENT_DEFAULT_DEPTH )

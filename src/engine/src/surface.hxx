@@ -9,14 +9,15 @@ namespace Engine
 {
     struct window::window::DATA_TYPE
     {
-        DATA_TYPE( window *parent ) :
-            parent { parent } {}
+        DATA_TYPE( types::window parent, instance *instance );
         void createSurface( VkInstance instance, const void *pNext, VkFlags flags );
         void destroySurface( VkInstance instance );
+        ~DATA_TYPE();
         GLFWwindow *window { nullptr };
         VkSurfaceKHR surface { nullptr };
-        Engine::types::instance instance { nullptr };
-        Engine::window::types::window parent { nullptr };
+        std::set<Engine::types::swapchain> swapchains;
+        Engine::instance *instance;
+        types::window parent;
     };
 } // namespace Engine
 #endif

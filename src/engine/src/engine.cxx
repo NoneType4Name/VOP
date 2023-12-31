@@ -40,8 +40,17 @@ namespace Engine
 
     instance::~instance()
     {
-        data->devices.clear();
-        data->windows.clear();
+        auto wI { data->windows.begin() };
+        while ( wI != data->windows.end() )
+        {
+            auto sI { wI->second.begin() };
+            while ( sI != wI->second.end() )
+                delete *sI++;
+            delete ( wI++ )->first;
+        }
+        auto dI { data->devices.begin() };
+        while ( dI != data->devices.end() )
+            delete *dI++;
         data->destroyDebugLayerCallback();
         vkDestroyInstance( data->handle, ALLOCATION_CALLBACK );
     }
@@ -64,17 +73,15 @@ namespace Engine
         ApplicationInfo.pApplicationName   = appName;
         ApplicationInfo.applicationVersion = appVersion;
 
-        VkDebugUtilsMessengerCreateInfoEXT debugUtilsMsg {};
-        data->setupDebugLayerCallback( debugUtilsMsg );
-        VkDebugUtilsMessengerCreateInfoEXT debugUtilsMsgCI = debugUtilsMsg;
-        VkValidationFeaturesEXT ValidationFeatures {};
-        debugUtilsMsgCI.pNext = &ValidationFeatures;
+        VkDebugUtilsMessengerCreateInfoEXT debugUtilsMsgCI { data->setupDebugLayerCallback() };
         std::vector<VkValidationFeatureEnableEXT> enabledVFeatures { VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT };
+        VkValidationFeaturesEXT ValidationFeatures {};
         ValidationFeatures.sType                          = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
         ValidationFeatures.enabledValidationFeatureCount  = enabledVFeatures.size();
         ValidationFeatures.pEnabledValidationFeatures     = enabledVFeatures.data();
         ValidationFeatures.disabledValidationFeatureCount = 0;
         ValidationFeatures.pDisabledValidationFeatures    = nullptr;
+        debugUtilsMsgCI.pNext                             = &ValidationFeatures;
 
         std::vector<const char *> ext {};
         std::vector<const char *> lays {};
@@ -88,7 +95,8 @@ namespace Engine
         InstanceCreateInfo.ppEnabledExtensionNames = ext.data();
         InstanceCreateInfo.pApplicationInfo        = &ApplicationInfo;
         data->create( InstanceCreateInfo );
-        data->initDebugLayerCallBack( debugUtilsMsg );
+        debugUtilsMsgCI.pNext = nullptr;
+        data->initDebugLayerCallBack( debugUtilsMsgCI );
     }
 
     void instance::DATA_TYPE::create( VkInstanceCreateInfo createInfo )
@@ -111,33 +119,18 @@ namespace Engine
     window::types::window instance::DATA_TYPE::regWindow( window::types::window window )
     {
         window->setup();
-        return windows.emplace_back( window ).get();
-    }
-
-    types::device instance::DATA_TYPE::regDevice( types::device device, window::types::window window )
-    {
-        device->setup( window );
-        return devices.emplace_back( device ).get();
+        return window;
     }
 
     types::device instance::DATA_TYPE::regDevice( types::device device )
     {
         device->setup();
-        return devices.emplace_back( device ).get();
-    }
-
-    instance::DATA_TYPE::~DATA_TYPE()
-    {
+        return device;
     }
 
     window::types::window instance::createWindow( ENGINE_RESOLUTION_TYPE width, ENGINE_RESOLUTION_TYPE height, const char *title, int fullScreenRefreshRate, bool resize )
     {
         return data->regWindow( new window::window { this, { width, height, title, fullScreenRefreshRate, resize } } );
-    }
-
-    types::device instance::createDevice( types::DeviceDescription description, window::types::window window )
-    {
-        return data->regDevice( new device { description, window }, window );
     }
 
     types::device instance::createDevice( types::DeviceDescription description )

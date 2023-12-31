@@ -3,10 +3,7 @@
 
 namespace Engine
 {
-    namespace
-    {
-        std::vector<image *> images;
-    }
+    image::image() {}
 
     image::image( types::device device, VkExtent3D extend, const VkBufferUsageFlags iUsage, const VkImageTiling tiling, const VkMemoryPropertyFlags mProperties, VkImageAspectFlags aspect, VkFormat format, VkImageCreateInfo ImageCreateInfo )
     {

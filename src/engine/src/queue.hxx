@@ -31,7 +31,7 @@ namespace Engine
         queueSet *set { nullptr };
         VkQueue handle { nullptr };
         VkQueueFlags flags { 0 };
-        float priority { 0.f };
+        float priority { 1.f };
         uint32_t index { 0 };
         std::optional<uint32_t> familyIndex;
         ~queue() = default;
@@ -52,11 +52,11 @@ namespace Engine
         void operator=( std::initializer_list<std::tuple<uint32_t, uint32_t, float>> familyIndexPriority );
         queue *operator[]( size_t index );
         queuesProperties &getUniqueIndecies();
-        ~queueSet() = default;
+        ~queueSet();
 
       private:
         friend class queue;
-        types::device parent { nullptr };
+        types::device parent;
         // <family<index in family, ptr to priority>, vector of all prioreties in family>
         queuesProperties _unique;
     };

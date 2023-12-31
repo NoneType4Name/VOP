@@ -12,21 +12,21 @@ namespace Engine
 {
     struct DeviceDescription::DATA_TYPE
     {
-        DATA_TYPE() = default;
-        DATA_TYPE( types::DeviceDescription parent ) :
-            parent { parent } {}
-        void init( VkPhysicalDevice device );
+        DATA_TYPE();
+        DATA_TYPE( types::DeviceDescription parent, struct instance *instance, VkPhysicalDevice device );
+        ~DATA_TYPE();
         std::vector<VkQueueFamilyProperties> queueFamilyProperties;
         VkPhysicalDeviceMemoryProperties memProperties {};
         VkPhysicalDeviceProperties properties {};
         VkPhysicalDeviceFeatures features {};
         VkPhysicalDevice phDevice { nullptr };
-        types::DeviceDescription parent { nullptr };
+        instance *instance { nullptr };
+        types::DeviceDescription parent;
     };
 
     struct device::DATA_TYPE
     {
-        DATA_TYPE( device *parent, types::DeviceDescription description );
+        DATA_TYPE( types::device parent, types::DeviceDescription description );
         // void addImagesMemorySize( uint32_t index, uint32_t size );
         // void addBuffersMemorySize( uint32_t index, uint32_t size );
         void create( VkDeviceCreateInfo createInfo );
@@ -39,16 +39,15 @@ namespace Engine
         VkCommandPool transferPool { nullptr };
         VkCommandPool presentPool { nullptr };
         std::vector<const char *> extensions;
-        std::unordered_set<std::shared_ptr<swapchain>> swapchains;
+        std::set<types::swapchain> swapchains;
         // std::vector<std::unique_ptr<descriptorPool>> descriptorPools;
         // std::vector<std::unique_ptr<shader>> shaders;
         // std::vector<std::unique_ptr<layout>> layouts;
         // std::vector<std::unique_ptr<pipeline>> pipelines;
         // memoryTypeIndex<<handle, offset>, <size, oversize>>;
-        window::types::window window { nullptr };
         queueSet queuesSet;
         types::DeviceDescription description { nullptr };
-        types::device parent { nullptr };
+        types::device parent;
 
       private:
         void setExtensions( std::vector<const char *> &deviceExtensions );

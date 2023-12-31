@@ -18,8 +18,8 @@ namespace Engine
         window::window( Engine::instance *instance, struct settings settings ) :
             properties { settings }
         {
-            DEFINE_DATA_FIELD;
-            data->instance = instance;
+            const_cast<std ::unique_ptr<data_T> &>( data ) = std ::make_unique<data_T>( this, instance );
+            data->instance->data->windows.emplace( std::make_pair<types::window, std::vector<Engine::types::swapchain>>( this, {} ) );
             resolution displayRes { getDisplayResolution() };
             auto mode = glfwGetVideoMode( glfwGetPrimaryMonitor() );
             glfwWindowHint( GLFW_RED_BITS, mode->redBits );
@@ -52,6 +52,21 @@ namespace Engine
                                     auto from_wnd    = reinterpret_cast<window *>( glfwGetWindowUserPointer( wnd ) );
                                     from_wnd->eventCallBack( key, scancode, action, mods ); } );
         }
+
+        window::~window()
+        {
+            auto sI { data->swapchains.begin() };
+            while ( sI != data->swapchains.end() )
+                delete *sI++;
+            data->instance->data->windows.erase( this );
+            data->destroySurface( data->instance->data->handle );
+            glfwDestroyWindow( data->window );
+        }
+
+        window::DATA_TYPE::DATA_TYPE( types::window parent, struct instance *instance ) :
+            parent { parent }, instance { instance } {}
+
+        window::DATA_TYPE::~DATA_TYPE() {}
 
         void window::setup()
         {
@@ -106,11 +121,5 @@ namespace Engine
         {
             return glfwWindowShouldClose( data->window );
         }
-
-        window::~window()
-        {
-            data->destroySurface( data->instance->data->handle );
-        }
-
     } // namespace window
 } // namespace Engine

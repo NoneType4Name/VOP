@@ -1,7 +1,7 @@
 #pragma once
 #ifndef GLOBALS_HXX
 #    define GLOBALS_HXX
-#    include <unordered_set>
+#    include <set>
 #    include <array>
 #    include <format>
 #    include <memory>
@@ -30,4 +30,15 @@
                 assert( result == VK_SUCCESS );                                                                                                                               \
             }                                                                                                                                                                 \
         }
+
+// template<typename _T>
+// struct cmp
+// {
+//     using is_transparent = void;
+//     bool operator()( const _T *a, const _T *b ) const
+//     {
+//         return a < b;
+//     }
+// };
+
 #endif

@@ -39,7 +39,7 @@ namespace Engine
         vkEnumerateDeviceExtensionProperties( description->data->phDevice, nullptr, &_c, nullptr );
         std::vector<VkExtensionProperties> AvailableExtNames { _c };
         vkEnumerateDeviceExtensionProperties( description->data->phDevice, nullptr, &_c, AvailableExtNames.data() );
-        std::unordered_set<std::string> tmpRequeredDeviceExts { extensions.begin(), extensions.end() };
+        std::set<std::string> tmpRequeredDeviceExts { extensions.begin(), extensions.end() };
         for ( const auto &ext : AvailableExtNames )
         {
             tmpRequeredDeviceExts.erase( ext.extensionName );
@@ -81,7 +81,7 @@ namespace Engine
         vkEnumerateInstanceLayerProperties( &_c, nullptr );
         std::vector<VkLayerProperties> AvailableLNames { _c };
         vkEnumerateInstanceLayerProperties( &_c, AvailableLNames.data() );
-        std::unordered_set<std::string> tmpRequeredDeviceL { layers.begin(), layers.end() };
+        std::set<std::string> tmpRequeredDeviceL { layers.begin(), layers.end() };
         for ( const auto &l : AvailableLNames )
         {
             tmpRequeredDeviceL.erase( l.layerName );
@@ -105,7 +105,7 @@ namespace Engine
         vkEnumerateInstanceExtensionProperties( nullptr, &_c, nullptr );
         std::vector<VkExtensionProperties> AvailableExtNames { _c };
         vkEnumerateInstanceExtensionProperties( nullptr, &_c, AvailableExtNames.data() );
-        std::unordered_set<std::string> tmpRequeredDeviceExts { extensions.begin(), extensions.end() };
+        std::set<std::string> tmpRequeredDeviceExts { extensions.begin(), extensions.end() };
         for ( const auto &ext : AvailableExtNames )
         {
             tmpRequeredDeviceExts.erase( ext.extensionName );

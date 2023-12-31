@@ -8,7 +8,7 @@ namespace Engine
 {
     struct swapchain::DATA_TYPE
     {
-        DATA_TYPE( swapchain *parent, types::device device, window::types::window window );
+        DATA_TYPE( types::swapchain parent, types::device device, window::types::window window );
 
         struct properties_T
         {
@@ -26,7 +26,6 @@ namespace Engine
         };
 
         void create( VkSwapchainCreateInfoKHR createInfo );
-        // void setupImgs();
         ~DATA_TYPE();
 
         window::types::window window { nullptr };
@@ -39,7 +38,6 @@ namespace Engine
         std::vector<image_T> images;
         uint32_t flightImgIndex { 0 };
         uint32_t semaphoreIndex { 0 };
-        VkSwapchainCreateInfoKHR createInfo {};
         types::swapchain parent { nullptr };
     };
 

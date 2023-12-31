@@ -76,6 +76,8 @@ namespace Engine
         this->parent = parent;
     }
 
+    queueSet::~queueSet() {}
+
     void queueSet::operator=( std::initializer_list<std::pair<uint32_t, float>> right )
     {
         uint32_t i { 0 };

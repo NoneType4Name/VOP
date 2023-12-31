@@ -23,14 +23,14 @@ namespace Engine
 
     struct descriptorPool::DATA_TYPE
     {
-        DATA_TYPE( descriptorPool *parent ) :
+        DATA_TYPE( types::descriptorPool parent ) :
             parent { parent } {}
         std::vector<VkDescriptorSetLayout> layouts;
         std::vector<VkDescriptorSet> sets;
         types::device device { nullptr };
         VkDescriptorPool handle { nullptr };
         void *userData { nullptr };
-        descriptorPool *parent { nullptr };
+        types::descriptorPool parent { nullptr };
     };
 } // namespace Engine
 #endif

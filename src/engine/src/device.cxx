@@ -1,5 +1,6 @@
 #include <device.hxx>
 #include <surface.hxx>
+#include <swapchain.hxx>
 #include <EHI.hxx>
 
 namespace Engine
@@ -24,21 +25,52 @@ namespace Engine
     //     descriptorSets.emplace_back( pDevice, set );
     // }
 
-    DeviceDescription::DeviceDescription()
-    {
-        DEFINE_DATA_FIELD;
-    };
+    DeviceDescription::DeviceDescription() {};
 
     DeviceDescription::~DeviceDescription() {};
 
-    device::DATA_TYPE::DATA_TYPE( Engine::device *parent, DeviceDescription *description ) :
+    device::DATA_TYPE::DATA_TYPE( types::device parent, types::DeviceDescription description ) :
         parent { parent }, description { description }, queuesSet { parent }
     {
     }
 
-    void DeviceDescription::DATA_TYPE::init( VkPhysicalDevice device )
+    device::DATA_TYPE::~DATA_TYPE()
     {
-        phDevice = device;
+    }
+
+    device::device() {}
+
+    device::device( types::DeviceDescription description )
+    {
+        auto &_data = const_cast<std ::unique_ptr<DATA_TYPE> &>( data );
+        _data.reset( new DATA_TYPE { this, description } );
+        data->description = description;
+        data->description->data->instance->data->devices.emplace( this );
+    }
+
+    device::~device()
+    {
+        if ( data->grapchicPool )
+            vkDestroyCommandPool( data->handle, data->grapchicPool, ALLOCATION_CALLBACK );
+        if ( data->transferPool )
+            vkDestroyCommandPool( data->handle, data->transferPool, ALLOCATION_CALLBACK );
+        if ( data->presentPool )
+            vkDestroyCommandPool( data->handle, data->presentPool, ALLOCATION_CALLBACK );
+        // data->pipelines.clear();
+        // data->shaders.clear();
+        // data->layouts.clear();
+        // data->descriptorPools.clear();
+        vkDestroyDevice( data->handle, ALLOCATION_CALLBACK );
+        for ( auto &s : data->swapchains )
+            delete s;
+        data->description->data->instance->data->devices.erase( this );
+    }
+
+    DeviceDescription::DATA_TYPE::DATA_TYPE() {}
+
+    DeviceDescription::DATA_TYPE::DATA_TYPE( types::DeviceDescription parent, struct instance *instance, VkPhysicalDevice device ) :
+        parent { parent }, instance { instance }, phDevice { device }
+    {
         uint32_t c;
         vkGetPhysicalDeviceQueueFamilyProperties( device, &c, nullptr );
         queueFamilyProperties.resize( c );
@@ -48,32 +80,7 @@ namespace Engine
         vkGetPhysicalDeviceFeatures( device, &features );
     }
 
-    device::DATA_TYPE::~DATA_TYPE()
-    {
-        vkDestroyCommandPool( handle, grapchicPool, ALLOCATION_CALLBACK );
-        vkDestroyCommandPool( handle, transferPool, ALLOCATION_CALLBACK );
-        vkDestroyCommandPool( handle, presentPool, ALLOCATION_CALLBACK );
-        // data->pipelines.clear();
-        // data->shaders.clear();
-        // data->layouts.clear();
-        // data->descriptorPools.clear();
-        vkDestroyDevice( handle, ALLOCATION_CALLBACK );
-    }
-
-    device::device() {};
-
-    device::device( types::DeviceDescription description, window::types::window window ) :
-        device { description }
-    {
-        this->data->window = window;
-    }
-
-    device::device( types::DeviceDescription description )
-    {
-        auto &_data = const_cast<std ::unique_ptr<DATA_TYPE> &>( data );
-        _data.reset( new DATA_TYPE { this, description } );
-        data->description = description;
-    }
+    DeviceDescription::DATA_TYPE::~DATA_TYPE() {}
 
     void device::setup( window::types::window window )
     {
@@ -117,6 +124,24 @@ namespace Engine
         VkPhysicalDeviceFeatures2 physicalDeviceFeatures {};
         DeviceCreateInfo.pEnabledFeatures = &features;
         data->create( DeviceCreateInfo );
+        VkCommandPoolCreateInfo poolCI {};
+        poolCI.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+        poolCI.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+        if ( data->queuesSet.graphic.familyIndex.has_value() )
+        {
+            poolCI.queueFamilyIndex = data->queuesSet.graphic.familyIndex.value();
+            CHECK_RESULT( vkCreateCommandPool( data->handle, &poolCI, ALLOCATION_CALLBACK, &data->grapchicPool ) );
+        }
+        if ( data->queuesSet.transfer.familyIndex.has_value() )
+        {
+            poolCI.queueFamilyIndex = data->queuesSet.transfer.familyIndex.value();
+            CHECK_RESULT( vkCreateCommandPool( data->handle, &poolCI, ALLOCATION_CALLBACK, &data->transferPool ) );
+        }
+        if ( data->queuesSet.present.familyIndex.has_value() )
+        {
+            poolCI.queueFamilyIndex = data->queuesSet.present.familyIndex.value();
+            CHECK_RESULT( vkCreateCommandPool( data->handle, &poolCI, ALLOCATION_CALLBACK, &data->presentPool ) );
+        }
     }
 
     void device::setup()
@@ -164,11 +189,7 @@ namespace Engine
     types::swapchain device::DATA_TYPE::regSwapchain( types::swapchain swapchain )
     {
         swapchain->setup();
-        return swapchains.emplace( swapchain ).first->get();
-    }
-
-    device::~device()
-    {
+        return swapchain;
     }
 
     void device::DATA_TYPE::create( VkDeviceCreateInfo createInfo )
@@ -194,15 +215,6 @@ namespace Engine
         createInfo.pQueueCreateInfos       = QueuesCreateInfo.data();
         CHECK_RESULT( vkCreateDevice( description->data->phDevice, &createInfo, ALLOCATION_CALLBACK, &handle ) );
         queuesSet.init( handle );
-        VkCommandPoolCreateInfo poolCI {};
-        poolCI.sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-        poolCI.flags            = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-        poolCI.queueFamilyIndex = queuesSet.graphic.familyIndex.value();
-        CHECK_RESULT( vkCreateCommandPool( handle, &poolCI, ALLOCATION_CALLBACK, &grapchicPool ) );
-        poolCI.queueFamilyIndex = queuesSet.transfer.familyIndex.value();
-        CHECK_RESULT( vkCreateCommandPool( handle, &poolCI, ALLOCATION_CALLBACK, &transferPool ) );
-        poolCI.queueFamilyIndex = queuesSet.present.familyIndex.value();
-        CHECK_RESULT( vkCreateCommandPool( handle, &poolCI, ALLOCATION_CALLBACK, &presentPool ) );
     }
 
     VkFormat device::DATA_TYPE::formatPriority( const std::vector<VkFormat> &formats, VkImageTiling ImageTiling, VkFormatFeatureFlags FormatFeatureFlags )
@@ -268,7 +280,7 @@ namespace Engine
     //     return data->pipelines.back().get();
     // }
 
-    const std::vector<types::DeviceDescription> instance::getDevices()
+    const std::vector<types::DeviceDescription> &instance::getDevices()
     {
         if ( data->deviceDescriptions.empty() )
         {
@@ -279,20 +291,16 @@ namespace Engine
 
             data->deviceDescriptions.resize( _c );
             CHECK_RESULT( vkEnumeratePhysicalDevices( data->handle, &_c, devices.data() ) );
-            for ( uint32_t c { 0 }; c < devices.size(); c++ )
+            for ( uint32_t c { 0 }; c < devices.size(); ++c )
             {
-                data->deviceDescriptions[ c ] = std::make_shared<DeviceDescription>();
-                data->deviceDescriptions[ c ]->data->init( devices[ c ] );
+                data->deviceDescriptions[ c ] = new DeviceDescription;
+                const_cast<std::unique_ptr<DeviceDescription::DATA_TYPE> &>( data->deviceDescriptions[ c ]->data ).reset( new DeviceDescription::DATA_TYPE { data->deviceDescriptions[ c ], this, devices[ c ] } );
                 data->deviceDescriptions[ c ]->name  = data->deviceDescriptions[ c ]->data->properties.deviceName;
                 data->deviceDescriptions[ c ]->type  = tools::VkDevTypeToEngineDevType( data->deviceDescriptions[ c ]->data->properties.deviceType );
                 data->deviceDescriptions[ c ]->grade = data->deviceDescriptions[ c ]->data->queueFamilyProperties.size() + data->deviceDescriptions[ c ]->type;
             }
         }
-        std::vector<types::DeviceDescription> ret;
-        ret.reserve( data->deviceDescriptions.size() );
-        for ( auto &dscrpt : data->deviceDescriptions )
-            ret.push_back( dscrpt.get() );
-        return ret;
+        return data->deviceDescriptions;
     }
 
     namespace tools

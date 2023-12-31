@@ -18,26 +18,24 @@ namespace Engine
     {
         DATA_TYPE( instance *parent ) :
             parent { parent } {}
-        void setupDebugLayerCallback( VkDebugUtilsMessengerCreateInfoEXT &createInfo ); //
-        void initDebugLayerCallBack( VkDebugUtilsMessengerCreateInfoEXT createInfo );   //
+        VkDebugUtilsMessengerCreateInfoEXT setupDebugLayerCallback();
+        void initDebugLayerCallBack( VkDebugUtilsMessengerCreateInfoEXT createInfo );
         void destroyDebugLayerCallback();
         bool supportLayers();
         bool supportExtensions();
         void create( VkInstanceCreateInfo createInfo );
         window::types::window regWindow( window::types::window window );
         types::device regDevice( types::device device );
-        types::device regDevice( types::device device, window::types::window window );
         std::vector<const char *> layers;
         std::vector<const char *> extensions;
         VkDebugUtilsMessengerEXT debugMessenger { nullptr };
         VkInstance handle { nullptr };
         instance *parent;
-        std::vector<std::shared_ptr<window::window>> windows;
-        std::vector<std::shared_ptr<DeviceDescription>> deviceDescriptions;
-        std::vector<std::shared_ptr<device>> devices;
-        // std::vector<std::shared_ptr<swapchain>> links;
-        // std::vector<std::shared_ptr<pass>> passes;
-        ~DATA_TYPE();
+        std::unordered_map<window::types::window, std::vector<types::swapchain>> windows;
+        std::vector<types::DeviceDescription> deviceDescriptions;
+        std::set<types::device> devices;
+        // std::vector<types::pass> passes;
+        ~DATA_TYPE() {}
 
       private:
         friend instance;
