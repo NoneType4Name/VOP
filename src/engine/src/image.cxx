@@ -23,7 +23,7 @@ namespace Engine
         ImageCreateInfo.samples       = ImageCreateInfo.samples ? ImageCreateInfo.samples : VK_SAMPLE_COUNT_1_BIT;
 
         CHECK_RESULT( vkCreateImage( this->device->data->handle, &ImageCreateInfo, ALLOCATION_CALLBACK, &handle ) );
-        memoryIndex = this->device->data->setImageMemory( handle, mProperties );
+        // memoryIndex = this->device->data->setImageMemory( handle, mProperties );
 
         VkImageViewCreateInfo ImageViewCreateInfo {};
         ImageViewCreateInfo.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;

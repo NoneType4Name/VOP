@@ -7,6 +7,7 @@
 #    include <surface.hxx>
 #    include <queue.hxx>
 #    include <buffer.hxx>
+#    include <image.hxx>
 
 namespace Engine
 {
@@ -45,6 +46,26 @@ namespace Engine
         // std::vector<std::unique_ptr<layout>> layouts;
         // std::vector<std::unique_ptr<pipeline>> pipelines;
         // memoryTypeIndex<<handle, offset>, <size, oversize>>;
+        template<typename _T>
+        struct vector
+        {
+            vector() = delete;
+            vector( device::DATA_TYPE * );
+            uint32_t append( _T *, VkMemoryPropertyFlags );
+            uint32_t append( std::vector<std::pair<_T *, VkMemoryPropertyFlags>> );
+            void erase( _T * );
+            void erase( std::vector<_T *> );
+
+          private:
+            VkDeviceMemory memory { nullptr };
+            uint32_t size { 0 };
+            std::unordered_map<_T *, uint32_t> offsets;
+            device::DATA_TYPE *parent;
+        };
+
+        std::vector<vector<buffer>> buffers;
+        std::vector<vector<image>> images;
+
         queueSet queuesSet;
         types::DeviceDescription description { nullptr };
         types::device parent;
@@ -62,8 +83,6 @@ namespace Engine
         // VkDeviceMemory buffersMemory { nullptr };
         // void allocateBufferMemory( VkBuffer buffer, VkMemoryPropertyFlags properties );
         // void writeBufferMemory( VkBuffer buffer, VkMemoryMapFlags flags, void **data, VkDeviceSize size );
-        // void freeBufferMemory( VkBuffer buffer );
-        friend class buffer;
     };
 
     namespace tools

@@ -32,6 +32,8 @@ namespace Engine
     device::DATA_TYPE::DATA_TYPE( types::device parent, types::DeviceDescription description ) :
         parent { parent }, description { description }, queuesSet { parent }
     {
+        images.resize( description->data->memProperties.memoryTypeCount, this );
+        buffers.resize( description->data->memProperties.memoryTypeCount, this );
     }
 
     device::DATA_TYPE::~DATA_TYPE()
@@ -250,6 +252,27 @@ namespace Engine
         assert( 0 );
         return -1;
     }
+    template<typename _T>
+    device::DATA_TYPE::vector<_T>::vector( device::DATA_TYPE *parent ) :
+        parent { parent }
+    {
+    }
+
+    template<>
+    uint32_t device::DATA_TYPE::vector<image>::append( image *img, VkMemoryPropertyFlags properties )
+    {
+        VkMemoryRequirements mReq {};
+        vkGetImageMemoryRequirements( parent->handle, img->handle, &mReq );
+        VkMemoryAllocateInfo allocateInfo {};
+        allocateInfo.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        allocateInfo.memoryTypeIndex = parent->requeredMemoryTypeIndex( mReq.memoryTypeBits, properties );
+        offsets[ img ]               = ( size + size % mReq.alignment );
+        size += offsets[ img ] + mReq.size;
+        VkImageCopy cp {};
+        cp.srcSubresource;
+        vkCmdCopyImage();
+        return allocateInfo.memoryTypeIndex;
+    }
 
     // types::descriptorPool device::CreatePool( void *userData )
     // {
@@ -280,7 +303,8 @@ namespace Engine
     //     return data->pipelines.back().get();
     // }
 
-    const std::vector<types::DeviceDescription> &instance::getDevices()
+    const std::vector<types::DeviceDescription> &
+        instance::getDevices()
     {
         if ( data->deviceDescriptions.empty() )
         {

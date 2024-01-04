@@ -21,8 +21,5 @@ namespace Engine
         VkImageView view { nullptr };
         VkDeviceMemory memory { nullptr };
     };
-    namespace tools
-    {
-    } // namespace tools
 } // namespace Engine
 #endif
