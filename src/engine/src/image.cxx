@@ -59,11 +59,6 @@ namespace Engine
         CHECK_RESULT( vkCreateImageView( this->device->data->handle, &ImageViewCreateInfo, ALLOCATION_CALLBACK, &view ) );
     }
 
-    image::image( types::device device, const uint32_t width, const uint32_t height, const VkBufferUsageFlags iUsage, const VkImageTiling tiling, const VkMemoryPropertyFlags mProperties, VkImageAspectFlags aspect, VkFormat format, VkImageCreateInfo ImageCreateInfo ) :
-        image::image( device, { width, height }, iUsage, tiling, mProperties, aspect, format, ImageCreateInfo )
-    {
-    }
-
     image::~image()
     {
         vkDestroyImageView( this->device->data->handle, view, ALLOCATION_CALLBACK );

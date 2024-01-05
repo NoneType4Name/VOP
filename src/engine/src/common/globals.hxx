@@ -19,8 +19,8 @@
 #    include <engine.hxx>
 
 #    define ALLOCATION_CALLBACK nullptr
-#    define DEFINE_DATA_FIELD \
-        const_cast<std::unique_ptr<DATA_TYPE> &>( data ) = std::make_unique<DATA_TYPE>( this );
+#    define DEFINE_DATA_FIELD( ... ) \
+        const_cast<std::unique_ptr<DATA_TYPE> &>( data ) = std::make_unique<DATA_TYPE>( this, __VA_ARGS__ );
 #    define CHECK_RESULT( ret_result )                                                                                                                                        \
         {                                                                                                                                                                     \
             const VkResult result { ret_result };                                                                                                                             \

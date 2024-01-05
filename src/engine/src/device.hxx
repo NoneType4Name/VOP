@@ -84,10 +84,5 @@ namespace Engine
         // void allocateBufferMemory( VkBuffer buffer, VkMemoryPropertyFlags properties );
         // void writeBufferMemory( VkBuffer buffer, VkMemoryMapFlags flags, void **data, VkDeviceSize size );
     };
-
-    namespace tools
-    {
-        inline DeviceType VkDevTypeToEngineDevType( VkPhysicalDeviceType type );
-    } // namespace tools
 } // namespace Engine
 #endif

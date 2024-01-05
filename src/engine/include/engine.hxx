@@ -28,10 +28,16 @@
 #    include <glm/gtx/hash.hpp>
 #    include "engine_export.hxx"
 #    include <glm/gtc/matrix_transform.hpp>
+#    include <platform.hxx>
 
 namespace Engine
 {
-    class instance;
+    DEFINE_HANDLE( instance );
+    DEFINE_HANDLE( DeviceDescription );
+    DEFINE_HANDLE( device );
+    DEFINE_HANDLE( swapchain );
+    DEFINE_HANDLE( image );
+
     namespace window
     {
         struct ENGINE_EXPORT resolution
@@ -76,27 +82,6 @@ namespace Engine
         DEFINE_HANDLE( window );
     } // namespace window
 
-    enum DeviceType
-    {
-        OTHER          = 0x0ui8,
-        CPU            = 0x1ui8,
-        VIRTUAL_GPU    = 0x2ui8,
-        INTEGRATED_GPU = 0x3ui8,
-        DISCRETE_GPU   = 0x4ui8,
-    };
-
-    enum ShaderStage
-    {
-        ALL_SHADER_TYPE,
-        VERTEX_SHADER_TYPE,
-        FRAGMENT_SHADER_TYPE
-    };
-    typedef uint32_t ShaderStageFlags;
-
-    DEFINE_HANDLE( instance )
-    DEFINE_HANDLE( DeviceDescription );
-    DEFINE_HANDLE( device );
-    DEFINE_HANDLE( swapchain );
     // DEFINE_HANDLE( pass );
     // DEFINE_HANDLE( shader );
     // DEFINE_HANDLE( layout );
@@ -115,7 +100,7 @@ namespace Engine
       public:
         DeviceDescription();
         const char *name;
-        DeviceType type;
+        VkPhysicalDeviceType type;
         uint32_t grade;
         ~DeviceDescription();
     };
@@ -138,6 +123,16 @@ namespace Engine
         // types::texture CreateTexture( const char *path );
         // types::model CreateModel( const char *path, types::texture texture );
         ~device();
+    };
+
+    class ENGINE_EXPORT image
+    {
+        DEFINE_DATA;
+
+      private:
+        image( types::device device, VkExtent3D extend, const VkBufferUsageFlags usage, const VkImageTiling tiling, const VkMemoryPropertyFlags mProperties, VkImageAspectFlags aspect, VkFormat format, VkImageCreateInfo ImageCreateInfo = {} );
+        image( types::device device, VkExtent3D extend, VkImage image, VkImageAspectFlags aspect, VkFormat format, uint32_t mipLevels, uint32_t arrayLayers );
+        friend device;
     };
 
     class ENGINE_EXPORT swapchain

@@ -114,6 +114,9 @@ namespace Game
 
 int main()
 {
+    std::vector<int> da;
+    da.emplace_back( 1 );
+    SPDLOG_CRITICAL( 1 );
     Game::engine->init( "test", 0 );
     auto wnd { Game::engine->createWindow( 800, 600, "test", 0, 1 ) };
     auto device { Game::engine->createDevice( Game::engine->getDevices()[ 0 ] ) };

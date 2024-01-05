@@ -35,7 +35,7 @@ namespace Engine
 {
     instance::instance()
     {
-        DEFINE_DATA_FIELD;
+        DEFINE_DATA_FIELD();
     }
 
     instance::~instance()

@@ -320,30 +320,10 @@ namespace Engine
                 data->deviceDescriptions[ c ] = new DeviceDescription;
                 const_cast<std::unique_ptr<DeviceDescription::DATA_TYPE> &>( data->deviceDescriptions[ c ]->data ).reset( new DeviceDescription::DATA_TYPE { data->deviceDescriptions[ c ], this, devices[ c ] } );
                 data->deviceDescriptions[ c ]->name  = data->deviceDescriptions[ c ]->data->properties.deviceName;
-                data->deviceDescriptions[ c ]->type  = tools::VkDevTypeToEngineDevType( data->deviceDescriptions[ c ]->data->properties.deviceType );
-                data->deviceDescriptions[ c ]->grade = data->deviceDescriptions[ c ]->data->queueFamilyProperties.size() + data->deviceDescriptions[ c ]->type;
+                data->deviceDescriptions[ c ]->type  = data->deviceDescriptions[ c ]->data->properties.deviceType;
+                data->deviceDescriptions[ c ]->grade = data->deviceDescriptions[ c ]->data->queueFamilyProperties.size();
             }
         }
         return data->deviceDescriptions;
     }
-
-    namespace tools
-    {
-        inline DeviceType VkDevTypeToEngineDevType( VkPhysicalDeviceType type )
-        {
-            switch ( type )
-            {
-                case VkPhysicalDeviceType::VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
-                    return DeviceType::INTEGRATED_GPU;
-                case VkPhysicalDeviceType::VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
-                    return DeviceType::DISCRETE_GPU;
-                case VkPhysicalDeviceType::VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
-                    return DeviceType::VIRTUAL_GPU;
-                case VkPhysicalDeviceType::VK_PHYSICAL_DEVICE_TYPE_CPU:
-                    return DeviceType::CPU;
-                default:
-                    return DeviceType::OTHER;
-            }
-        }
-    } // namespace tools
 } // namespace Engine
