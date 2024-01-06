@@ -81,8 +81,6 @@ namespace Engine
     //     return Format;
     // }
 
-    swapchain::swapchain() {};
-
     swapchain::swapchain( types::device device, window::types::window window )
     {
         *const_cast<std::unique_ptr<DATA_TYPE> *>( &data ) = std::make_unique<DATA_TYPE>( this, device, window );

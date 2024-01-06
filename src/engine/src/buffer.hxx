@@ -4,6 +4,7 @@
 #    include <common/globals.hxx>
 #    include <common/logging.hxx>
 #    include <platform.hxx>
+#    include <memory.hxx>
 
 namespace Engine
 {
@@ -15,6 +16,7 @@ namespace Engine
         void init( VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertiesFlag, VkDeviceSize size, VkSharingMode sharingMode = VK_SHARING_MODE_EXCLUSIVE, VkBufferCreateFlags flags = 0, void *pNext = nullptr );
         void copy( void *data, VkDeviceSize size, VkMemoryMapFlags flags = 0 );
         types::device device { nullptr };
+        memory::allocationAddres addres;
         void *mapped { nullptr };
         VkBuffer handle { nullptr };
         ~buffer();
@@ -32,7 +34,7 @@ namespace Engine
         VkCommandBuffer handle { nullptr };
         Engine::queue *queue { nullptr };
         VkFence fence { nullptr };
-        bool began { 0 };
+        bool used { 0 };
         ~commandBuffer();
     };
 } // namespace Engine

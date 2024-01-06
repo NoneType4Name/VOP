@@ -1,5 +1,4 @@
 #include <buffer.hxx>
-#include <device.hxx>
 
 namespace Engine
 {
@@ -88,7 +87,7 @@ namespace Engine
     {
         if ( handle == nullptr )
             SPDLOG_CRITICAL( "Failed to end command buffer." );
-        if ( began )
+        if ( used )
             vkEndCommandBuffer( handle );
     }
 } // namespace Engine

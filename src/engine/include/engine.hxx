@@ -70,39 +70,33 @@ namespace Engine
             friend Engine::instance;
 
           public:
-            window();
+            window() = delete;
+            ~window();
             resolution getDisplayResolution();
             void setTitle( const char *title );
             void updateProperties( settings properties );
             void updateEvents();
             bool shouldClose();
-            ~window();
             const settings properties {};
         };
         DEFINE_HANDLE( window );
     } // namespace window
-
-    // DEFINE_HANDLE( pass );
-    // DEFINE_HANDLE( shader );
-    // DEFINE_HANDLE( layout );
-    // DEFINE_HANDLE( pipeline );
-    // DEFINE_HANDLE( texture );
-    // DEFINE_HANDLE( buffer );
-    // DEFINE_HANDLE( model );
 
     struct ENGINE_EXPORT DeviceDescription
     {
         DEFINE_DATA;
 
       private:
-        friend struct queue;
+        DeviceDescription( instance *instance, VkPhysicalDevice phDevice );
+        friend class queue;
+        friend instance;
 
       public:
-        DeviceDescription();
+        DeviceDescription() = delete;
+        ~DeviceDescription();
         const char *name;
         VkPhysicalDeviceType type;
         uint32_t grade;
-        ~DeviceDescription();
     };
 
     class ENGINE_EXPORT device
@@ -116,13 +110,13 @@ namespace Engine
         friend instance;
 
       public:
-        device();
+        device() = delete;
+        ~device();
         virtual types::swapchain bindWindow( window::types::window window );
         // types::shader CreateShader( const char *path, const char *main, ShaderStage stage );
         // types::pipeline CreatePipeline( types::layout layouts, std::vector<types::shader> shaders, types::pass pass );
         // types::texture CreateTexture( const char *path );
         // types::model CreateModel( const char *path, types::texture texture );
-        ~device();
     };
 
     class ENGINE_EXPORT image
@@ -130,9 +124,13 @@ namespace Engine
         DEFINE_DATA;
 
       private:
-        image( types::device device, VkExtent3D extend, const VkBufferUsageFlags usage, const VkImageTiling tiling, const VkMemoryPropertyFlags mProperties, VkImageAspectFlags aspect, VkFormat format, VkImageCreateInfo ImageCreateInfo = {} );
-        image( types::device device, VkExtent3D extend, VkImage image, VkImageAspectFlags aspect, VkFormat format, uint32_t mipLevels, uint32_t arrayLayers );
+        image( types::device device, VkImageCreateInfo ImageCreateInfo, VkImageViewCreateInfo ImageViewCreateInfo );
+        image( types::device device, types::image parent, VkImageViewCreateInfo ImageViewCreateInfo );
         friend device;
+
+      public:
+        image() = delete;
+        ~image();
     };
 
     class ENGINE_EXPORT swapchain
@@ -145,7 +143,7 @@ namespace Engine
         friend device;
 
       public:
-        swapchain();
+        swapchain() = delete;
         ~swapchain();
     };
 

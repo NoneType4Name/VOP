@@ -1,19 +1,19 @@
 #pragma once
 #ifndef DEVICE_HXX
 #    define DEVICE_HXX
-#    include <platform.hxx>
 #    include <common/globals.hxx>
 #    include <common/logging.hxx>
+#    include <platform.hxx>
 #    include <surface.hxx>
-#    include <queue.hxx>
 #    include <buffer.hxx>
 #    include <image.hxx>
+#    include <queue.hxx>
 
 namespace Engine
 {
     struct DeviceDescription::DATA_TYPE
     {
-        DATA_TYPE();
+        DATA_TYPE() = delete;
         DATA_TYPE( types::DeviceDescription parent, struct instance *instance, VkPhysicalDevice device );
         ~DATA_TYPE();
         std::vector<VkQueueFamilyProperties> queueFamilyProperties;
@@ -27,14 +27,15 @@ namespace Engine
 
     struct device::DATA_TYPE
     {
+        DATA_TYPE() = delete;
         DATA_TYPE( types::device parent, types::DeviceDescription description );
+        ~DATA_TYPE();
         // void addImagesMemorySize( uint32_t index, uint32_t size );
         // void addBuffersMemorySize( uint32_t index, uint32_t size );
         void create( VkDeviceCreateInfo createInfo );
         VkFormat formatPriority( const std::vector<VkFormat> &formats, VkImageTiling ImageTiling, VkFormatFeatureFlags FormatFeatureFlags );
         types::swapchain regSwapchain( types::swapchain swapchain );
         uint32_t requeredMemoryTypeIndex( uint32_t type, VkMemoryPropertyFlags properties );
-        ~DATA_TYPE();
         VkDevice handle { nullptr };
         VkCommandPool grapchicPool { nullptr };
         VkCommandPool transferPool { nullptr };
@@ -46,26 +47,7 @@ namespace Engine
         // std::vector<std::unique_ptr<layout>> layouts;
         // std::vector<std::unique_ptr<pipeline>> pipelines;
         // memoryTypeIndex<<handle, offset>, <size, oversize>>;
-        template<typename _T>
-        struct vector
-        {
-            vector() = delete;
-            vector( device::DATA_TYPE * );
-            uint32_t append( _T *, VkMemoryPropertyFlags );
-            uint32_t append( std::vector<std::pair<_T *, VkMemoryPropertyFlags>> );
-            void erase( _T * );
-            void erase( std::vector<_T *> );
-
-          private:
-            VkDeviceMemory memory { nullptr };
-            uint32_t size { 0 };
-            std::unordered_map<_T *, uint32_t> offsets;
-            device::DATA_TYPE *parent;
-        };
-
-        std::vector<vector<buffer>> buffers;
-        std::vector<vector<image>> images;
-
+        Engine::memory memory;
         queueSet queuesSet;
         types::DeviceDescription description { nullptr };
         types::device parent;

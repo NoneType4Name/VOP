@@ -4,23 +4,24 @@
 #    include <common/globals.hxx>
 #    include <common/logging.hxx>
 #    include <platform.hxx>
+#    include <memory.hxx>
 
 namespace Engine
 {
     class image::DATA_TYPE
     {
       public:
-        DATA_TYPE();
-        // image( types::device device, VkExtent3D extend, const VkBufferUsageFlags iUsage, const VkImageTiling tiling, const VkMemoryPropertyFlags mProperties, VkImageAspectFlags aspect, VkFormat format, VkImageCreateInfo ImageCreateInfo = {} );
-        // image( types::device device, VkExtent3D extend, VkImage image, VkImageAspectFlags aspect, VkFormat format, uint32_t mipLevels, uint32_t arrayLayers );
+        DATA_TYPE( types::image parent, types::device device, VkImageCreateInfo ImageCreateInfo, VkImageViewCreateInfo ImageViewCreateInfo );
+        DATA_TYPE( types::image parent, types::device device, types::image image, VkImageViewCreateInfo ImageViewCreateInfo );
+        DATA_TYPE() = delete;
         ~DATA_TYPE();
         types::device device { nullptr };
-        VkExtent3D extend;
-        VkImageSubresourceLayers subresource;
-        uint32_t memoryIndex { 0 };
-        VkImage handle { nullptr };
+        VkImageCreateInfo ImageInfo;
+        VkImageViewCreateInfo ImageViewInfo;
         VkImageView view { nullptr };
-        VkDeviceMemory memory { nullptr };
+        memory::allocationAddres addres;
+        types::image image { nullptr };
+        std::vector<types::image> views;
         types::image parent;
     };
 } // namespace Engine

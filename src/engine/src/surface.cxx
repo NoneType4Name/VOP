@@ -11,10 +11,6 @@ namespace Engine
 
     namespace window
     {
-        window::window()
-        {
-        }
-
         window::window( Engine::instance *instance, struct settings settings ) :
             properties { settings }
         {

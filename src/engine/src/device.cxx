@@ -24,8 +24,10 @@ namespace Engine
     //     set.back()[ 1 ].pImageInfo      = nullptr;
     //     descriptorSets.emplace_back( pDevice, set );
     // }
-
-    DeviceDescription::DeviceDescription() {};
+    DeviceDescription::DeviceDescription( instance *instance, VkPhysicalDevice phDevice )
+    {
+        DEFINE_DATA_FIELD( instance, phDevice );
+    }
 
     DeviceDescription::~DeviceDescription() {};
 
@@ -39,8 +41,6 @@ namespace Engine
     device::DATA_TYPE::~DATA_TYPE()
     {
     }
-
-    device::device() {}
 
     device::device( types::DeviceDescription description )
     {
@@ -68,8 +68,6 @@ namespace Engine
         data->description->data->instance->data->devices.erase( this );
     }
 
-    DeviceDescription::DATA_TYPE::DATA_TYPE() {}
-
     DeviceDescription::DATA_TYPE::DATA_TYPE( types::DeviceDescription parent, struct instance *instance, VkPhysicalDevice device ) :
         parent { parent }, instance { instance }, phDevice { device }
     {
@@ -80,6 +78,9 @@ namespace Engine
         vkGetPhysicalDeviceMemoryProperties( device, &memProperties );
         vkGetPhysicalDeviceProperties( device, &properties );
         vkGetPhysicalDeviceFeatures( device, &features );
+        parent->name  = properties.deviceName;
+        parent->type  = properties.deviceType;
+        parent->grade = queueFamilyProperties.size();
     }
 
     DeviceDescription::DATA_TYPE::~DATA_TYPE() {}
@@ -252,27 +253,26 @@ namespace Engine
         assert( 0 );
         return -1;
     }
-    template<typename _T>
-    device::DATA_TYPE::vector<_T>::vector( device::DATA_TYPE *parent ) :
-        parent { parent }
-    {
-    }
+    // device::DATA_TYPE::vector<_T>::vector( device::DATA_TYPE *parent ) :
+    //     parent { parent }
+    // {
+    // }
 
-    template<>
-    uint32_t device::DATA_TYPE::vector<image>::append( image *img, VkMemoryPropertyFlags properties )
-    {
-        VkMemoryRequirements mReq {};
-        vkGetImageMemoryRequirements( parent->handle, img->handle, &mReq );
-        VkMemoryAllocateInfo allocateInfo {};
-        allocateInfo.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-        allocateInfo.memoryTypeIndex = parent->requeredMemoryTypeIndex( mReq.memoryTypeBits, properties );
-        offsets[ img ]               = ( size + size % mReq.alignment );
-        size += offsets[ img ] + mReq.size;
-        VkImageCopy cp {};
-        cp.srcSubresource;
-        vkCmdCopyImage();
-        return allocateInfo.memoryTypeIndex;
-    }
+    // uint32_t device::DATA_TYPE::vector<image>::append( image *img, VkMemoryPropertyFlags properties )
+    // {
+    //     // capacity?
+    //     VkMemoryRequirements mReq {};
+    //     vkGetImageMemoryRequirements( parent->handle, img->data->ImageViewInfo.image, &mReq );
+    //     VkMemoryAllocateInfo allocateInfo {};
+    //     allocateInfo.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    //     allocateInfo.memoryTypeIndex = parent->requeredMemoryTypeIndex( mReq.memoryTypeBits, properties );
+    //     offsets[ img ]               = ( size + size % mReq.alignment );
+    //     size += offsets[ img ] + mReq.size - not aviable;
+    //     //  for ( auto &i : parent->images[ allocateInfo.memoryTypeIndex ].offsets )
+    //     //  {
+    //     //  }
+    //     return allocateInfo.memoryTypeIndex;
+    // }
 
     // types::descriptorPool device::CreatePool( void *userData )
     // {
@@ -316,13 +316,7 @@ namespace Engine
             data->deviceDescriptions.resize( _c );
             CHECK_RESULT( vkEnumeratePhysicalDevices( data->handle, &_c, devices.data() ) );
             for ( uint32_t c { 0 }; c < devices.size(); ++c )
-            {
-                data->deviceDescriptions[ c ] = new DeviceDescription;
-                const_cast<std::unique_ptr<DeviceDescription::DATA_TYPE> &>( data->deviceDescriptions[ c ]->data ).reset( new DeviceDescription::DATA_TYPE { data->deviceDescriptions[ c ], this, devices[ c ] } );
-                data->deviceDescriptions[ c ]->name  = data->deviceDescriptions[ c ]->data->properties.deviceName;
-                data->deviceDescriptions[ c ]->type  = data->deviceDescriptions[ c ]->data->properties.deviceType;
-                data->deviceDescriptions[ c ]->grade = data->deviceDescriptions[ c ]->data->queueFamilyProperties.size();
-            }
+                data->deviceDescriptions[ c ] = new DeviceDescription { this, devices[ c ] };
         }
         return data->deviceDescriptions;
     }
