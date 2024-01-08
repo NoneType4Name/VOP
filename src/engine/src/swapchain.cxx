@@ -177,19 +177,19 @@ namespace Engine
         }
         createInfo.oldSwapchain = handle;
         vkCreateSwapchainKHR( device->data->handle, &createInfo, ALLOCATION_CALLBACK, &handle );
-        // uint32_t c;
-        // vkGetSwapchainImagesKHR( device->data->handle, handle, &c, nullptr );
-        // std::vector<VkImage> imgs { c };
-        // images.resize( c );
-        // vkGetSwapchainImagesKHR( device->data->handle, handle, &c, imgs.data() );
-        // VkSemaphoreCreateInfo semaphoreInfo {};
-        // semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-        // for ( size_t i { 0 }; i < imgs.size(); i++ )
-        // {
-        //     images[ i ].image.reset( new image { device, { createInfo.imageExtent.width, createInfo.imageExtent.height }, imgs[ i ], VK_IMAGE_ASPECT_COLOR_BIT, createInfo.imageFormat, 1, createInfo.imageArrayLayers } );
-        //     CHECK_RESULT( vkCreateSemaphore( device->data->handle, &semaphoreInfo, ALLOCATION_CALLBACK, &images[ i ].isAvailable ) );
-        //     CHECK_RESULT( vkCreateSemaphore( device->data->handle, &semaphoreInfo, ALLOCATION_CALLBACK, &images[ i ].isRendered ) );
-        // }
+        uint32_t c;
+        vkGetSwapchainImagesKHR( device->data->handle, handle, &c, nullptr );
+        std::vector<VkImage> imgs { c };
+        images.resize( c );
+        vkGetSwapchainImagesKHR( device->data->handle, handle, &c, imgs.data() );
+        VkSemaphoreCreateInfo semaphoreInfo {};
+        semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+        for ( size_t i { 0 }; i < imgs.size(); i++ )
+        {
+            images[ i ].image = new image { device, nullptr, { .image = imgs[ i ], .viewType = VK_IMAGE_VIEW_TYPE_2D, .format = format.format, .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 } } };
+            CHECK_RESULT( vkCreateSemaphore( device->data->handle, &semaphoreInfo, ALLOCATION_CALLBACK, &images[ i ].isAvailable ) );
+            CHECK_RESULT( vkCreateSemaphore( device->data->handle, &semaphoreInfo, ALLOCATION_CALLBACK, &images[ i ].isRendered ) );
+        }
     }
 
     swapchain::DATA_TYPE::DATA_TYPE( types::swapchain parent, types::device device, window::types::window window ) :
@@ -205,6 +205,7 @@ namespace Engine
         {
             vkDestroySemaphore( device->data->handle, img.isAvailable, ALLOCATION_CALLBACK );
             vkDestroySemaphore( device->data->handle, img.isRendered, ALLOCATION_CALLBACK );
+            delete img.image;
         }
     }
 

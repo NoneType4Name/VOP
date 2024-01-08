@@ -11,13 +11,11 @@ namespace Engine
     class buffer
     {
       public:
-        buffer( types::device device );
-        buffer( types::device device, VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertiesFlag, VkDeviceSize size, VkSharingMode sharingMode = VK_SHARING_MODE_EXCLUSIVE, VkBufferCreateFlags flags = 0, void *pNext = nullptr );
-        void init( VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertiesFlag, VkDeviceSize size, VkSharingMode sharingMode = VK_SHARING_MODE_EXCLUSIVE, VkBufferCreateFlags flags = 0, void *pNext = nullptr );
-        void copy( void *data, VkDeviceSize size, VkMemoryMapFlags flags = 0 );
+        buffer() = delete;
+        buffer( types::device device, VkMemoryPropertyFlags memoryPropertiesFlag, VkBufferCreateInfo BufferCreateInfo );
+        void write( std::vector<void *> data, VkMemoryMapFlags flags = 0 );
         types::device device { nullptr };
         memory::allocationAddres addres;
-        void *mapped { nullptr };
         VkBuffer handle { nullptr };
         ~buffer();
     };
@@ -25,10 +23,9 @@ namespace Engine
     class commandBuffer
     {
       public:
-        commandBuffer( types::device device, VkCommandPool commandPool, VkCommandBufferLevel level, Engine::queue *queue );
+        commandBuffer( types::device device, VkCommandPool commandPool, VkCommandBufferLevel level, Engine::queue &queue );
         void begin();
         void submit();
-        void end();
         types::device device { nullptr };
         VkCommandPool pool { nullptr };
         VkCommandBuffer handle { nullptr };

@@ -11,29 +11,30 @@ namespace Engine
     {
         struct allocationAddres
         {
+            VkDeviceSize size;
+            VkDeviceSize offset;
+            VkDeviceMemory memory;
             uint32_t memoryType;
             size_t memoryBlock;
-            VkDeviceSize offset;
         };
         memory() = delete;
         memory( device::DATA_TYPE * );
 
-        allocationAddres allocate( types::image image );
-        // uint32_t allocate( types::buffer );
-        void free( types::image image );
-        // void free( types::buffer buffer );
+        allocationAddres allocate( VkImage image, VkMemoryPropertyFlags flags );
+        allocationAddres allocate( VkBuffer buffer, VkMemoryPropertyFlags flags );
+        void free( allocationAddres &addres );
         ~memory();
 
       private:
         struct memoryBlock
         {
             VkDeviceSize size;
-            VkDeviceSize freeSize;
             // offset size
             std::unordered_map<VkDeviceSize, VkDeviceSize> free;
             std::unordered_map<VkDeviceSize, VkDeviceSize> allocated;
             VkDeviceMemory handle;
         };
+        bool used { false };
         // mem type <memory blocks<>>
         std::vector<std::vector<memoryBlock>> memories;
         device::DATA_TYPE *parent;

@@ -11,13 +11,13 @@ namespace Engine
     class image::DATA_TYPE
     {
       public:
+        DATA_TYPE() = delete;
         DATA_TYPE( types::image parent, types::device device, VkImageCreateInfo ImageCreateInfo, VkImageViewCreateInfo ImageViewCreateInfo );
         DATA_TYPE( types::image parent, types::device device, types::image image, VkImageViewCreateInfo ImageViewCreateInfo );
-        DATA_TYPE() = delete;
         ~DATA_TYPE();
         types::device device { nullptr };
-        VkImageCreateInfo ImageInfo;
-        VkImageViewCreateInfo ImageViewInfo;
+        VkImageCreateInfo ImageInfo {};
+        VkImageViewCreateInfo ImageViewInfo {};
         VkImageView view { nullptr };
         memory::allocationAddres addres;
         types::image image { nullptr };

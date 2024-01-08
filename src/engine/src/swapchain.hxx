@@ -20,7 +20,7 @@ namespace Engine
 
         struct image_T
         {
-            std::shared_ptr<image> image { nullptr };
+            types::image image { nullptr };
             VkSemaphore isAvailable { nullptr };
             VkSemaphore isRendered { nullptr };
         };

@@ -32,10 +32,8 @@ namespace Engine
     DeviceDescription::~DeviceDescription() {};
 
     device::DATA_TYPE::DATA_TYPE( types::device parent, types::DeviceDescription description ) :
-        parent { parent }, description { description }, queuesSet { parent }
+        parent { parent }, description { description }, queuesSet { parent }, memory { this }
     {
-        images.resize( description->data->memProperties.memoryTypeCount, this );
-        buffers.resize( description->data->memProperties.memoryTypeCount, this );
     }
 
     device::DATA_TYPE::~DATA_TYPE()
