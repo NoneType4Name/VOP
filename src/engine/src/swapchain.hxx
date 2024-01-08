@@ -18,13 +18,6 @@ namespace Engine
             std::vector<VkPresentModeKHR> presentModes;
         };
 
-        struct image_T
-        {
-            types::image image { nullptr };
-            VkSemaphore isAvailable { nullptr };
-            VkSemaphore isRendered { nullptr };
-        };
-
         void create( VkSwapchainCreateInfoKHR createInfo );
         ~DATA_TYPE();
 
@@ -35,7 +28,6 @@ namespace Engine
         VkPresentModeKHR presentMode { VK_PRESENT_MODE_MAX_ENUM_KHR };
         VkFormat depthImageFormat { VK_FORMAT_MAX_ENUM };
         properties_T properties;
-        std::vector<image_T> images;
         uint32_t flightImgIndex { 0 };
         uint32_t semaphoreIndex { 0 };
         types::swapchain parent { nullptr };

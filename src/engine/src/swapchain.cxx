@@ -180,15 +180,15 @@ namespace Engine
         uint32_t c;
         vkGetSwapchainImagesKHR( device->data->handle, handle, &c, nullptr );
         std::vector<VkImage> imgs { c };
-        images.resize( c );
+        parent->images.resize( c );
         vkGetSwapchainImagesKHR( device->data->handle, handle, &c, imgs.data() );
         VkSemaphoreCreateInfo semaphoreInfo {};
         semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
         for ( size_t i { 0 }; i < imgs.size(); i++ )
         {
-            images[ i ].image = new image { device, nullptr, { .image = imgs[ i ], .viewType = VK_IMAGE_VIEW_TYPE_2D, .format = format.format, .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 } } };
-            CHECK_RESULT( vkCreateSemaphore( device->data->handle, &semaphoreInfo, ALLOCATION_CALLBACK, &images[ i ].isAvailable ) );
-            CHECK_RESULT( vkCreateSemaphore( device->data->handle, &semaphoreInfo, ALLOCATION_CALLBACK, &images[ i ].isRendered ) );
+            parent->images[ i ].image = new image { device, nullptr, { .image = imgs[ i ], .viewType = VK_IMAGE_VIEW_TYPE_2D, .format = format.format, .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 } } };
+            CHECK_RESULT( vkCreateSemaphore( device->data->handle, &semaphoreInfo, ALLOCATION_CALLBACK, &parent->images[ i ].isAvailable ) );
+            CHECK_RESULT( vkCreateSemaphore( device->data->handle, &semaphoreInfo, ALLOCATION_CALLBACK, &parent->images[ i ].isRendered ) );
         }
     }
 
@@ -201,7 +201,7 @@ namespace Engine
 
     swapchain::DATA_TYPE::~DATA_TYPE()
     {
-        for ( auto &img : images )
+        for ( auto &img : parent->images )
         {
             vkDestroySemaphore( device->data->handle, img.isAvailable, ALLOCATION_CALLBACK );
             vkDestroySemaphore( device->data->handle, img.isRendered, ALLOCATION_CALLBACK );

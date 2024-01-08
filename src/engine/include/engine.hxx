@@ -148,6 +148,13 @@ namespace Engine
       public:
         swapchain() = delete;
         ~swapchain();
+        struct image_T
+        {
+            types::image image { nullptr };
+            VkSemaphore isAvailable { nullptr };
+            VkSemaphore isRendered { nullptr };
+        };
+        std::vector<image_T> images;
     };
 
     // class ENGINE_EXPORT shader
