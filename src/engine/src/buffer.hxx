@@ -8,31 +8,28 @@
 
 namespace Engine
 {
-    class buffer
+    class buffer::DATA_TYPE
     {
       public:
-        buffer() = delete;
-        buffer( types::device device, VkMemoryPropertyFlags memoryPropertiesFlag, VkBufferCreateInfo BufferCreateInfo );
-        void write( std::vector<void *> data, VkMemoryMapFlags flags = 0 );
+        DATA_TYPE( types::buffer parent, types::device device );
+        ~DATA_TYPE();
         types::device device { nullptr };
         memory::allocationAddres addres;
         VkBuffer handle { nullptr };
-        ~buffer();
+        types::buffer parent { nullptr };
     };
 
-    class commandBuffer
+    class commandBuffer::DATA_TYPE
     {
       public:
-        commandBuffer( types::device device, VkCommandPool commandPool, VkCommandBufferLevel level, Engine::queue &queue );
-        void begin();
-        void submit();
+        DATA_TYPE( types::commandBuffer parent, types::device device );
+        ~DATA_TYPE();
         types::device device { nullptr };
         VkCommandPool pool { nullptr };
-        VkCommandBuffer handle { nullptr };
         Engine::queue *queue { nullptr };
         VkFence fence { nullptr };
         bool used { 0 };
-        ~commandBuffer();
+        types::commandBuffer parent { nullptr };
     };
 } // namespace Engine
 #endif

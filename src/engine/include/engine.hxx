@@ -37,6 +37,8 @@ namespace Engine
     DEFINE_HANDLE( device );
     DEFINE_HANDLE( swapchain );
     DEFINE_HANDLE( image );
+    DEFINE_HANDLE( buffer );
+    DEFINE_HANDLE( commandBuffer );
 
     namespace window
     {
@@ -134,6 +136,35 @@ namespace Engine
         void write( std::vector<void *> data, VkExtent3D srcExtend = { 0, 0, 0 }, VkOffset3D srcOffset = { 0, 0, 0 }, VkImageAspectFlags srcAspectMask = VK_IMAGE_ASPECT_COLOR_BIT, uint32_t dstMipLevel = 0, uint32_t arrayLayersCount = 1, uint32_t dstBaseArrayLayer = 0, VkMemoryMapFlags flags = 0 );
         void transition( VkImageLayout newLayout, VkDependencyFlags dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT, VkPipelineStageFlags srcStageMask = 0, VkPipelineStageFlags dstStageMask = 0, uint32_t srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED, uint32_t dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED );
         ~image();
+    };
+
+    class buffer
+    {
+        DEFINE_DATA;
+
+      private:
+        buffer( types::device device, VkMemoryPropertyFlags memoryPropertiesFlag, VkBufferCreateInfo BufferCreateInfo );
+
+      public:
+        buffer() = delete;
+        void write( std::vector<void *> data, VkMemoryMapFlags flags = 0 );
+        ~buffer();
+    };
+
+    class commandBuffer
+    {
+        DEFINE_DATA;
+
+      private:
+        // friend buffer; // test for call reg from constructor
+
+      public:
+        commandBuffer( types::device device, VkCommandPool commandPool, VkCommandBufferLevel level, Engine::queue &queue );
+        commandBuffer() = delete;
+        void begin();
+        void submit();
+        VkCommandBuffer handle { nullptr };
+        ~commandBuffer();
     };
 
     class ENGINE_EXPORT swapchain

@@ -84,6 +84,7 @@ namespace Engine
     swapchain::swapchain( types::device device, window::types::window window )
     {
         *const_cast<std::unique_ptr<DATA_TYPE> *>( &data ) = std::make_unique<DATA_TYPE>( this, device, window );
+        device->data->regSwapchain( this );
         data->device->data->swapchains.emplace( this );
         data->window->data->swapchains.emplace( this );
         // std::vector<void *> swapchainData;

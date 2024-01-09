@@ -41,69 +41,69 @@ namespace
 
 namespace Game
 {
-    // class E;
+    class E;
 
-    // struct W : public Engine::window::window
-    // {
-    //   protected:
-    //     void setup() override
-    //     {
-    //         data->createSurface( data->instance->data->handle, 0, 0 );
-    //     }
+    struct W : public Engine::window::window
+    {
+      protected:
+        void setup() override
+        {
+            data->createSurface( data->instance->data->handle, 0, 0 );
+        }
 
-    //     void eventCallBack( int key, int scancode, int action, int mods ) override
-    //     {
-    //         switch ( key )
-    //         {
-    //             case GLFW_KEY_F11:
-    //                 auto d { getDisplayResolution() };
-    //                 if ( action == GLFW_RELEASE )
-    //                 {
-    //                     if ( properties.size.width != getDisplayResolution().width )
-    //                     {
-    //                         updateProperties( { .size = d, .fullScreenRefreshRate = 60 } );
-    //                         break;
-    //                     }
-    //                     updateProperties( { .size = { .width = 800, .height = 600 }, .fullScreenRefreshRate = 0 } );
-    //                 }
-    //         }
-    //     }
+        void eventCallBack( int key, int scancode, int action, int mods ) override
+        {
+            switch ( key )
+            {
+                case GLFW_KEY_F11:
+                    auto d { getDisplayResolution() };
+                    if ( action == GLFW_RELEASE )
+                    {
+                        if ( properties.size.width != getDisplayResolution().width )
+                        {
+                            updateProperties( { .size = d, .fullScreenRefreshRate = 60 } );
+                            break;
+                        }
+                        updateProperties( { .size = { .width = 800, .height = 600 }, .fullScreenRefreshRate = 0 } );
+                    }
+            }
+        }
 
-    //     void resizeCallBack( int width, int height ) override
-    //     {
-    //     }
-    //     friend E;
+        void resizeCallBack( int width, int height ) override
+        {
+        }
+        friend E;
 
-    //   public:
-    //     using Engine::window::window::window;
-    // };
+      public:
+        using Engine::window::window::window;
+    };
 
-    // struct E : public Engine::instance
-    // {
-    //     Engine::window::types::window createWindow( ENGINE_RESOLUTION_TYPE width, ENGINE_RESOLUTION_TYPE height, const char *title, int fullScreenRefreshRate, bool resize ) override
-    //     {
-    //         return data->regWindow( new W { this, { width, height, title, fullScreenRefreshRate, resize } } );
-    //     }
+    struct E : public Engine::instance
+    {
+        Engine::window::types::window createWindow( ENGINE_RESOLUTION_TYPE width, ENGINE_RESOLUTION_TYPE height, const char *title, int fullScreenRefreshRate, bool resize ) override
+        {
+            return data->regWindow( new W { this, { width, height, title, fullScreenRefreshRate, resize } } );
+        }
 
-    //   protected:
-    //     void setup( const char *appName, uint32_t appVersion ) override
-    //     {
-    //         VkApplicationInfo ApplicationInfo {};
-    //         ApplicationInfo.sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    //         ApplicationInfo.apiVersion         = VK_API_VERSION_1_0;
-    //         ApplicationInfo.pApplicationName   = appName;
-    //         ApplicationInfo.applicationVersion = appVersion;
-    //         VkInstanceCreateInfo InstanceCreateInfo {};
-    //         InstanceCreateInfo.sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    //         InstanceCreateInfo.pNext                   = nullptr;
-    //         InstanceCreateInfo.enabledLayerCount       = 0;
-    //         InstanceCreateInfo.ppEnabledLayerNames     = nullptr;
-    //         InstanceCreateInfo.enabledExtensionCount   = 0;
-    //         InstanceCreateInfo.ppEnabledExtensionNames = nullptr;
-    //         InstanceCreateInfo.pApplicationInfo        = &ApplicationInfo;
-    //         data->create( InstanceCreateInfo );
-    //     }
-    // };
+      protected:
+        void setup( const char *appName, uint32_t appVersion ) override
+        {
+            VkApplicationInfo ApplicationInfo {};
+            ApplicationInfo.sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+            ApplicationInfo.apiVersion         = VK_API_VERSION_1_0;
+            ApplicationInfo.pApplicationName   = appName;
+            ApplicationInfo.applicationVersion = appVersion;
+            VkInstanceCreateInfo InstanceCreateInfo {};
+            InstanceCreateInfo.sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+            InstanceCreateInfo.pNext                   = nullptr;
+            InstanceCreateInfo.enabledLayerCount       = 0;
+            InstanceCreateInfo.ppEnabledLayerNames     = nullptr;
+            InstanceCreateInfo.enabledExtensionCount   = 0;
+            InstanceCreateInfo.ppEnabledExtensionNames = nullptr;
+            InstanceCreateInfo.pApplicationInfo        = &ApplicationInfo;
+            data->create( InstanceCreateInfo );
+        }
+    };
     std::unique_ptr<Engine::instance> engine { new Engine::instance };
 
     // Engine::types::shader vertexShader { device->CreateShader( "./assets/shaders/binary.vert.spv", "main", Engine::ShaderStage::VERTEX_SHADER_TYPE ) };

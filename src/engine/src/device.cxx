@@ -184,7 +184,7 @@ namespace Engine
 
     types::swapchain device::bindWindow( window::types::window window )
     {
-        return data->regSwapchain( new swapchain { this, window } );
+        return new swapchain { this, window };
     }
 
     types::swapchain device::DATA_TYPE::regSwapchain( types::swapchain swapchain )
