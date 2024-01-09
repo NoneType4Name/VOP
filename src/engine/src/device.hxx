@@ -11,10 +11,10 @@
 
 namespace Engine
 {
-    struct DeviceDescription::DATA_TYPE
+    struct deviceDescription::DATA_TYPE
     {
         DATA_TYPE() = delete;
-        DATA_TYPE( types::DeviceDescription parent, struct instance *instance, VkPhysicalDevice device );
+        DATA_TYPE( types::deviceDescription parent, struct instance *instance, VkPhysicalDevice device );
         ~DATA_TYPE();
         std::vector<VkQueueFamilyProperties> queueFamilyProperties;
         VkPhysicalDeviceMemoryProperties memProperties {};
@@ -22,13 +22,13 @@ namespace Engine
         VkPhysicalDeviceFeatures features {};
         VkPhysicalDevice phDevice { nullptr };
         instance *instance { nullptr };
-        types::DeviceDescription parent;
+        types::deviceDescription parent;
     };
 
     struct device::DATA_TYPE
     {
         DATA_TYPE() = delete;
-        DATA_TYPE( types::device parent, types::DeviceDescription description );
+        DATA_TYPE( types::device parent, types::deviceDescription description );
         ~DATA_TYPE();
         // void addImagesMemorySize( uint32_t index, uint32_t size );
         // void addBuffersMemorySize( uint32_t index, uint32_t size );
@@ -49,7 +49,7 @@ namespace Engine
         // memoryTypeIndex<<handle, offset>, <size, oversize>>;
         Engine::memory memory;
         queueSet queuesSet;
-        types::DeviceDescription description { nullptr };
+        types::deviceDescription description { nullptr };
         types::device parent;
 
       private:

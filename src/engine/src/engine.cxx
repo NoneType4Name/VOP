@@ -33,9 +33,15 @@ namespace
 
 namespace Engine
 {
-    instance::instance()
+    instance::instance( const char *appName, uint32_t appVersion )
     {
         DEFINE_DATA_FIELD();
+        setup( appName, appVersion );
+    }
+
+    instance::instance( bool, const char *appName, uint32_t appVersion ) :
+        instance( appName, appVersion )
+    {
     }
 
     instance::~instance()
@@ -53,16 +59,6 @@ namespace Engine
             delete *dI++;
         data->destroyDebugLayerCallback();
         vkDestroyInstance( data->handle, ALLOCATION_CALLBACK );
-    }
-
-    void instance::init( const char *appName, uint32_t appVersion )
-    {
-        if ( data->handle )
-        {
-            SPDLOG_CRITICAL( "Allready inited." );
-            return;
-        }
-        setup( appName, appVersion );
     }
 
     void instance::setup( const char *appName, uint32_t appVersion )
@@ -118,7 +114,7 @@ namespace Engine
 
     window::types::window instance::DATA_TYPE::regWindow( window::types::window window )
     {
-        window->setup();
+        // window->setup();
         return window;
     }
 
@@ -128,12 +124,12 @@ namespace Engine
         return device;
     }
 
-    window::types::window instance::createWindow( ENGINE_RESOLUTION_TYPE width, ENGINE_RESOLUTION_TYPE height, const char *title, int fullScreenRefreshRate, bool resize )
+    window::types::window instance::createWindow( window::settings settings )
     {
-        return data->regWindow( new window::window { this, { width, height, title, fullScreenRefreshRate, resize } } );
+        return data->regWindow( new window::window { this, settings } );
     }
 
-    types::device instance::createDevice( types::DeviceDescription description )
+    types::device instance::createDevice( types::deviceDescription description )
     {
         return data->regDevice( new device { description } );
     }
@@ -143,7 +139,7 @@ namespace Engine
     //     return data->windows.emplace_back( new window::window { this, width, height, title } ).get();
     // }
 
-    // std::pair<types::swapchain, types::device> instance::makeLink( window::types::window window, types::DeviceDescription description )
+    // std::pair<types::swapchain, types::device> instance::makeLink( window::types::window window, types::deviceDescription description )
     // {
     //     data->devices.emplace_back( std::unique_ptr<device> { new device { description, window } } );
     //     data->links.emplace_back( std::unique_ptr<swapchain> { new swapchain { window, data->devices.back().get() } } );

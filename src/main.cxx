@@ -72,7 +72,6 @@ namespace Game
         void resizeCallBack( int width, int height ) override
         {
         }
-        friend E;
 
       public:
         using Engine::window::window::window;
@@ -80,9 +79,14 @@ namespace Game
 
     struct E : public Engine::instance
     {
-        Engine::window::types::window createWindow( ENGINE_RESOLUTION_TYPE width, ENGINE_RESOLUTION_TYPE height, const char *title, int fullScreenRefreshRate, bool resize ) override
+        E( const char *appName, uint32_t appVersion ) :
+            Engine::instance( 1, appName, appVersion )
         {
-            return data->regWindow( new W { this, { width, height, title, fullScreenRefreshRate, resize } } );
+        }
+
+        Engine::window::types::window createWindow( Engine::window::settings settings ) override
+        {
+            return data->regWindow( new W { this, settings } );
         }
 
       protected:
@@ -104,7 +108,7 @@ namespace Game
             data->create( InstanceCreateInfo );
         }
     };
-    std::unique_ptr<Engine::instance> engine { new Engine::instance };
+    std::unique_ptr<E> engine { new E { "test", 0 } };
 
     // Engine::types::shader vertexShader { device->CreateShader( "./assets/shaders/binary.vert.spv", "main", Engine::ShaderStage::VERTEX_SHADER_TYPE ) };
     // Engine::types::shader fragmentShader { device->CreateShader( "./assets/shaders/binary.frag.spv", "main", Engine::ShaderStage::FRAGMENT_SHADER_TYPE ) };
@@ -114,8 +118,7 @@ namespace Game
 
 int main()
 {
-    Game::engine->init( "test", 0 );
-    auto wnd { Game::engine->createWindow( 800, 600, "test", 0, 1 ) };
+    auto wnd { Game::engine->createWindow( { 800, 600, "test", 0, 1 } ) };
     auto device { Game::engine->createDevice( Game::engine->getDevices()[ 0 ] ) };
     auto swapchain { device->bindWindow( wnd ) };
     while ( !wnd->shouldClose() )

@@ -84,7 +84,7 @@ namespace Engine
     swapchain::swapchain( types::device device, window::types::window window )
     {
         *const_cast<std::unique_ptr<DATA_TYPE> *>( &data ) = std::make_unique<DATA_TYPE>( this, device, window );
-        device->data->regSwapchain( this );
+        data->device->data->regSwapchain( this );
         data->device->data->swapchains.emplace( this );
         data->window->data->swapchains.emplace( this );
         // std::vector<void *> swapchainData;
@@ -97,6 +97,12 @@ namespace Engine
 
     swapchain::~swapchain()
     {
+        for ( auto &img : images )
+        {
+            vkDestroySemaphore( data->device->data->handle, img.isAvailable, ALLOCATION_CALLBACK );
+            vkDestroySemaphore( data->device->data->handle, img.isRendered, ALLOCATION_CALLBACK );
+            delete img.image;
+        }
         vkDestroySwapchainKHR( data->device->data->handle, data->handle, ALLOCATION_CALLBACK );
         data->device->data->swapchains.erase( this );
         data->window->data->swapchains.erase( this );
@@ -202,12 +208,6 @@ namespace Engine
 
     swapchain::DATA_TYPE::~DATA_TYPE()
     {
-        for ( auto &img : parent->images )
-        {
-            vkDestroySemaphore( device->data->handle, img.isAvailable, ALLOCATION_CALLBACK );
-            vkDestroySemaphore( device->data->handle, img.isRendered, ALLOCATION_CALLBACK );
-            delete img.image;
-        }
     }
 
     // uint32_t AcquireImageIndex( VkSemaphore &semaphore )

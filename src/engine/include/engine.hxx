@@ -33,7 +33,7 @@
 namespace Engine
 {
     DEFINE_HANDLE( instance );
-    DEFINE_HANDLE( DeviceDescription );
+    DEFINE_HANDLE( deviceDescription );
     DEFINE_HANDLE( device );
     DEFINE_HANDLE( swapchain );
     DEFINE_HANDLE( image );
@@ -65,37 +65,38 @@ namespace Engine
             DEFINE_DATA;
 
           protected:
-            window( Engine::instance *instance, settings settings );
             virtual void setup();
-            virtual void eventCallBack( int key, int scancode, int action, int mods );
-            virtual void resizeCallBack( int width, int height );
-            friend Engine::instance;
+            void construct( instance *instance, settings settings );
 
           public:
             window() = delete;
+            window( instance *instance, settings settings );
+            window( bool, Engine::instance *instance, settings settings );
             ~window();
             resolution getDisplayResolution();
             void setTitle( const char *title );
             void updateProperties( settings properties );
             void updateEvents();
             bool shouldClose();
+            virtual void eventCallBack( int key, int scancode, int action, int mods );
+            virtual void resizeCallBack( int width, int height );
             const settings properties {};
         };
         DEFINE_HANDLE( window );
     } // namespace window
 
-    struct ENGINE_EXPORT DeviceDescription
+    struct ENGINE_EXPORT deviceDescription
     {
         DEFINE_DATA;
 
       private:
-        DeviceDescription( instance *instance, VkPhysicalDevice phDevice );
+        deviceDescription( instance *instance, VkPhysicalDevice phDevice );
         friend class queue;
         friend instance;
 
       public:
-        DeviceDescription() = delete;
-        ~DeviceDescription();
+        deviceDescription() = delete;
+        ~deviceDescription();
         const char *name;
         VkPhysicalDeviceType type;
         uint32_t grade;
@@ -106,7 +107,7 @@ namespace Engine
         DEFINE_DATA;
 
       private:
-        device( types::DeviceDescription description );
+        device( types::deviceDescription description );
         virtual void setup();
         virtual void setup( window::types::window window );
         friend instance;
@@ -148,15 +149,13 @@ namespace Engine
       public:
         buffer() = delete;
         void write( std::vector<void *> data, VkMemoryMapFlags flags = 0 );
+        VkBuffer handle { nullptr };
         ~buffer();
     };
 
     class commandBuffer
     {
         DEFINE_DATA;
-
-      private:
-        // friend buffer; // test for call reg from constructor
 
       public:
         commandBuffer( types::device device, VkCommandPool commandPool, VkCommandBufferLevel level, Engine::queue &queue );
@@ -290,28 +289,15 @@ namespace Engine
         virtual void setup( const char *appName, uint32_t appVersion );
 
       public:
-        instance();
-        void init( const char *appName, uint32_t appVersion );
-        virtual window::types::window createWindow( ENGINE_RESOLUTION_TYPE width, ENGINE_RESOLUTION_TYPE height, const char *title, int fullScreenRefreshRate = 0, bool resize = 0 );
-        virtual types::device createDevice( types::DeviceDescription description );
-        // virtual std::pair<types::swapchain, types::device> makeLink( window::types::window window, types::DeviceDescription description );
+        instance( const char *appName, uint32_t appVersion );
+        instance( bool, const char *appName, uint32_t appVersion );
+        virtual window::types::window createWindow( window::settings settings );
+        virtual types::device createDevice( types::deviceDescription description );
+        // virtual std::pair<types::swapchain, types::device> makeLink( window::types::window window, types::deviceDescription description );
         // ? virtual types::pass createRenderPass( types::swapchain swapchain );
-        const std::vector<types::DeviceDescription> &getDevices();
+        const std::vector<types::deviceDescription> &getDevices();
         ~instance();
     };
-    // DEFINE_RENDER_ATTACHMENT_TEMPLATE( RENDER_ATTACHMENT_DEFAULT_COLOR )
-    // DEFINE_RENDER_ATTACHMENT_TEMPLATE( RENDER_ATTACHMENT_DEFAULT_DEPTH )
-    // DEFINE_RENDER_ATTACHMENT_TEMPLATE( RENDER_ATTACHMENT_DEFAULT_COLOR_RESOLVE )
-
-    // ENGINE_EXPORT shaderID CreateShader( const char *path, const char *mainFuncName, ShaderStage stage );
-    // // ENGINE_EXPORT pipelineID CreateDescriptorSet( DescriptorSetInfo info );
-    // ENGINE_EXPORT pipelineID CreatePipeline( PipelineInfo info );
-    // namespace templates
-    // {
-    //     DEFINE_TEMPLATE( colorAttachment );
-    //     DEFINE_TEMPLATE( colorResolveAttachment );
-    //     DEFINE_TEMPLATE( depthAttachment ); // setup only in subpass?.
-    // } // namespace templates
 } // namespace Engine
 
 #endif

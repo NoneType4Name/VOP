@@ -24,14 +24,14 @@ namespace Engine
     //     set.back()[ 1 ].pImageInfo      = nullptr;
     //     descriptorSets.emplace_back( pDevice, set );
     // }
-    DeviceDescription::DeviceDescription( instance *instance, VkPhysicalDevice phDevice )
+    deviceDescription::deviceDescription( instance *instance, VkPhysicalDevice phDevice )
     {
         DEFINE_DATA_FIELD( instance, phDevice );
     }
 
-    DeviceDescription::~DeviceDescription() {};
+    deviceDescription::~deviceDescription() {};
 
-    device::DATA_TYPE::DATA_TYPE( types::device parent, types::DeviceDescription description ) :
+    device::DATA_TYPE::DATA_TYPE( types::device parent, types::deviceDescription description ) :
         parent { parent }, description { description }, queuesSet { parent }, memory { this }
     {
     }
@@ -40,7 +40,7 @@ namespace Engine
     {
     }
 
-    device::device( types::DeviceDescription description )
+    device::device( types::deviceDescription description )
     {
         auto &_data = const_cast<std ::unique_ptr<DATA_TYPE> &>( data );
         _data.reset( new DATA_TYPE { this, description } );
@@ -66,7 +66,7 @@ namespace Engine
         data->description->data->instance->data->devices.erase( this );
     }
 
-    DeviceDescription::DATA_TYPE::DATA_TYPE( types::DeviceDescription parent, struct instance *instance, VkPhysicalDevice device ) :
+    deviceDescription::DATA_TYPE::DATA_TYPE( types::deviceDescription parent, struct instance *instance, VkPhysicalDevice device ) :
         parent { parent }, instance { instance }, phDevice { device }
     {
         uint32_t c;
@@ -81,7 +81,7 @@ namespace Engine
         parent->grade = queueFamilyProperties.size();
     }
 
-    DeviceDescription::DATA_TYPE::~DATA_TYPE() {}
+    deviceDescription::DATA_TYPE::~DATA_TYPE() {}
 
     void device::setup( window::types::window window )
     {
@@ -301,7 +301,7 @@ namespace Engine
     //     return data->pipelines.back().get();
     // }
 
-    const std::vector<types::DeviceDescription> &
+    const std::vector<types::deviceDescription> &
         instance::getDevices()
     {
         if ( data->deviceDescriptions.empty() )
@@ -314,7 +314,7 @@ namespace Engine
             data->deviceDescriptions.resize( _c );
             CHECK_RESULT( vkEnumeratePhysicalDevices( data->handle, &_c, devices.data() ) );
             for ( uint32_t c { 0 }; c < devices.size(); ++c )
-                data->deviceDescriptions[ c ] = new DeviceDescription { this, devices[ c ] };
+                data->deviceDescriptions[ c ] = new deviceDescription { this, devices[ c ] };
         }
         return data->deviceDescriptions;
     }

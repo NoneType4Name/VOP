@@ -32,7 +32,7 @@ namespace Engine
         VkInstance handle { nullptr };
         instance *parent;
         std::unordered_map<window::types::window, std::vector<types::swapchain>> windows;
-        std::vector<types::DeviceDescription> deviceDescriptions;
+        std::vector<types::deviceDescription> deviceDescriptions;
         std::set<types::device> devices;
         // std::vector<types::pass> passes;
         ~DATA_TYPE() {}

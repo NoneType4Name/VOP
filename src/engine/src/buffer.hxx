@@ -15,14 +15,13 @@ namespace Engine
         ~DATA_TYPE();
         types::device device { nullptr };
         memory::allocationAddres addres;
-        VkBuffer handle { nullptr };
         types::buffer parent { nullptr };
     };
 
     class commandBuffer::DATA_TYPE
     {
       public:
-        DATA_TYPE( types::commandBuffer parent, types::device device );
+        DATA_TYPE( types::commandBuffer parent, types::device device, VkCommandPool commandPool, Engine::queue &queue );
         ~DATA_TYPE();
         types::device device { nullptr };
         VkCommandPool pool { nullptr };

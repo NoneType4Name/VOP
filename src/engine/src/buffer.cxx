@@ -7,14 +7,14 @@ namespace Engine
     {
         DEFINE_DATA_FIELD( device );
         BufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-        CHECK_RESULT( vkCreateBuffer( device->data->handle, &BufferCreateInfo, nullptr, &data->handle ) );
-        data->addres = data->device->data->memory.allocate( data->handle, memoryPropertiesFlag );
+        CHECK_RESULT( vkCreateBuffer( device->data->handle, &BufferCreateInfo, nullptr, &handle ) );
+        data->addres = data->device->data->memory.allocate( handle, memoryPropertiesFlag );
     }
 
     buffer::~buffer()
     {
         data->device->data->memory.free( data->addres );
-        vkDestroyBuffer( data->device->data->handle, data->handle, ALLOCATION_CALLBACK );
+        vkDestroyBuffer( data->device->data->handle, handle, ALLOCATION_CALLBACK );
     }
 
     buffer::DATA_TYPE::DATA_TYPE( types::buffer parent, types::device device ) :
@@ -47,14 +47,13 @@ namespace Engine
         copyInfo.size      = bCI.size;
         commandBuffer commands { this->data->device, this->data->device->data->transferPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY, this->data->device->data->queuesSet.transfer };
         commands.begin();
-        vkCmdCopyBuffer( commands.handle, TransferBuffer, this->data->handle, 1, &copyInfo );
+        vkCmdCopyBuffer( commands.handle, TransferBuffer, this->handle, 1, &copyInfo );
         commands.submit();
     }
 
     commandBuffer::commandBuffer( types::device device, VkCommandPool commandPool, VkCommandBufferLevel level, Engine::queue &queue )
     {
-        DEFINE_DATA_FIELD( device );
-        data->queue = &queue;
+        DEFINE_DATA_FIELD( device, commandPool, queue );
         VkCommandBufferAllocateInfo CommandBufferAllocateInfo {};
         CommandBufferAllocateInfo.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
         CommandBufferAllocateInfo.commandPool        = commandPool; // todo
@@ -107,7 +106,12 @@ namespace Engine
         vkWaitForFences( data->device->data->handle, 1, &data->fence, true, -1ui64 );
     }
 
-    commandBuffer::DATA_TYPE::DATA_TYPE( types::commandBuffer parent, types::device device )
+    commandBuffer::DATA_TYPE::DATA_TYPE( types::commandBuffer parent, types::device device, VkCommandPool commandPool, Engine::queue &queue ) :
+        device { device }, pool { commandPool }, queue { &queue }
+    {
+    }
+
+    commandBuffer::DATA_TYPE::~DATA_TYPE()
     {
     }
 } // namespace Engine
