@@ -150,7 +150,7 @@ namespace Engine
         data->create( DeviceCreateInfo );
         for ( auto &wnd : windows )
         {
-            data->swapchains.emplace( new swapchain { this, wnd } );
+            new swapchain { this, wnd };
         }
 
         VkCommandPoolCreateInfo poolCI {};
