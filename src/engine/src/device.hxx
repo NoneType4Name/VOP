@@ -34,7 +34,7 @@ namespace Engine
         // void addBuffersMemorySize( uint32_t index, uint32_t size );
         void create( VkDeviceCreateInfo createInfo );
         VkFormat formatPriority( const std::vector<VkFormat> &formats, VkImageTiling ImageTiling, VkFormatFeatureFlags FormatFeatureFlags );
-        types::swapchain regSwapchain( types::swapchain swapchain );
+        // types::swapchain regSwapchain( types::swapchain swapchain );
         uint32_t requeredMemoryTypeIndex( uint32_t type, VkMemoryPropertyFlags properties );
         VkDevice handle { nullptr };
         VkCommandPool grapchicPool { nullptr };
@@ -42,6 +42,8 @@ namespace Engine
         VkCommandPool presentPool { nullptr };
         std::vector<const char *> extensions;
         std::set<types::swapchain> swapchains;
+        std::set<types::image> images;
+        std::set<types::buffer> buffers;
         // std::vector<std::unique_ptr<descriptorPool>> descriptorPools;
         // std::vector<std::unique_ptr<shader>> shaders;
         // std::vector<std::unique_ptr<layout>> layouts;

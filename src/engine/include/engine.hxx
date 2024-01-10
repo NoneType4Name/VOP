@@ -73,6 +73,7 @@ namespace Engine
             window( instance *instance, settings settings );
             window( bool, Engine::instance *instance, settings settings );
             ~window();
+            types::swapchain getLink( types::device device );
             resolution getDisplayResolution();
             void setTitle( const char *title );
             void updateProperties( settings properties );
@@ -89,13 +90,9 @@ namespace Engine
     {
         DEFINE_DATA;
 
-      private:
-        deviceDescription( instance *instance, VkPhysicalDevice phDevice );
-        friend class queue;
-        friend instance;
-
       public:
         deviceDescription() = delete;
+        deviceDescription( instance *instance, VkPhysicalDevice phDevice );
         ~deviceDescription();
         const char *name;
         VkPhysicalDeviceType type;
@@ -107,19 +104,42 @@ namespace Engine
         DEFINE_DATA;
 
       private:
-        device( types::deviceDescription description );
-        virtual void setup();
-        virtual void setup( window::types::window window );
-        friend instance;
+        void construct( types::deviceDescription description );
+        // virtual void setup();
+        virtual void setup( std::vector<window::types::window> windows );
 
       public:
         device() = delete;
+        device( types::deviceDescription description, std::vector<window::types::window> windows );
+        device( bool, types::deviceDescription description, std::vector<window::types::window> windows );
         ~device();
-        virtual types::swapchain bindWindow( window::types::window window );
+        types::swapchain getLink( window::types::window window );
         // types::shader CreateShader( const char *path, const char *main, ShaderStage stage );
         // types::pipeline CreatePipeline( types::layout layouts, std::vector<types::shader> shaders, types::pass pass );
         // types::texture CreateTexture( const char *path );
         // types::model CreateModel( const char *path, types::texture texture );
+    };
+
+    class ENGINE_EXPORT swapchain
+    {
+        DEFINE_DATA;
+
+      private:
+        virtual void setup();
+        void construct( types::device device, window::types::window window );
+
+      public:
+        swapchain() = delete;
+        swapchain( types::device device, window::types::window window );
+        swapchain( bool, types::device device, window::types::window window );
+        ~swapchain();
+        struct image_T
+        {
+            types::image image { nullptr };
+            VkSemaphore isAvailable { nullptr };
+            VkSemaphore isRendered { nullptr };
+        };
+        std::vector<image_T> images;
     };
 
     class ENGINE_EXPORT image
@@ -143,11 +163,9 @@ namespace Engine
     {
         DEFINE_DATA;
 
-      private:
-        buffer( types::device device, VkMemoryPropertyFlags memoryPropertiesFlag, VkBufferCreateInfo BufferCreateInfo );
-
       public:
         buffer() = delete;
+        buffer( types::device device, VkMemoryPropertyFlags memoryPropertiesFlag, VkBufferCreateInfo BufferCreateInfo );
         void write( std::vector<void *> data, VkMemoryMapFlags flags = 0 );
         VkBuffer handle { nullptr };
         ~buffer();
@@ -158,33 +176,12 @@ namespace Engine
         DEFINE_DATA;
 
       public:
-        commandBuffer( types::device device, VkCommandPool commandPool, VkCommandBufferLevel level, Engine::queue &queue );
+        commandBuffer( types::device device, VkCommandPool commandPool, VkCommandBufferLevel level, struct queue &queue );
         commandBuffer() = delete;
         void begin();
         void submit();
         VkCommandBuffer handle { nullptr };
         ~commandBuffer();
-    };
-
-    class ENGINE_EXPORT swapchain
-    {
-        DEFINE_DATA;
-
-      private:
-        swapchain( types::device device, window::types::window window );
-        virtual void setup();
-        friend device;
-
-      public:
-        swapchain() = delete;
-        ~swapchain();
-        struct image_T
-        {
-            types::image image { nullptr };
-            VkSemaphore isAvailable { nullptr };
-            VkSemaphore isRendered { nullptr };
-        };
-        std::vector<image_T> images;
     };
 
     // class ENGINE_EXPORT shader
@@ -292,7 +289,7 @@ namespace Engine
         instance( const char *appName, uint32_t appVersion );
         instance( bool, const char *appName, uint32_t appVersion );
         virtual window::types::window createWindow( window::settings settings );
-        virtual types::device createDevice( types::deviceDescription description );
+        virtual types::device createDevice( types::deviceDescription description, std::vector<window::types::window> windows );
         // virtual std::pair<types::swapchain, types::device> makeLink( window::types::window window, types::deviceDescription description );
         // ? virtual types::pass createRenderPass( types::swapchain swapchain );
         const std::vector<types::deviceDescription> &getDevices();

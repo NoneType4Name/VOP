@@ -112,26 +112,14 @@ namespace Engine
         CHECK_RESULT( vkCreateInstance( &createInfo, ALLOCATION_CALLBACK, &handle ) );
     }
 
-    window::types::window instance::DATA_TYPE::regWindow( window::types::window window )
-    {
-        // window->setup();
-        return window;
-    }
-
-    types::device instance::DATA_TYPE::regDevice( types::device device )
-    {
-        device->setup();
-        return device;
-    }
-
     window::types::window instance::createWindow( window::settings settings )
     {
-        return data->regWindow( new window::window { this, settings } );
+        return new window::window { this, settings };
     }
 
-    types::device instance::createDevice( types::deviceDescription description )
+    types::device instance::createDevice( types::deviceDescription description, std::vector<window::types::window> windows )
     {
-        return data->regDevice( new device { description } );
+        return new device { description, windows };
     }
 
     // window::types::window Engine::instance::createWindow( ENGINE_RESOLUTION_TYPE width, ENGINE_RESOLUTION_TYPE height, const char *title )

@@ -6,6 +6,7 @@ namespace Engine
     buffer::buffer( types::device device, VkMemoryPropertyFlags memoryPropertiesFlag, VkBufferCreateInfo BufferCreateInfo )
     {
         DEFINE_DATA_FIELD( device );
+        data->device->data->buffers.insert( this );
         BufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
         CHECK_RESULT( vkCreateBuffer( device->data->handle, &BufferCreateInfo, nullptr, &handle ) );
         data->addres = data->device->data->memory.allocate( handle, memoryPropertiesFlag );
@@ -15,6 +16,7 @@ namespace Engine
     {
         data->device->data->memory.free( data->addres );
         vkDestroyBuffer( data->device->data->handle, handle, ALLOCATION_CALLBACK );
+        data->device->data->buffers.erase( this );
     }
 
     buffer::DATA_TYPE::DATA_TYPE( types::buffer parent, types::device device ) :

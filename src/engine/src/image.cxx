@@ -35,20 +35,25 @@ namespace Engine
         // ImageViewCreateInfo.subresourceRange.layerCount     = ImageCreateInfo.arrayLayers;
         CHECK_RESULT( vkCreateImageView( data->device->data->handle, &ImageViewCreateInfo, ALLOCATION_CALLBACK, &data->view ) );
         DEFINE_DATA_FIELD( device, ImageCreateInfo, ImageViewCreateInfo );
+        data->device->data->images.insert( this );
     }
 
     image::image( types::device device, types::image image, VkImageViewCreateInfo ImageViewCreateInfo )
     {
         DEFINE_DATA_FIELD( device, image, ImageViewCreateInfo );
+        data->device->data->images.insert( this );
         ImageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         CHECK_RESULT( vkCreateImageView( data->device->data->handle, &ImageViewCreateInfo, ALLOCATION_CALLBACK, &data->view ) );
     }
 
     image::~image()
     {
+        for ( auto &view : data->views )
+            delete view;
         vkDestroyImageView( data->device->data->handle, data->view, ALLOCATION_CALLBACK );
         if ( data->ImageInfo.sType )
             vkDestroyImage( data->device->data->handle, data->ImageViewInfo.image, ALLOCATION_CALLBACK );
+        data->device->data->images.erase( this );
     }
 
     void image::transition( VkImageLayout newLayout, VkDependencyFlags dependencyFlags, VkPipelineStageFlags srcStageMask, VkPipelineStageFlags dstStageMask, uint32_t srcQueueFamilyIndex, uint32_t dstQueueFamilyIndex )

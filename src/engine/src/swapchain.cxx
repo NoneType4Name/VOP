@@ -81,12 +81,19 @@ namespace Engine
     //     return Format;
     // }
 
-    swapchain::swapchain( types::device device, window::types::window window )
+    swapchain::swapchain( bool, types::device device, window::types::window window )
     {
-        *const_cast<std::unique_ptr<DATA_TYPE> *>( &data ) = std::make_unique<DATA_TYPE>( this, device, window );
-        data->device->data->regSwapchain( this );
-        data->device->data->swapchains.emplace( this );
-        data->window->data->swapchains.emplace( this );
+        construct( device, window );
+    }
+
+    swapchain::swapchain( types::device device, window::types::window window ) :
+        swapchain( 1, device, window )
+    {
+        setup();
+        // DEFINE_DATA_FIELD( device, window );
+        // // data->device->data->regSwapchain( this );
+        // data->device->data->swapchains.emplace( this );
+        // data->window->data->swapchains.emplace( this );
         // std::vector<void *> swapchainData;
         // std::vector<void *> pData;
         // data->window->data->instance->data->setup->swapchainInfo( this, data->createInfo, swapchainData, data->window->data->instance->data->userPointer );
@@ -107,6 +114,13 @@ namespace Engine
         data->device->data->swapchains.erase( this );
         data->window->data->swapchains.erase( this );
     };
+
+    void swapchain::construct( types::device device, window::types::window window )
+    {
+        DEFINE_DATA_FIELD( device, window );
+        data->device->data->swapchains.emplace( this );
+        data->window->data->swapchains.emplace( this );
+    }
 
     void swapchain::setup()
     {

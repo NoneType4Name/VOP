@@ -40,12 +40,16 @@ namespace Engine
     {
     }
 
-    device::device( types::deviceDescription description )
+    device::device( types::deviceDescription description, std::vector<window::types::window> windows ) :
+        device( 1, description, windows )
     {
-        auto &_data = const_cast<std ::unique_ptr<DATA_TYPE> &>( data );
-        _data.reset( new DATA_TYPE { this, description } );
-        data->description = description;
-        data->description->data->instance->data->devices.emplace( this );
+        setup( windows );
+    }
+
+    device::device( bool, types::deviceDescription description, std::vector<window::types::window> windows )
+    {
+        DEFINE_DATA_FIELD( description );
+        construct( description );
     }
 
     device::~device()
@@ -56,6 +60,10 @@ namespace Engine
             vkDestroyCommandPool( data->handle, data->transferPool, ALLOCATION_CALLBACK );
         if ( data->presentPool )
             vkDestroyCommandPool( data->handle, data->presentPool, ALLOCATION_CALLBACK );
+        for ( auto &img : data->images )
+            delete img;
+        for ( auto &buf : data->buffers )
+            delete buf;
         // data->pipelines.clear();
         // data->shaders.clear();
         // data->layouts.clear();
@@ -81,17 +89,25 @@ namespace Engine
         parent->grade = queueFamilyProperties.size();
     }
 
-    deviceDescription::DATA_TYPE::~DATA_TYPE() {}
+    deviceDescription::DATA_TYPE::~DATA_TYPE()
+    {
+    }
 
-    void device::setup( window::types::window window )
+    void device::construct( types::deviceDescription description )
+    {
+        DEFINE_DATA_FIELD( description );
+        data->description->data->instance->data->devices.emplace( this );
+    }
+
+    void device::setup( std::vector<window::types::window> windows )
     {
         VkDeviceCreateInfo DeviceCreateInfo {};
-        VkPhysicalDeviceDescriptorIndexingFeatures indexFeatures {};
-        DeviceCreateInfo.pNext                                  = &indexFeatures;
-        indexFeatures.sType                                     = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
-        indexFeatures.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
-        indexFeatures.runtimeDescriptorArray                    = VK_TRUE;
-        indexFeatures.descriptorBindingVariableDescriptorCount  = VK_TRUE;
+        // VkPhysicalDeviceDescriptorIndexingFeatures indexFeatures {};
+        // DeviceCreateInfo.pNext                                  = &indexFeatures;
+        // indexFeatures.sType                                     = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
+        // indexFeatures.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
+        // indexFeatures.runtimeDescriptorArray                    = VK_TRUE;
+        // indexFeatures.descriptorBindingVariableDescriptorCount  = VK_TRUE;
         VkPhysicalDeviceFeatures features {};
         features.samplerAnisotropy = VK_TRUE;
         features.sampleRateShading = VK_TRUE;
@@ -100,7 +116,11 @@ namespace Engine
             for ( uint32_t i { 0 }; i < data->description->data->queueFamilyProperties.size(); i++ )
             {
                 VkBool32 presentSupport { false };
-                vkGetPhysicalDeviceSurfaceSupportKHR( data->description->data->phDevice, i, window->data->surface, &presentSupport );
+                for ( auto &wnd : windows )
+                {
+                    vkGetPhysicalDeviceSurfaceSupportKHR( data->description->data->phDevice, i, wnd->data->surface, &presentSupport );
+                }
+
                 if ( !data->queuesSet.graphic.familyIndex.has_value() && data->description->data->queueFamilyProperties[ i ].queueFlags & VK_QUEUE_GRAPHICS_BIT )
                     data->queuesSet.graphic = { i, 1.f };
                 if ( !data->queuesSet.present.familyIndex.has_value() && presentSupport )
@@ -116,7 +136,10 @@ namespace Engine
         else
         {
             VkBool32 presentSupport { false };
-            vkGetPhysicalDeviceSurfaceSupportKHR( data->description->data->phDevice, 0, window->data->surface, &presentSupport );
+            for ( auto &wnd : windows )
+            {
+                vkGetPhysicalDeviceSurfaceSupportKHR( data->description->data->phDevice, 0, wnd->data->surface, &presentSupport );
+            }
             if ( data->description->data->queueFamilyProperties[ 0 ].queueFlags & ( VK_QUEUE_TRANSFER_BIT | VK_QUEUE_GRAPHICS_BIT ) && presentSupport )
             {
                 data->queuesSet = { { 0, 0, 1.f }, { 0, 0, 1.f }, { 0, 0, 1.f } };
@@ -145,52 +168,62 @@ namespace Engine
         }
     }
 
-    void device::setup()
-    {
-        VkDeviceCreateInfo DeviceCreateInfo {};
-        VkPhysicalDeviceDescriptorIndexingFeatures indexFeatures {};
-        DeviceCreateInfo.pNext                                  = &indexFeatures;
-        indexFeatures.sType                                     = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
-        indexFeatures.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
-        indexFeatures.runtimeDescriptorArray                    = VK_TRUE;
-        indexFeatures.descriptorBindingVariableDescriptorCount  = VK_TRUE;
-        VkPhysicalDeviceFeatures features {};
-        features.samplerAnisotropy        = VK_TRUE;
-        features.sampleRateShading        = VK_TRUE;
-        DeviceCreateInfo.pEnabledFeatures = &features;
-        if ( data->description->data->queueFamilyProperties.size() - 1 )
-        {
-            for ( uint32_t i { 0 }; i < data->description->data->queueFamilyProperties.size(); i++ )
-            {
-                if ( !data->queuesSet.graphic.familyIndex.has_value() && data->description->data->queueFamilyProperties[ i ].queueFlags & VK_QUEUE_GRAPHICS_BIT )
-                    data->queuesSet.graphic = { i, 1.f };
-                else if ( !data->queuesSet.transfer.familyIndex.has_value() && data->description->data->queueFamilyProperties[ i ].queueFlags & VK_QUEUE_TRANSFER_BIT )
-                    data->queuesSet.transfer = { i, 1.f };
-                // else if ( !data->queuesSet.compute.familyIndex.has_value() && data->description->data->queueFamilyProperties[ i ].queueFlags & VK_QUEUE_COMPUTE_BIT )
-                //     data->queuesSet.compute = i;
-                else
-                    break;
-            }
-        }
-        else
-        {
-            if ( data->description->data->queueFamilyProperties[ 0 ].queueFlags & ( VK_QUEUE_TRANSFER_BIT | VK_QUEUE_GRAPHICS_BIT ) )
-            {
-                data->queuesSet = { { 0, 0, 1.f }, { 0, 0, 1.f } };
-            }
-        }
-        data->create( DeviceCreateInfo );
-    }
+    // void device::setup()
+    // {
+    //     VkDeviceCreateInfo DeviceCreateInfo {};
+    //     // VkPhysicalDeviceDescriptorIndexingFeatures indexFeatures {};
+    //     // DeviceCreateInfo.pNext                                  = &indexFeatures;
+    //     // indexFeatures.sType                                     = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
+    //     // indexFeatures.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
+    //     // indexFeatures.runtimeDescriptorArray                    = VK_TRUE;
+    //     // indexFeatures.descriptorBindingVariableDescriptorCount  = VK_TRUE;
+    //     VkPhysicalDeviceFeatures features {};
+    //     features.samplerAnisotropy        = VK_TRUE;
+    //     features.sampleRateShading        = VK_TRUE;
+    //     DeviceCreateInfo.pEnabledFeatures = &features;
+    //     if ( data->description->data->queueFamilyProperties.size() - 1 )
+    //     {
+    //         for ( uint32_t i { 0 }; i < data->description->data->queueFamilyProperties.size(); i++ )
+    //         {
+    //             if ( !data->queuesSet.graphic.familyIndex.has_value() && data->description->data->queueFamilyProperties[ i ].queueFlags & VK_QUEUE_GRAPHICS_BIT )
+    //                 data->queuesSet.graphic = { i, 1.f };
+    //             else if ( !data->queuesSet.transfer.familyIndex.has_value() && data->description->data->queueFamilyProperties[ i ].queueFlags & VK_QUEUE_TRANSFER_BIT )
+    //                 data->queuesSet.transfer = { i, 1.f };
+    //             // else if ( !data->queuesSet.compute.familyIndex.has_value() && data->description->data->queueFamilyProperties[ i ].queueFlags & VK_QUEUE_COMPUTE_BIT )
+    //             //     data->queuesSet.compute = i;
+    //             else
+    //                 break;
+    //         }
+    //     }
+    //     else
+    //     {
+    //         if ( data->description->data->queueFamilyProperties[ 0 ].queueFlags & ( VK_QUEUE_TRANSFER_BIT | VK_QUEUE_GRAPHICS_BIT ) )
+    //         {
+    //             data->queuesSet = { { 0, 0, 1.f }, { 0, 0, 1.f } };
+    //         }
+    //     }
+    //     data->create( DeviceCreateInfo );
+    // }
 
-    types::swapchain device::bindWindow( window::types::window window )
-    {
-        return new swapchain { this, window };
-    }
+    // types::swapchain device::bindWindow( window::types::window window )
+    // {
+    //     return new swapchain { this, window };
+    // }
 
-    types::swapchain device::DATA_TYPE::regSwapchain( types::swapchain swapchain )
+    // types::swapchain device::DATA_TYPE::regSwapchain( types::swapchain swapchain )
+    // {
+    //     swapchain->setup();
+    //     return swapchain;
+    // }
+
+    types::swapchain device::getLink( window::types::window window )
     {
-        swapchain->setup();
-        return swapchain;
+        for ( auto &swp : data->swapchains )
+        {
+            if ( swp->data->window == window )
+                return swp;
+        }
+        return nullptr;
     }
 
     void device::DATA_TYPE::create( VkDeviceCreateInfo createInfo )

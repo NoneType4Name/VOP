@@ -2,6 +2,7 @@
 #include <common/logging.hxx>
 #include <platform.hxx>
 #include <surface.hxx>
+#include <swapchain.hxx>
 #include <EHI.hxx>
 
 namespace Engine
@@ -82,6 +83,16 @@ namespace Engine
         void window::setup()
         {
             data->createSurface( data->instance->data->handle, 0, 0 );
+        }
+
+        Engine::types::swapchain window::getLink( Engine::types::device device )
+        {
+            for ( auto &swp : data->swapchains )
+            {
+                if ( swp->data->device == device )
+                    return swp;
+            }
+            return nullptr;
         }
 
         resolution window::getDisplayResolution()

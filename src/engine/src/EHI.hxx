@@ -24,8 +24,6 @@ namespace Engine
         bool supportLayers();
         bool supportExtensions();
         void create( VkInstanceCreateInfo createInfo );
-        window::types::window regWindow( window::types::window window );
-        types::device regDevice( types::device device );
         std::vector<const char *> layers;
         std::vector<const char *> extensions;
         VkDebugUtilsMessengerEXT debugMessenger { nullptr };

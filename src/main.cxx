@@ -86,7 +86,7 @@ namespace Game
 
         Engine::window::types::window createWindow( Engine::window::settings settings ) override
         {
-            return data->regWindow( new W { this, settings } );
+            return new W { this, settings };
         }
 
       protected:
@@ -119,8 +119,8 @@ namespace Game
 int main()
 {
     auto wnd { Game::engine->createWindow( { 800, 600, "test", 0, 1 } ) };
-    auto device { Game::engine->createDevice( Game::engine->getDevices()[ 0 ] ) };
-    auto swapchain { device->bindWindow( wnd ) };
+    auto device { Game::engine->createDevice( Game::engine->getDevices()[ 0 ], { wnd } ) };
+    auto swapchain { device->getLink( wnd ) };
     while ( !wnd->shouldClose() )
     {
         wnd->updateEvents();
