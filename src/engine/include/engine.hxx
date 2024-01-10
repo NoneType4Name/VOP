@@ -105,7 +105,6 @@ namespace Engine
 
       private:
         void construct( types::deviceDescription description );
-        // virtual void setup();
         virtual void setup( std::vector<window::types::window> windows );
 
       public:
@@ -183,6 +182,13 @@ namespace Engine
         VkCommandBuffer handle { nullptr };
         ~commandBuffer();
     };
+
+    // class renderPass
+    // {
+    //     DEFINE_DATA;
+
+    //   public:
+    // };
 
     // class ENGINE_EXPORT shader
     // {
@@ -290,6 +296,7 @@ namespace Engine
         instance( bool, const char *appName, uint32_t appVersion );
         virtual window::types::window createWindow( window::settings settings );
         virtual types::device createDevice( types::deviceDescription description, std::vector<window::types::window> windows );
+        // virtual types::renderPass createRenderPass();
         // virtual std::pair<types::swapchain, types::device> makeLink( window::types::window window, types::deviceDescription description );
         // ? virtual types::pass createRenderPass( types::swapchain swapchain );
         const std::vector<types::deviceDescription> &getDevices();

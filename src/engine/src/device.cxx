@@ -148,6 +148,11 @@ namespace Engine
         VkPhysicalDeviceFeatures2 physicalDeviceFeatures {};
         DeviceCreateInfo.pEnabledFeatures = &features;
         data->create( DeviceCreateInfo );
+        for ( auto &wnd : windows )
+        {
+            data->swapchains.emplace( new swapchain { this, wnd } );
+        }
+
         VkCommandPoolCreateInfo poolCI {};
         poolCI.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
         poolCI.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
