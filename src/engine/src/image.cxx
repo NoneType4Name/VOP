@@ -41,7 +41,16 @@ namespace Engine
     image::image( types::device device, types::image image, VkImageViewCreateInfo ImageViewCreateInfo )
     {
         DEFINE_DATA_FIELD( device, image, ImageViewCreateInfo );
-        data->device->data->images.insert( this );
+        if ( image )
+        {
+            data->ImageInfo = image->data->ImageInfo;
+            data->device->data->images.insert( this );
+        }
+        else
+        {
+            data->ImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+        }
+
         ImageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         CHECK_RESULT( vkCreateImageView( data->device->data->handle, &ImageViewCreateInfo, ALLOCATION_CALLBACK, &data->view ) );
     }

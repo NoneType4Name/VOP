@@ -207,7 +207,14 @@ namespace Engine
         semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
         for ( size_t i { 0 }; i < imgs.size(); i++ )
         {
-            parent->images[ i ].image = new image { device, nullptr, { .image = imgs[ i ], .viewType = VK_IMAGE_VIEW_TYPE_2D, .format = format.format, .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 } } };
+            parent->images[ i ].image                                        = new image { device, nullptr, { .image = imgs[ i ], .viewType = VK_IMAGE_VIEW_TYPE_2D, .format = format.format, .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 } } };
+            parent->images[ i ].image->data->ImageInfo.extent                = { createInfo.imageExtent.width, createInfo.imageExtent.height, 1 };
+            parent->images[ i ].image->data->ImageInfo.format                = createInfo.imageFormat;
+            parent->images[ i ].image->data->ImageInfo.sharingMode           = createInfo.imageSharingMode;
+            parent->images[ i ].image->data->ImageInfo.arrayLayers           = createInfo.imageArrayLayers;
+            parent->images[ i ].image->data->ImageInfo.usage                 = createInfo.imageUsage;
+            parent->images[ i ].image->data->ImageInfo.queueFamilyIndexCount = createInfo.queueFamilyIndexCount;
+            parent->images[ i ].image->data->ImageInfo.pQueueFamilyIndices   = createInfo.pQueueFamilyIndices;
             CHECK_RESULT( vkCreateSemaphore( device->data->handle, &semaphoreInfo, ALLOCATION_CALLBACK, &parent->images[ i ].isAvailable ) );
             CHECK_RESULT( vkCreateSemaphore( device->data->handle, &semaphoreInfo, ALLOCATION_CALLBACK, &parent->images[ i ].isRendered ) );
         }
