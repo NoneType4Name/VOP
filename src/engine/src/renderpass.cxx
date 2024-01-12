@@ -87,9 +87,16 @@ namespace Engine
     //     dataPointer.clear();
     // }
 
-    pass::pass() {};
+    renderPass::renderPass( bool, subpass subpasses )
+    {
+    }
 
-    pass::pass( swapchain *swapchain )
+    renderPass::renderPass( subpass subpasses ) :
+        renderPass( 1, subpasses )
+    {
+    }
+
+    void renderPass::construct( subpass subpasses )
     {
         DEFINE_DATA_FIELD
         data->swapchain = swapchain;

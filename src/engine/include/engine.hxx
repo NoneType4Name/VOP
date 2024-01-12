@@ -19,6 +19,7 @@
       public:                          \
         class ENGINE_EXPORT DATA_TYPE; \
         const std::unique_ptr<DATA_TYPE> data;
+#    include <set>
 #    include <array>
 #    include <memory>
 #    include <vector>
@@ -186,7 +187,6 @@ namespace Engine
       public:
         struct attachment
         {
-            attachment *next;
             VkAttachmentDescriptionFlags flags;
             VkAttachmentLoadOp loadOp;
             VkAttachmentStoreOp storeOp;
@@ -196,13 +196,27 @@ namespace Engine
             types::image attachment;
         };
 
-        renderPass() = delete;
-        renderPass( attachment attachments );
-        ~renderPass();
-
-        struct dependency
+        struct colorAttachment
         {
+            attachment ColorAttachment;
+            attachment ResolveAttachment;
+            attachment DepthStencilAttachmen;
         };
+
+        struct subpass
+        {
+            std::set<attachment> InputAttachments;
+            std::set<colorAttachment> ColorAttachments;
+        };
+
+      private:
+        void contruct( subpass subpasses );
+        virtual void setup();
+
+      public:
+        renderPass() = delete;
+        renderPass( subpass subpasses );
+        ~renderPass();
     };
 
     // class ENGINE_EXPORT shader
