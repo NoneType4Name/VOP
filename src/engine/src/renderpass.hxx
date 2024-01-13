@@ -7,13 +7,14 @@
 
 namespace Engine
 {
-    struct pass::DATA_TYPE
+    struct renderPass::DATA_TYPE
     {
-        DATA_TYPE( types::pass parent ) :
-            parent { parent } {}
+        DATA_TYPE( types::renderPass parent, types::swapchain swapchain );
+        ~DATA_TYPE();
+        void create( VkRenderPassCreateInfo createInfo );
         VkRenderPass handle { nullptr };
-        Engine::types::swapchain swapchain { nullptr };
-        types::pass parent;
+        types::swapchain swapchain;
+        types::renderPass parent;
     };
 } // namespace Engine
 #endif

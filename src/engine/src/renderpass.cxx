@@ -87,29 +87,48 @@ namespace Engine
     //     dataPointer.clear();
     // }
 
-    renderPass::renderPass( bool, subpass subpasses )
+    renderPass::renderPass( bool, types::swapchain swapchain, std::vector<subpass> subpasses )
+    {
+        DEFINE_DATA_FIELD( swapchain );
+        construct( swapchain, subpasses );
+    }
+
+    renderPass::renderPass( types::swapchain swapchain, std::vector<subpass> subpasses ) :
+        renderPass( 1, swapchain, subpasses )
+    {
+        setup( swapchain, subpasses );
+    }
+
+    renderPass::~renderPass()
+    {
+        vkDestroyRenderPass( data->swapchain->data->device->data->handle, data->handle, ALLOCATION_CALLBACK );
+    }
+
+    renderPass::DATA_TYPE::DATA_TYPE( types::renderPass parent, types::swapchain swapchain ) :
+        parent { parent }, swapchain { swapchain }
     {
     }
 
-    renderPass::renderPass( subpass subpasses ) :
-        renderPass( 1, subpasses )
+    renderPass::DATA_TYPE::~DATA_TYPE()
     {
     }
 
-    void renderPass::construct( subpass subpasses )
+    void renderPass::construct( types::swapchain swapchain, std::vector<subpass> subpasses )
     {
-        DEFINE_DATA_FIELD
-        data->swapchain = swapchain;
-        std::vector<void *> pData;
-        VkRenderPassCreateInfo createInfo {};
-        data->swapchain->data->window->data->instance->data->setup->renderpassInfo( this, data->swapchain, createInfo, pData, data->swapchain->data->window->data->instance->data->userPointer );
-        createInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+        // std::vector<void *> pData;
+        // VkRenderPassCreateInfo createInfo {};
+        // data->swapchain->data->window->data->instance->data->setup->renderpassInfo( this, data->swapchain, createInfo, pData, data->swapchain->data->window->data->instance->data->userPointer );
         CHECK_RESULT( vkCreateRenderPass( swapchain->data->device->data->handle, &createInfo, ALLOCATION_CALLBACK, &data->handle ) );
         data->swapchain->data->window->data->instance->data->setup->renderpassInfoClear( this, data->swapchain, pData, data->swapchain->data->window->data->instance->data->userPointer );
     }
 
-    pass::~pass()
+    void renderPass::setup( types::swapchain swapchain, std::vector<subpass> subpasses )
     {
-        vkDestroyRenderPass( data->swapchain->data->device->data->handle, data->handle, ALLOCATION_CALLBACK );
     }
+
+    void renderPass::DATA_TYPE::create( VkRenderPassCreateInfo createInfo )
+    {
+        createInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    }
+
 } // namespace Engine

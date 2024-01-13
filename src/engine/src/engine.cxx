@@ -33,15 +33,16 @@ namespace
 
 namespace Engine
 {
-    instance::instance( const char *appName, uint32_t appVersion )
+    instance::instance( bool, const char *appName, uint32_t appVersion )
     {
         DEFINE_DATA_FIELD();
-        setup( appName, appVersion );
+        construct( appName, appVersion );
     }
 
-    instance::instance( bool, const char *appName, uint32_t appVersion ) :
-        instance( appName, appVersion )
+    instance::instance( const char *appName, uint32_t appVersion ) :
+        instance { 1, appName, appVersion }
     {
+        setup( appName, appVersion );
     }
 
     instance::~instance()
@@ -59,6 +60,10 @@ namespace Engine
             delete *dI++;
         data->destroyDebugLayerCallback();
         vkDestroyInstance( data->handle, ALLOCATION_CALLBACK );
+    }
+
+    void instance::construct( const char *appName, uint32_t appVersion )
+    {
     }
 
     void instance::setup( const char *appName, uint32_t appVersion )

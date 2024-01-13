@@ -89,7 +89,7 @@ namespace Engine
     swapchain::swapchain( types::device device, window::types::window window ) :
         swapchain( 1, device, window )
     {
-        setup();
+        setup( device, window );
         // DEFINE_DATA_FIELD( device, window );
         // // data->device->data->regSwapchain( this );
         // data->device->data->swapchains.emplace( this );
@@ -122,14 +122,14 @@ namespace Engine
         data->window->data->swapchains.emplace( this );
     }
 
-    void swapchain::setup()
+    void swapchain::setup( types::device device, window::types::window window )
     {
         VkSwapchainCreateInfoKHR createInfo {};
         VkSurfaceFormatKHR SurfaceFormat { data->properties.formats[ 0 ] };
         for ( const auto &format : data->properties.formats )
         {
             VkFormatProperties properties;
-            vkGetPhysicalDeviceFormatProperties( data->device->data->description->data->phDevice, format.format, &properties );
+            vkGetPhysicalDeviceFormatProperties( device->data->description->data->phDevice, format.format, &properties );
             if ( format.format == VK_FORMAT_B8G8R8A8_SRGB && format.colorSpace == VK_COLORSPACE_SRGB_NONLINEAR_KHR ) SurfaceFormat = format;
         }
 
@@ -139,9 +139,9 @@ namespace Engine
             if ( mode == VK_PRESENT_MODE_MAILBOX_KHR ) data->presentMode = mode;
         }
 
-        data->depthImageFormat = data->device->data->formatPriority( { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT }, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT );
+        data->depthImageFormat = device->data->formatPriority( { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT }, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT );
         int width, height;
-        glfwGetFramebufferSize( data->window->data->window, &width, &height );
+        glfwGetFramebufferSize( window->data->window, &width, &height );
         createInfo.imageUsage         = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
         createInfo.imageFormat        = SurfaceFormat.format;
         createInfo.imageExtent.width  = std::clamp( static_cast<uint32_t>( width ), data->properties.capabilities.minImageExtent.width, data->properties.capabilities.maxImageExtent.width );

@@ -21,7 +21,7 @@ namespace Engine
         window::window( instance *instance, settings settings ) :
             window( 1, instance, settings )
         {
-            setup();
+            setup( instance, settings );
         }
 
         window::~window()
@@ -80,9 +80,9 @@ namespace Engine
                                     from_wnd->eventCallBack( key, scancode, action, mods ); } );
         }
 
-        void window::setup()
+        void window::setup( instance *instance, settings settings )
         {
-            data->createSurface( data->instance->data->handle, 0, 0 );
+            data->createSurface( instance->data->handle, 0, 0 );
         }
 
         Engine::types::swapchain window::getLink( Engine::types::device device )

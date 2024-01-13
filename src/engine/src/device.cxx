@@ -43,13 +43,13 @@ namespace Engine
     device::device( types::deviceDescription description, std::vector<window::types::window> windows ) :
         device( 1, description, windows )
     {
-        setup( windows );
+        setup( description, windows );
     }
 
     device::device( bool, types::deviceDescription description, std::vector<window::types::window> windows )
     {
         DEFINE_DATA_FIELD( description );
-        construct( description );
+        construct( description, windows );
     }
 
     device::~device()
@@ -93,13 +93,12 @@ namespace Engine
     {
     }
 
-    void device::construct( types::deviceDescription description )
+    void device::construct( types::deviceDescription description, std::vector<window::types::window> windows )
     {
-        DEFINE_DATA_FIELD( description );
         data->description->data->instance->data->devices.emplace( this );
     }
 
-    void device::setup( std::vector<window::types::window> windows )
+    void device::setup( types::deviceDescription description, std::vector<window::types::window> windows )
     {
         VkDeviceCreateInfo DeviceCreateInfo {};
         // VkPhysicalDeviceDescriptorIndexingFeatures indexFeatures {};

@@ -46,7 +46,7 @@ namespace Game
     struct W : public Engine::window::window
     {
       protected:
-        void setup() override
+        void setup( Engine::instance *instance, Engine::window::settings settings ) override
         {
             data->createSurface( data->instance->data->handle, 0, 0 );
         }

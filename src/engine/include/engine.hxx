@@ -36,10 +36,11 @@ namespace Engine
     DEFINE_HANDLE( instance );
     DEFINE_HANDLE( deviceDescription );
     DEFINE_HANDLE( device );
-    DEFINE_HANDLE( swapchain );
     DEFINE_HANDLE( image );
     DEFINE_HANDLE( buffer );
     DEFINE_HANDLE( commandBuffer );
+    DEFINE_HANDLE( swapchain );
+    DEFINE_HANDLE( renderPass );
 
     namespace window
     {
@@ -66,8 +67,8 @@ namespace Engine
             DEFINE_DATA;
 
           protected:
-            virtual void setup();
             void construct( instance *instance, settings settings );
+            virtual void setup( instance *instance, settings settings );
 
           public:
             window() = delete;
@@ -105,8 +106,8 @@ namespace Engine
         DEFINE_DATA;
 
       private:
-        void construct( types::deviceDescription description );
-        virtual void setup( std::vector<window::types::window> windows );
+        void construct( types::deviceDescription description, std::vector<window::types::window> windows );
+        virtual void setup( types::deviceDescription description, std::vector<window::types::window> windows );
 
       public:
         device() = delete;
@@ -125,7 +126,7 @@ namespace Engine
         DEFINE_DATA;
 
       private:
-        virtual void setup();
+        virtual void setup( types::device device, window::types::window window );
         void construct( types::device device, window::types::window window );
 
       public:
@@ -210,12 +211,13 @@ namespace Engine
         };
 
       private:
-        void contruct( subpass subpasses );
-        virtual void setup();
+        void construct( types::swapchain swapchain, std::vector<subpass> subpasses );
+        virtual void setup( types::swapchain swapchain, std::vector<subpass> subpasses );
 
       public:
         renderPass() = delete;
-        renderPass( subpass subpasses );
+        renderPass( types::swapchain swapchain, std::vector<subpass> subpasses );
+        renderPass( bool, types::swapchain swapchain, std::vector<subpass> subpasses );
         ~renderPass();
     };
 
@@ -318,6 +320,7 @@ namespace Engine
         DEFINE_DATA;
 
       protected:
+        void construct( const char *appName, uint32_t appVersion );
         virtual void setup( const char *appName, uint32_t appVersion );
 
       public:
