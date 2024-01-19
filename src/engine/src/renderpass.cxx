@@ -117,18 +117,32 @@ namespace Engine
     {
         // std::vector<void *> pData;
         // VkRenderPassCreateInfo createInfo {};
-        // data->swapchain->data->window->data->instance->data->setup->renderpassInfo( this, data->swapchain, createInfo, pData, data->swapchain->data->window->data->instance->data->userPointer );
-        CHECK_RESULT( vkCreateRenderPass( swapchain->data->device->data->handle, &createInfo, ALLOCATION_CALLBACK, &data->handle ) );
-        data->swapchain->data->window->data->instance->data->setup->renderpassInfoClear( this, data->swapchain, pData, data->swapchain->data->window->data->instance->data->userPointer );
     }
 
     void renderPass::setup( types::swapchain swapchain, std::vector<subpass> subpasses )
     {
     }
 
-    void renderPass::DATA_TYPE::create( VkRenderPassCreateInfo createInfo )
+    void renderPass::DATA_TYPE::create( VkRenderPassCreateInfo createInfo, std::vector<subpass> subpasses )
     {
         createInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+        std::set<subpass> setSubpasses;
+        std::vector<VkAttachmentDescription> attachments;
+        std::vector<VkSubpassDependency> deps;
+        deps.reserve( subpasses.size() );
+        for ( size_t i { 0 }; i < subpasses.size(); ++i )
+        {
+            setSubpasses.insert( subpasses[ i ] );
+            deps.emplace_back();
+            deps.back().srcSubpass      = ( i - 1 ) > 0 ? i - 1 : VK_SUBPASS_EXTERNAL;
+            deps.back().srcAccessMask   = subpasses[ i - 1 ].accessFlags;
+            deps.back().srcStageMask    = subpasses[ i - 1 ].stageFlags;
+            deps.back().dstSubpass      = ( i - subpasses.size() ) ? i - 1 : VK_SUBPASS_EXTERNAL;
+            deps.back().dstAccessMask   = subpasses[ i ].accessFlags;
+            deps.back().dstStageMask    = subpasses[ i ].stageFlags;
+            deps.back().dependencyFlags = subpasses[ i - 1 ].dependencyFlags;
+        }
+        CHECK_RESULT( vkCreateRenderPass( swapchain->data->device->data->handle, &createInfo, ALLOCATION_CALLBACK, &handle ) );
     }
 
 } // namespace Engine

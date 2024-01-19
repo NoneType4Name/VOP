@@ -208,6 +208,9 @@ namespace Engine
         {
             std::set<attachment> InputAttachments;
             std::set<colorAttachment> ColorAttachments;
+            VkPipelineStageFlags stageFlags;
+            VkAccessFlags accessFlags;
+            VkDependencyFlags dependencyFlags;
         };
 
       private:

@@ -45,7 +45,7 @@ namespace Engine
 
         void window::construct( instance *instance, settings settings )
         {
-            const_cast<std ::unique_ptr<data_T> &>( data ) = std ::make_unique<data_T>( this, instance );
+            DEFINE_DATA_FIELD( instance );
             data->instance->data->windows.emplace( std::make_pair<types::window, std::vector<Engine::types::swapchain>>( this, {} ) );
             resolution displayRes { getDisplayResolution() };
             auto mode = glfwGetVideoMode( glfwGetPrimaryMonitor() );

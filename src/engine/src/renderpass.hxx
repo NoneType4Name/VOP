@@ -11,7 +11,7 @@ namespace Engine
     {
         DATA_TYPE( types::renderPass parent, types::swapchain swapchain );
         ~DATA_TYPE();
-        void create( VkRenderPassCreateInfo createInfo );
+        void create( VkRenderPassCreateInfo createInfo, std::vector<subpass> subpasses );
         VkRenderPass handle { nullptr };
         types::swapchain swapchain;
         types::renderPass parent;

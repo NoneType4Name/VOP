@@ -82,6 +82,7 @@ namespace Game
         E( const char *appName, uint32_t appVersion ) :
             Engine::instance( 1, appName, appVersion )
         {
+            setup( appName, appVersion );
         }
 
         Engine::window::types::window createWindow( Engine::window::settings settings ) override
@@ -89,24 +90,24 @@ namespace Game
             return new W { this, settings };
         }
 
-      protected:
-        void setup( const char *appName, uint32_t appVersion ) override
-        {
-            VkApplicationInfo ApplicationInfo {};
-            ApplicationInfo.sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-            ApplicationInfo.apiVersion         = VK_API_VERSION_1_0;
-            ApplicationInfo.pApplicationName   = appName;
-            ApplicationInfo.applicationVersion = appVersion;
-            VkInstanceCreateInfo InstanceCreateInfo {};
-            InstanceCreateInfo.sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-            InstanceCreateInfo.pNext                   = nullptr;
-            InstanceCreateInfo.enabledLayerCount       = 0;
-            InstanceCreateInfo.ppEnabledLayerNames     = nullptr;
-            InstanceCreateInfo.enabledExtensionCount   = 0;
-            InstanceCreateInfo.ppEnabledExtensionNames = nullptr;
-            InstanceCreateInfo.pApplicationInfo        = &ApplicationInfo;
-            data->create( InstanceCreateInfo );
-        }
+        //   protected:
+        //     void setup( const char *appName, uint32_t appVersion ) override
+        //     {
+        //         VkApplicationInfo ApplicationInfo {};
+        //         ApplicationInfo.sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+        //         ApplicationInfo.apiVersion         = VK_API_VERSION_1_0;
+        //         ApplicationInfo.pApplicationName   = appName;
+        //         ApplicationInfo.applicationVersion = appVersion;
+        //         VkInstanceCreateInfo InstanceCreateInfo {};
+        //         InstanceCreateInfo.sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+        //         InstanceCreateInfo.pNext                   = nullptr;
+        //         InstanceCreateInfo.enabledLayerCount       = 0;
+        //         InstanceCreateInfo.ppEnabledLayerNames     = nullptr;
+        //         InstanceCreateInfo.enabledExtensionCount   = 0;
+        //         InstanceCreateInfo.ppEnabledExtensionNames = nullptr;
+        //         InstanceCreateInfo.pApplicationInfo        = &ApplicationInfo;
+        //         data->create( InstanceCreateInfo );
+        //     }
     };
     std::unique_ptr<E> engine { new E { "test", 0 } };
 
