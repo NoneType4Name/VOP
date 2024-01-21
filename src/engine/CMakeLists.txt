@@ -39,19 +39,19 @@ target_link_libraries(engine spdlog::spdlog)
 target_link_libraries(engine tinyobjloader::tinyobjloader)
 target_link_libraries(engine glm::glm)
 
-if(${ENGINE_MODIFY_SUPPORT})
+# if(${ENGINE_MODIFY_SUPPORT})
     target_include_directories(
         engine
         PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>"
         PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
     )
-else()
-    target_include_directories(
-        engine
-        PRIVATE "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>"
-        PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
-    )
-endif()
+# else()
+#     target_include_directories(
+#         engine
+#         PRIVATE "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>"
+#         PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+#     )
+# endif()
 
 generate_export_header(engine EXPORT_FILE_NAME ${CMAKE_CURRENT_SOURCE_DIR}/include/engine_export.hxx)
 target_compile_definitions(engine PUBLIC "$<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:engine_STATIC_DEFINE>")
