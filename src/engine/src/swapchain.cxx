@@ -2,7 +2,7 @@
 #include <device.hxx>
 #include <surface.hxx>
 // #include <image.hxx>
-#include <EHI.hxx>
+#include <instance.hxx>
 
 namespace Engine
 {
@@ -83,13 +83,50 @@ namespace Engine
 
     swapchain::swapchain( bool, types::device device, window::types::window window )
     {
-        construct( device, window );
+        DEFINE_DATA_FIELD( device, window );
+        data->device->data->swapchains.emplace( this );
+        data->window->data->swapchains.emplace( this );
+        uint32_t c;
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR( device->data->description->data->phDevice, window->surface, &properties.capabilities );
+        glfwSetWindowSizeLimits( window->glfwHandle, properties.capabilities.minImageExtent.width, properties.capabilities.minImageExtent.height, properties.capabilities.maxImageExtent.width, properties.capabilities.maxImageExtent.height );
+        vkGetPhysicalDeviceSurfaceFormatsKHR( device->data->description->data->phDevice, window->surface, &c, nullptr );
+        properties.formats.resize( c );
+        vkGetPhysicalDeviceSurfaceFormatsKHR( device->data->description->data->phDevice, window->surface, &c, properties.formats.data() );
+        vkGetPhysicalDeviceSurfacePresentModesKHR( device->data->description->data->phDevice, window->surface, &c, nullptr );
+        properties.presentModes.resize( c );
+        vkGetPhysicalDeviceSurfacePresentModesKHR( device->data->description->data->phDevice, window->surface, &c, properties.presentModes.data() );
     }
 
     swapchain::swapchain( types::device device, window::types::window window ) :
         swapchain( 1, device, window )
     {
-        setup( device, window );
+        VkSwapchainCreateInfoKHR createInfo {};
+        VkSurfaceFormatKHR SurfaceFormat { properties.formats[ 0 ] };
+        for ( const auto &format : properties.formats )
+        {
+            VkFormatProperties properties;
+            vkGetPhysicalDeviceFormatProperties( device->data->description->data->phDevice, format.format, &properties );
+            if ( format.format == VK_FORMAT_B8G8R8A8_SRGB && format.colorSpace == VK_COLORSPACE_SRGB_NONLINEAR_KHR ) SurfaceFormat = format;
+        }
+
+        presentMode = VK_PRESENT_MODE_FIFO_KHR;
+        for ( const auto &mode : properties.presentModes )
+        {
+            if ( mode == VK_PRESENT_MODE_MAILBOX_KHR ) presentMode = mode;
+        }
+
+        int width, height;
+        glfwGetFramebufferSize( window->glfwHandle, &width, &height );
+        createInfo.imageUsage         = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+        createInfo.imageFormat        = SurfaceFormat.format;
+        createInfo.imageExtent.width  = std::clamp( static_cast<uint32_t>( width ), properties.capabilities.minImageExtent.width, properties.capabilities.maxImageExtent.width );
+        createInfo.imageExtent.height = std::clamp( static_cast<uint32_t>( height ), properties.capabilities.minImageExtent.height, properties.capabilities.maxImageExtent.height );
+        createInfo.minImageCount      = properties.capabilities.minImageCount;
+        createInfo.clipped            = VK_FALSE;
+        createInfo.oldSwapchain       = handle;
+        createInfo.preTransform       = properties.capabilities.currentTransform;
+        createInfo.compositeAlpha     = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+        data->create( createInfo );
         // DEFINE_DATA_FIELD( device, window );
         // // data->device->data->regSwapchain( this );
         // data->device->data->swapchains.emplace( this );
@@ -97,8 +134,7 @@ namespace Engine
         // std::vector<void *> swapchainData;
         // std::vector<void *> pData;
         // data->window->data->instance->data->setup->swapchainInfo( this, data->createInfo, swapchainData, data->window->data->instance->data->userPointer );
-        // data->setup( this, data->createInfo, pData, data->window->data->instance->data->userPointer );
-        // CHECK_RESULT( vkCreateSwapchainKHR( data->device->data->handle, &data->createInfo, ALLOCATION_CALLBACK, &data->swapchain ) );
+        // CHECK_RESULT( vkCreateSwapchainKHR( data->device->handle, &data->createInfo, ALLOCATION_CALLBACK, &data->swapchain ) );
         // data->setupImgs();
     }
 
@@ -106,79 +142,27 @@ namespace Engine
     {
         for ( auto &img : images )
         {
-            vkDestroySemaphore( data->device->data->handle, img.isAvailable, ALLOCATION_CALLBACK );
-            vkDestroySemaphore( data->device->data->handle, img.isRendered, ALLOCATION_CALLBACK );
+            vkDestroySemaphore( data->device->handle, img.available, ALLOCATION_CALLBACK );
+            vkDestroySemaphore( data->device->handle, img.rendered, ALLOCATION_CALLBACK );
             delete img.image;
         }
-        vkDestroySwapchainKHR( data->device->data->handle, data->handle, ALLOCATION_CALLBACK );
+        vkDestroySwapchainKHR( data->device->handle, handle, ALLOCATION_CALLBACK );
         data->device->data->swapchains.erase( this );
         data->window->data->swapchains.erase( this );
     };
 
-    void swapchain::construct( types::device device, window::types::window window )
-    {
-        DEFINE_DATA_FIELD( device, window );
-        data->device->data->swapchains.emplace( this );
-        data->window->data->swapchains.emplace( this );
-    }
-
-    void swapchain::setup( types::device device, window::types::window window )
-    {
-        VkSwapchainCreateInfoKHR createInfo {};
-        VkSurfaceFormatKHR SurfaceFormat { data->properties.formats[ 0 ] };
-        for ( const auto &format : data->properties.formats )
-        {
-            VkFormatProperties properties;
-            vkGetPhysicalDeviceFormatProperties( device->data->description->data->phDevice, format.format, &properties );
-            if ( format.format == VK_FORMAT_B8G8R8A8_SRGB && format.colorSpace == VK_COLORSPACE_SRGB_NONLINEAR_KHR ) SurfaceFormat = format;
-        }
-
-        data->presentMode = VK_PRESENT_MODE_FIFO_KHR;
-        for ( const auto &mode : data->properties.presentModes )
-        {
-            if ( mode == VK_PRESENT_MODE_MAILBOX_KHR ) data->presentMode = mode;
-        }
-
-        data->depthImageFormat = device->data->formatPriority( { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT }, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT );
-        int width, height;
-        glfwGetFramebufferSize( window->data->window, &width, &height );
-        createInfo.imageUsage         = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-        createInfo.imageFormat        = SurfaceFormat.format;
-        createInfo.imageExtent.width  = std::clamp( static_cast<uint32_t>( width ), data->properties.capabilities.minImageExtent.width, data->properties.capabilities.maxImageExtent.width );
-        createInfo.imageExtent.height = std::clamp( static_cast<uint32_t>( height ), data->properties.capabilities.minImageExtent.height, data->properties.capabilities.maxImageExtent.height );
-        createInfo.minImageCount      = data->properties.capabilities.minImageCount;
-        createInfo.clipped            = VK_FALSE;
-        createInfo.oldSwapchain       = data->handle;
-        createInfo.preTransform       = data->properties.capabilities.currentTransform;
-        createInfo.compositeAlpha     = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-        data->create( createInfo );
-    }
-
-    swapchain::DATA_TYPE::properties_T::properties_T( types::device device, window::types::window window )
-    {
-        uint32_t c;
-        vkGetPhysicalDeviceSurfaceCapabilitiesKHR( device->data->description->data->phDevice, window->data->surface, &capabilities );
-        glfwSetWindowSizeLimits( window->data->window, capabilities.minImageExtent.width, capabilities.minImageExtent.height, capabilities.maxImageExtent.width, capabilities.maxImageExtent.height );
-        vkGetPhysicalDeviceSurfaceFormatsKHR( device->data->description->data->phDevice, window->data->surface, &c, nullptr );
-        formats.resize( c );
-        vkGetPhysicalDeviceSurfaceFormatsKHR( device->data->description->data->phDevice, window->data->surface, &c, formats.data() );
-        vkGetPhysicalDeviceSurfacePresentModesKHR( device->data->description->data->phDevice, window->data->surface, &c, nullptr );
-        presentModes.resize( c );
-        vkGetPhysicalDeviceSurfacePresentModesKHR( device->data->description->data->phDevice, window->data->surface, &c, presentModes.data() );
-    }
-
     void swapchain::DATA_TYPE::create( VkSwapchainCreateInfoKHR createInfo )
     {
         createInfo.sType   = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-        createInfo.surface = window->data->surface;
-        if ( createInfo.minImageCount < properties.capabilities.minImageCount )
-            createInfo.minImageCount = properties.capabilities.minImageCount;
-        format.format                         = createInfo.imageFormat;
-        format.colorSpace                     = createInfo.imageColorSpace;
-        presentMode                           = createInfo.presentMode;
-        createInfo.imageExtent.width          = std::clamp( static_cast<uint32_t>( createInfo.imageExtent.width ), properties.capabilities.minImageExtent.width, properties.capabilities.maxImageExtent.width );
-        createInfo.imageExtent.height         = std::clamp( static_cast<uint32_t>( createInfo.imageExtent.height ), properties.capabilities.minImageExtent.height, properties.capabilities.maxImageExtent.height );
-        properties.capabilities.currentExtent = createInfo.imageExtent;
+        createInfo.surface = window->surface;
+        if ( createInfo.minImageCount < parent->properties.capabilities.minImageCount )
+            createInfo.minImageCount = parent->properties.capabilities.minImageCount;
+        parent->format.format                         = createInfo.imageFormat;
+        parent->format.colorSpace                     = createInfo.imageColorSpace;
+        parent->presentMode                           = createInfo.presentMode;
+        createInfo.imageExtent.width                  = std::clamp( static_cast<uint32_t>( createInfo.imageExtent.width ), parent->properties.capabilities.minImageExtent.width, parent->properties.capabilities.maxImageExtent.width );
+        createInfo.imageExtent.height                 = std::clamp( static_cast<uint32_t>( createInfo.imageExtent.height ), parent->properties.capabilities.minImageExtent.height, parent->properties.capabilities.maxImageExtent.height );
+        parent->properties.capabilities.currentExtent = createInfo.imageExtent;
         if ( !createInfo.imageArrayLayers )
             createInfo.imageArrayLayers = 1;
         if ( device->data->queuesSet.count() == device->data->queuesSet.getUniqueIndecies().size() )
@@ -196,32 +180,32 @@ namespace Engine
         {
             createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
         }
-        createInfo.oldSwapchain = handle;
-        vkCreateSwapchainKHR( device->data->handle, &createInfo, ALLOCATION_CALLBACK, &handle );
+        createInfo.oldSwapchain = parent->handle;
+        vkCreateSwapchainKHR( device->handle, &createInfo, ALLOCATION_CALLBACK, &parent->handle );
         uint32_t c;
-        vkGetSwapchainImagesKHR( device->data->handle, handle, &c, nullptr );
+        vkGetSwapchainImagesKHR( device->handle, parent->handle, &c, nullptr );
         std::vector<VkImage> imgs { c };
         parent->images.resize( c );
-        vkGetSwapchainImagesKHR( device->data->handle, handle, &c, imgs.data() );
+        vkGetSwapchainImagesKHR( device->handle, parent->handle, &c, imgs.data() );
         VkSemaphoreCreateInfo semaphoreInfo {};
         semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
         for ( size_t i { 0 }; i < imgs.size(); i++ )
         {
-            parent->images[ i ].image                                        = new image { device, nullptr, { .image = imgs[ i ], .viewType = VK_IMAGE_VIEW_TYPE_2D, .format = format.format, .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 } } };
-            parent->images[ i ].image->data->ImageInfo.extent                = { createInfo.imageExtent.width, createInfo.imageExtent.height, 1 };
-            parent->images[ i ].image->data->ImageInfo.format                = createInfo.imageFormat;
-            parent->images[ i ].image->data->ImageInfo.sharingMode           = createInfo.imageSharingMode;
-            parent->images[ i ].image->data->ImageInfo.arrayLayers           = createInfo.imageArrayLayers;
-            parent->images[ i ].image->data->ImageInfo.usage                 = createInfo.imageUsage;
-            parent->images[ i ].image->data->ImageInfo.queueFamilyIndexCount = createInfo.queueFamilyIndexCount;
-            parent->images[ i ].image->data->ImageInfo.pQueueFamilyIndices   = createInfo.pQueueFamilyIndices;
-            CHECK_RESULT( vkCreateSemaphore( device->data->handle, &semaphoreInfo, ALLOCATION_CALLBACK, &parent->images[ i ].isAvailable ) );
-            CHECK_RESULT( vkCreateSemaphore( device->data->handle, &semaphoreInfo, ALLOCATION_CALLBACK, &parent->images[ i ].isRendered ) );
+            VkImageCreateInfo imCreateInfo {};
+            imCreateInfo.imageType     = VK_IMAGE_TYPE_2D;
+            imCreateInfo.arrayLayers   = createInfo.imageArrayLayers;
+            imCreateInfo.samples       = VK_SAMPLE_COUNT_FLAG_BITS_MAX_ENUM;
+            imCreateInfo.usage         = createInfo.imageUsage;
+            imCreateInfo.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+            imCreateInfo.extent        = { createInfo.imageExtent.width, createInfo.imageExtent.height, 1 };
+            parent->images[ i ].image  = new image { device, imCreateInfo, { .image = imgs[ i ], .viewType = VK_IMAGE_VIEW_TYPE_2D, .format = parent->format.format, .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 } }, 0 };
+            CHECK_RESULT( vkCreateSemaphore( device->handle, &semaphoreInfo, ALLOCATION_CALLBACK, &parent->images[ i ].available ) );
+            CHECK_RESULT( vkCreateSemaphore( device->handle, &semaphoreInfo, ALLOCATION_CALLBACK, &parent->images[ i ].rendered ) );
         }
     }
 
     swapchain::DATA_TYPE::DATA_TYPE( types::swapchain parent, types::device device, window::types::window window ) :
-        parent { parent }, properties( device, window )
+        parent { parent }
     {
         this->device = device;
         this->window = window;

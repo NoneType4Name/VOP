@@ -4,8 +4,6 @@
 #define GLFW_EXPOSE_NATIVE_WIN32
 #define ENGINE_RESOLUTION_TYPE uint16_t
 
-// #include <vulkan/vulkan.hpp>
-#include <stddef.h>
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan.h>
 #include <GLFW/glfw3native.h>

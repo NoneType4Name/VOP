@@ -10,11 +10,8 @@ namespace Engine
     struct window::window::DATA_TYPE
     {
         DATA_TYPE( types::window parent, instance *instance );
-        void createSurface( VkInstance instance, const void *pNext, VkFlags flags );
-        void destroySurface( VkInstance instance );
+        void createSurface( const void *pNext, VkFlags flags );
         ~DATA_TYPE();
-        GLFWwindow *window { nullptr };
-        VkSurfaceKHR surface { nullptr };
         std::set<Engine::types::swapchain> swapchains;
         Engine::instance *instance;
         types::window parent;

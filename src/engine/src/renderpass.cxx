@@ -1,7 +1,7 @@
 #include <renderpass.hxx>
 #include <swapchain.hxx>
 #include <device.hxx>
-#include <EHI.hxx>
+#include <instance.hxx>
 
 namespace Engine
 {
@@ -90,18 +90,16 @@ namespace Engine
     renderPass::renderPass( bool, types::swapchain swapchain, std::vector<subpass> subpasses )
     {
         DEFINE_DATA_FIELD( swapchain );
-        construct( swapchain, subpasses );
     }
 
     renderPass::renderPass( types::swapchain swapchain, std::vector<subpass> subpasses ) :
         renderPass( 1, swapchain, subpasses )
     {
-        setup( swapchain, subpasses );
     }
 
     renderPass::~renderPass()
     {
-        vkDestroyRenderPass( data->swapchain->data->device->data->handle, data->handle, ALLOCATION_CALLBACK );
+        vkDestroyRenderPass( data->swapchain->data->device->handle, data->handle, ALLOCATION_CALLBACK );
     }
 
     renderPass::DATA_TYPE::DATA_TYPE( types::renderPass parent, types::swapchain swapchain ) :
@@ -113,20 +111,9 @@ namespace Engine
     {
     }
 
-    void renderPass::construct( types::swapchain swapchain, std::vector<subpass> subpasses )
-    {
-        // std::vector<void *> pData;
-        // VkRenderPassCreateInfo createInfo {};
-    }
-
-    void renderPass::setup( types::swapchain swapchain, std::vector<subpass> subpasses )
-    {
-    }
-
     void renderPass::DATA_TYPE::create( VkRenderPassCreateInfo createInfo, std::vector<subpass> subpasses )
     {
         createInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-        std::set<subpass> setSubpasses;
         std::vector<VkAttachmentDescription> attachments;
         std::vector<VkSubpassDependency> deps;
         deps.reserve( subpasses.size() );
@@ -142,7 +129,7 @@ namespace Engine
             deps.back().dstStageMask    = subpasses[ i ].stageFlags;
             deps.back().dependencyFlags = subpasses[ i - 1 ].dependencyFlags;
         }
-        CHECK_RESULT( vkCreateRenderPass( swapchain->data->device->data->handle, &createInfo, ALLOCATION_CALLBACK, &handle ) );
+        CHECK_RESULT( vkCreateRenderPass( swapchain->data->device->handle, &createInfo, ALLOCATION_CALLBACK, &parent->handle ) );
     }
 
 } // namespace Engine

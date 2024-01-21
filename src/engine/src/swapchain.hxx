@@ -9,25 +9,11 @@ namespace Engine
     struct swapchain::DATA_TYPE
     {
         DATA_TYPE( types::swapchain parent, types::device device, window::types::window window );
-
-        struct properties_T
-        {
-            properties_T( types::device device, window::types::window window );
-            VkSurfaceCapabilitiesKHR capabilities {};
-            std::vector<VkSurfaceFormatKHR> formats;
-            std::vector<VkPresentModeKHR> presentModes;
-        };
-
-        void create( VkSwapchainCreateInfoKHR createInfo );
         ~DATA_TYPE();
+        void create( VkSwapchainCreateInfoKHR createInfo );
 
         window::types::window window { nullptr };
         types::device device { nullptr };
-        VkSwapchainKHR handle { nullptr };
-        VkSurfaceFormatKHR format { VK_FORMAT_MAX_ENUM };
-        VkPresentModeKHR presentMode { VK_PRESENT_MODE_MAX_ENUM_KHR };
-        VkFormat depthImageFormat { VK_FORMAT_MAX_ENUM };
-        properties_T properties;
         uint32_t flightImgIndex { 0 };
         uint32_t semaphoreIndex { 0 };
         types::swapchain parent { nullptr };

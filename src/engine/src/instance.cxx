@@ -1,6 +1,6 @@
 #include <platform.hxx>
 #include <engine.hxx>
-#include <EHI.hxx>
+#include <instance.hxx>
 #include <surface.hxx>
 #include <device.hxx>
 // #include <RHI.hxx>
@@ -36,37 +36,10 @@ namespace Engine
     instance::instance( bool, const char *appName, uint32_t appVersion )
     {
         DEFINE_DATA_FIELD();
-        construct( appName, appVersion );
     }
 
     instance::instance( const char *appName, uint32_t appVersion ) :
         instance { 1, appName, appVersion }
-    {
-        setup( appName, appVersion );
-    }
-
-    instance::~instance()
-    {
-        auto wI { data->windows.begin() };
-        while ( wI != data->windows.end() )
-        {
-            auto sI { wI->second.begin() };
-            while ( sI != wI->second.end() )
-                delete *sI++;
-            delete ( wI++ )->first;
-        }
-        auto dI { data->devices.begin() };
-        while ( dI != data->devices.end() )
-            delete *dI++;
-        data->destroyDebugLayerCallback();
-        vkDestroyInstance( data->handle, ALLOCATION_CALLBACK );
-    }
-
-    void instance::construct( const char *appName, uint32_t appVersion )
-    {
-    }
-
-    void instance::setup( const char *appName, uint32_t appVersion )
     {
         VkApplicationInfo ApplicationInfo {};
         ApplicationInfo.sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -100,10 +73,27 @@ namespace Engine
         data->initDebugLayerCallBack( debugUtilsMsgCI );
     }
 
+    instance::~instance()
+    {
+        auto wI { data->windows.begin() };
+        while ( wI != data->windows.end() )
+        {
+            auto sI { wI->second.begin() };
+            while ( sI != wI->second.end() )
+                delete *sI++;
+            delete ( wI++ )->first;
+        }
+        auto dI { data->devices.begin() };
+        while ( dI != data->devices.end() )
+            delete *dI++;
+        data->destroyDebugLayerCallback();
+        vkDestroyInstance( handle, ALLOCATION_CALLBACK );
+    }
+
     void instance::DATA_TYPE::create( VkInstanceCreateInfo createInfo )
     {
         const_cast<VkApplicationInfo *>( createInfo.pApplicationInfo )->engineVersion = ENGINE_VERSION;
-        const_cast<VkApplicationInfo *>( createInfo.pApplicationInfo )->pEngineName   = "NoneTypeName's Engine";
+        const_cast<VkApplicationInfo *>( createInfo.pApplicationInfo )->pEngineName   = "NoneTypeName.";
         std::vector<const char *> _layers { createInfo.ppEnabledLayerNames, &createInfo.ppEnabledLayerNames[ createInfo.enabledLayerCount ] };
         std::vector<const char *> _extensions { createInfo.ppEnabledExtensionNames, &createInfo.ppEnabledExtensionNames[ createInfo.enabledExtensionCount ] };
         setLayers( _layers );
@@ -114,7 +104,7 @@ namespace Engine
         createInfo.ppEnabledLayerNames     = layers.data();
         createInfo.enabledExtensionCount   = extensions.size();
         createInfo.ppEnabledExtensionNames = extensions.data();
-        CHECK_RESULT( vkCreateInstance( &createInfo, ALLOCATION_CALLBACK, &handle ) );
+        CHECK_RESULT( vkCreateInstance( &createInfo, ALLOCATION_CALLBACK, &parent->handle ) );
     }
 
     window::types::window instance::createWindow( window::settings settings )

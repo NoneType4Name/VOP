@@ -8,8 +8,7 @@
 
 // #include <engine_setup.hxx>
 #include <engine.hxx>
-#include <EHI.hxx>
-#include <surface.hxx>
+#include <ehi.hxx>
 #include <spdlog/spdlog.h>
 #include <iostream>
 
@@ -45,12 +44,6 @@ namespace Game
 
     struct W : public Engine::window::window
     {
-      protected:
-        void setup( Engine::instance *instance, Engine::window::settings settings ) override
-        {
-            data->createSurface( data->instance->data->handle, 0, 0 );
-        }
-
         void eventCallBack( int key, int scancode, int action, int mods ) override
         {
             switch ( key )
@@ -74,40 +67,39 @@ namespace Game
         }
 
       public:
-        using Engine::window::window::window;
+        W( Engine::instance *instance, Engine::window::settings settings ) :
+            Engine::window::window( 1, instance, settings )
+        {
+            data->createSurface( 0, 0 );
+        }
     };
 
     struct E : public Engine::instance
     {
         E( const char *appName, uint32_t appVersion ) :
-            Engine::instance( 1, appName, appVersion )
+            // Engine::instance( 1, appName, appVersion )
+            Engine::instance( appName, appVersion )
         {
-            setup( appName, appVersion );
+            // VkApplicationInfo ApplicationInfo {};
+            // ApplicationInfo.sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+            // ApplicationInfo.apiVersion         = VK_API_VERSION_1_0;
+            // ApplicationInfo.pApplicationName   = appName;
+            // ApplicationInfo.applicationVersion = appVersion;
+            // VkInstanceCreateInfo InstanceCreateInfo {};
+            // InstanceCreateInfo.sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+            // InstanceCreateInfo.pNext                   = nullptr;
+            // InstanceCreateInfo.enabledLayerCount       = 0;
+            // InstanceCreateInfo.ppEnabledLayerNames     = nullptr;
+            // InstanceCreateInfo.enabledExtensionCount   = 0;
+            // InstanceCreateInfo.ppEnabledExtensionNames = nullptr;
+            // InstanceCreateInfo.pApplicationInfo        = &ApplicationInfo;
+            // data->create( InstanceCreateInfo );
         }
 
         Engine::window::types::window createWindow( Engine::window::settings settings ) override
         {
             return new W { this, settings };
         }
-
-        //   protected:
-        //     void setup( const char *appName, uint32_t appVersion ) override
-        //     {
-        //         VkApplicationInfo ApplicationInfo {};
-        //         ApplicationInfo.sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-        //         ApplicationInfo.apiVersion         = VK_API_VERSION_1_0;
-        //         ApplicationInfo.pApplicationName   = appName;
-        //         ApplicationInfo.applicationVersion = appVersion;
-        //         VkInstanceCreateInfo InstanceCreateInfo {};
-        //         InstanceCreateInfo.sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-        //         InstanceCreateInfo.pNext                   = nullptr;
-        //         InstanceCreateInfo.enabledLayerCount       = 0;
-        //         InstanceCreateInfo.ppEnabledLayerNames     = nullptr;
-        //         InstanceCreateInfo.enabledExtensionCount   = 0;
-        //         InstanceCreateInfo.ppEnabledExtensionNames = nullptr;
-        //         InstanceCreateInfo.pApplicationInfo        = &ApplicationInfo;
-        //         data->create( InstanceCreateInfo );
-        //     }
     };
     std::unique_ptr<E> engine { new E { "test", 0 } };
 

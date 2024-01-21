@@ -3,7 +3,7 @@
 #include <platform.hxx>
 #include <surface.hxx>
 #include <swapchain.hxx>
-#include <EHI.hxx>
+#include <instance.hxx>
 
 namespace Engine
 {
@@ -14,36 +14,6 @@ namespace Engine
     {
         window::window( bool, instance *instance, settings settings ) :
             properties { settings }
-        {
-            construct( instance, settings );
-        }
-
-        window::window( instance *instance, settings settings ) :
-            window( 1, instance, settings )
-        {
-            setup( instance, settings );
-        }
-
-        window::~window()
-        {
-            auto sI { data->swapchains.begin() };
-            while ( sI != data->swapchains.end() )
-                delete *sI++;
-            data->instance->data->windows.erase( this );
-            data->destroySurface( data->instance->data->handle );
-            glfwDestroyWindow( data->window );
-        }
-
-        window::DATA_TYPE::DATA_TYPE( types::window parent, struct instance *instance ) :
-            parent { parent }, instance { instance }
-        {
-        }
-
-        window::DATA_TYPE::~DATA_TYPE()
-        {
-        }
-
-        void window::construct( instance *instance, settings settings )
         {
             DEFINE_DATA_FIELD( instance );
             data->instance->data->windows.emplace( std::make_pair<types::window, std::vector<Engine::types::swapchain>>( this, {} ) );
@@ -61,28 +31,48 @@ namespace Engine
             if ( !properties.size.width or !properties.size.height )
             {
                 glfwWindowHint( GLFW_MAXIMIZED, 1 );
-                data->window = glfwCreateWindow( displayRes.width, displayRes.height, properties.title, nullptr, nullptr );
+                glfwHandle = glfwCreateWindow( displayRes.width, displayRes.height, properties.title, nullptr, nullptr );
             }
             else
-                data->window = glfwCreateWindow( properties.fullScreenRefreshRate ? displayRes.width : properties.size.width, properties.fullScreenRefreshRate ? displayRes.height : properties.size.height, properties.title, properties.fullScreenRefreshRate ? glfwGetPrimaryMonitor() : nullptr, nullptr );
-            glfwGetWindowSize( data->window, reinterpret_cast<int *>( const_cast<ENGINE_RESOLUTION_TYPE *>( &properties.size.width ) ), reinterpret_cast<int *>( const_cast<ENGINE_RESOLUTION_TYPE *>( &properties.size.height ) ) );
+                glfwHandle = glfwCreateWindow( properties.fullScreenRefreshRate ? displayRes.width : properties.size.width, properties.fullScreenRefreshRate ? displayRes.height : properties.size.height, properties.title, properties.fullScreenRefreshRate ? glfwGetPrimaryMonitor() : nullptr, nullptr );
+            glfwGetWindowSize( glfwHandle, reinterpret_cast<int *>( const_cast<ENGINE_RESOLUTION_TYPE *>( &properties.size.width ) ), reinterpret_cast<int *>( const_cast<ENGINE_RESOLUTION_TYPE *>( &properties.size.height ) ) );
             if ( properties.fullScreenRefreshRate )
-                glfwSetWindowMonitor( data->window, glfwGetPrimaryMonitor(), 0, 0, properties.size.width, properties.size.height, properties.fullScreenRefreshRate );
-            glfwSetWindowUserPointer( data->window, this );
-            glfwSetFramebufferSizeCallback( data->window, []( GLFWwindow *wnd, int w, int h )
+                glfwSetWindowMonitor( glfwHandle, glfwGetPrimaryMonitor(), 0, 0, properties.size.width, properties.size.height, properties.fullScreenRefreshRate );
+            glfwSetWindowUserPointer( glfwHandle, this );
+            glfwSetFramebufferSizeCallback( glfwHandle, []( GLFWwindow *wnd, int w, int h )
                                             {auto from_wnd    = reinterpret_cast<window *>( glfwGetWindowUserPointer( wnd ) );
                                         const_cast<struct settings*>(&from_wnd->properties)->size.width = static_cast<ENGINE_RESOLUTION_TYPE>( w );
                                         const_cast<struct settings*>(&from_wnd->properties)->size.height = static_cast<ENGINE_RESOLUTION_TYPE>( h );
                                         from_wnd->resizeCallBack(w, h); } );
-            glfwSetKeyCallback( data->window, []( GLFWwindow *wnd, int key, int scancode, int action, int mods )
+            glfwSetKeyCallback( glfwHandle, []( GLFWwindow *wnd, int key, int scancode, int action, int mods )
                                 {   
                                     auto from_wnd    = reinterpret_cast<window *>( glfwGetWindowUserPointer( wnd ) );
                                     from_wnd->eventCallBack( key, scancode, action, mods ); } );
         }
 
-        void window::setup( instance *instance, settings settings )
+        window::window( instance *instance, settings settings ) :
+            window( 1, instance, settings )
         {
-            data->createSurface( instance->data->handle, 0, 0 );
+            data->createSurface( 0, 0 );
+        }
+
+        window::~window()
+        {
+            auto sI { data->swapchains.begin() };
+            while ( sI != data->swapchains.end() )
+                delete *sI++;
+            data->instance->data->windows.erase( this );
+            vkDestroySurfaceKHR( data->instance->handle, surface, ALLOCATION_CALLBACK );
+            glfwDestroyWindow( glfwHandle );
+        }
+
+        window::DATA_TYPE::DATA_TYPE( types::window parent, struct instance *instance ) :
+            parent { parent }, instance { instance }
+        {
+        }
+
+        window::DATA_TYPE::~DATA_TYPE()
+        {
         }
 
         Engine::types::swapchain window::getLink( Engine::types::device device )
@@ -104,7 +94,7 @@ namespace Engine
         void window::setTitle( const char *title )
         {
             *const_cast<const char **>( &properties.title ) = title;
-            glfwSetWindowTitle( data->window, properties.title );
+            glfwSetWindowTitle( glfwHandle, properties.title );
         }
 
         void window::updateProperties( settings properties )
@@ -115,15 +105,15 @@ namespace Engine
             if ( this->properties.fullScreenRefreshRate )
             {
                 const_cast<settings *>( &this->properties )->size = getDisplayResolution();
-                glfwSetWindowMonitor( data->window, glfwGetPrimaryMonitor(), 0, 0, this->properties.size.width, this->properties.size.height, this->properties.fullScreenRefreshRate );
+                glfwSetWindowMonitor( glfwHandle, glfwGetPrimaryMonitor(), 0, 0, this->properties.size.width, this->properties.size.height, this->properties.fullScreenRefreshRate );
             }
             else
             {
-                glfwSetWindowMonitor( data->window, 0, 0, 0, this->properties.size.width, this->properties.size.height, GLFW_DONT_CARE );
+                glfwSetWindowMonitor( glfwHandle, 0, 0, 0, this->properties.size.width, this->properties.size.height, GLFW_DONT_CARE );
             }
-            glfwSetWindowAttrib( data->window, GLFW_RESIZABLE, this->properties.resize );
-            glfwSetWindowAttrib( data->window, GLFW_DECORATED, this->properties.decorated );
-            glfwSetWindowAttrib( data->window, GLFW_FLOATING, this->properties.floating );
+            glfwSetWindowAttrib( glfwHandle, GLFW_RESIZABLE, this->properties.resize );
+            glfwSetWindowAttrib( glfwHandle, GLFW_DECORATED, this->properties.decorated );
+            glfwSetWindowAttrib( glfwHandle, GLFW_FLOATING, this->properties.floating );
         }
 
         void window::eventCallBack( int key, int scancode, int action, int mods )
@@ -141,7 +131,7 @@ namespace Engine
 
         bool window::shouldClose()
         {
-            return glfwWindowShouldClose( data->window );
+            return glfwWindowShouldClose( glfwHandle );
         }
     } // namespace window
 } // namespace Engine

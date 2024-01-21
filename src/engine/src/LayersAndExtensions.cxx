@@ -1,5 +1,5 @@
 #include <platform.hxx>
-#include <EHI.hxx>
+#include <instance.hxx>
 #include <device.hxx>
 
 namespace Engine

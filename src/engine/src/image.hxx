@@ -12,15 +12,12 @@ namespace Engine
     {
       public:
         DATA_TYPE() = delete;
-        DATA_TYPE( types::image parent, types::device device, VkImageCreateInfo ImageCreateInfo, VkImageViewCreateInfo ImageViewCreateInfo );
-        DATA_TYPE( types::image parent, types::device device, types::image image, VkImageViewCreateInfo ImageViewCreateInfo );
+        DATA_TYPE( types::image parent, types::device device );
+        DATA_TYPE( types::image parent, types::device device, types::image image );
         ~DATA_TYPE();
         types::device device { nullptr };
-        VkImageCreateInfo ImageInfo {};
-        VkImageViewCreateInfo ImageViewInfo {};
-        VkImageView view { nullptr };
-        memory::allocationAddres addres;
-        types::image image { nullptr };
+        device::memory::allocationAddres addres;
+        types::image parentImage { nullptr };
         std::vector<types::image> views;
         types::image parent;
     };

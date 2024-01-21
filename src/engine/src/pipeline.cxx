@@ -17,11 +17,11 @@ namespace Engine
         ci.pSetLayouts            = data->pool->data->layouts.data();
         ci.pushConstantRangeCount = 0;
         ci.pPushConstantRanges    = 0;
-        vkCreatePipelineLayout( data->device->data->handle, &ci, ALLOCATION_CALLBACK, &data->handle );
+        vkCreatePipelineLayout( data->device->handle, &ci, ALLOCATION_CALLBACK, &data->handle );
     }
     layout::~layout()
     {
-        vkDestroyPipelineLayout( data->device->data->handle, data->handle, ALLOCATION_CALLBACK );
+        vkDestroyPipelineLayout( data->device->handle, data->handle, ALLOCATION_CALLBACK );
     }
 
     void InstanceSetup::layoutInfo( types::layout layout, const void *&pNext, VkPipelineLayoutCreateFlags &flags, std::vector<void *> &dataPointer, void *userPoiner ) {}
@@ -161,13 +161,13 @@ namespace Engine
             const_cast<VkPipelineColorBlendStateCreateInfo *>( GraphicPipeLineCreateInfo.pColorBlendState )->sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
         if ( GraphicPipeLineCreateInfo.pDynamicState )
             const_cast<VkPipelineDynamicStateCreateInfo *>( GraphicPipeLineCreateInfo.pDynamicState )->sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-        CHECK_RESULT( vkCreateGraphicsPipelines( data->device->data->handle, nullptr, 1, &GraphicPipeLineCreateInfo, ALLOCATION_CALLBACK, &data->handle ) ); // TODO pipeline cachae
+        CHECK_RESULT( vkCreateGraphicsPipelines( data->device->handle, nullptr, 1, &GraphicPipeLineCreateInfo, ALLOCATION_CALLBACK, &data->handle ) ); // TODO pipeline cachae
         data->device->data->window->data->instance->data->setup->pipelineInfoClear( this, dataPointer, data->device->data->window->data->instance->data->userPointer );
     }
 
     pipeline::~pipeline()
     {
-        vkDestroyPipeline( data->device->data->handle, data->handle, ALLOCATION_CALLBACK );
-        vkDestroyPipelineLayout( data->device->data->handle, data->layout->data->handle, ALLOCATION_CALLBACK );
+        vkDestroyPipeline( data->device->handle, data->handle, ALLOCATION_CALLBACK );
+        vkDestroyPipelineLayout( data->device->handle, data->layout->data->handle, ALLOCATION_CALLBACK );
     }
 } // namespace Engine

@@ -1,4 +1,4 @@
-#include <EHI.hxx>
+#include <instance.hxx>
 
 namespace Engine
 {

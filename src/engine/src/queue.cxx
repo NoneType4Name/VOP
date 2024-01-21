@@ -1,6 +1,6 @@
 #include <queue.hxx>
 #include <device.hxx>
-#include <EHI.hxx>
+#include <instance.hxx>
 
 namespace Engine
 {

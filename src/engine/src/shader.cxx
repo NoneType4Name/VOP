@@ -53,12 +53,12 @@ namespace Engine
         DEFINE_DATA_FIELD;
         data->device = device;
         data->stage  = tools::userShaderStageToVulkan( stage );
-        data->module = tools::loadShaderModule( data->device->data->handle, path );
+        data->module = tools::loadShaderModule( data->device->handle, path );
         data->pName  = mainFuncName;
     }
     shader::~shader()
     {
-        vkDestroyShaderModule( data->device->data->handle, data->module, ALLOCATION_CALLBACK );
+        vkDestroyShaderModule( data->device->handle, data->module, ALLOCATION_CALLBACK );
     }
 
     void InstanceSetup::shader( types::shader shader, VkPipelineShaderStageCreateInfo &stageCreateInfo, void *userPoiner )

@@ -30,16 +30,7 @@ namespace Engine
         DATA_TYPE() = delete;
         DATA_TYPE( types::device parent, types::deviceDescription description );
         ~DATA_TYPE();
-        // void addImagesMemorySize( uint32_t index, uint32_t size );
-        // void addBuffersMemorySize( uint32_t index, uint32_t size );
         void create( VkDeviceCreateInfo createInfo );
-        VkFormat formatPriority( const std::vector<VkFormat> &formats, VkImageTiling ImageTiling, VkFormatFeatureFlags FormatFeatureFlags );
-        // types::swapchain regSwapchain( types::swapchain swapchain );
-        uint32_t requeredMemoryTypeIndex( uint32_t type, VkMemoryPropertyFlags properties );
-        VkDevice handle { nullptr };
-        VkCommandPool grapchicPool { nullptr };
-        VkCommandPool transferPool { nullptr };
-        VkCommandPool presentPool { nullptr };
         std::vector<const char *> extensions;
         std::set<types::swapchain> swapchains;
         std::set<types::image> images;
@@ -49,7 +40,6 @@ namespace Engine
         // std::vector<std::unique_ptr<layout>> layouts;
         // std::vector<std::unique_ptr<pipeline>> pipelines;
         // memoryTypeIndex<<handle, offset>, <size, oversize>>;
-        Engine::memory memory;
         queueSet queuesSet;
         types::deviceDescription description { nullptr };
         types::device parent;

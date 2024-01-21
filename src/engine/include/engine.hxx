@@ -59,16 +59,11 @@ namespace Engine
             bool decorated { true };
             bool floating { false };
             bool visible { true };
-            // bool vsync { false };
         };
 
         class ENGINE_EXPORT window
         {
             DEFINE_DATA;
-
-          protected:
-            void construct( instance *instance, settings settings );
-            virtual void setup( instance *instance, settings settings );
 
           public:
             window() = delete;
@@ -84,6 +79,8 @@ namespace Engine
             virtual void eventCallBack( int key, int scancode, int action, int mods );
             virtual void resizeCallBack( int width, int height );
             const settings properties {};
+            GLFWwindow *glfwHandle;
+            VkSurfaceKHR surface;
         };
         DEFINE_HANDLE( window );
     } // namespace window
@@ -105,16 +102,40 @@ namespace Engine
     {
         DEFINE_DATA;
 
-      private:
-        void construct( types::deviceDescription description, std::vector<window::types::window> windows );
-        virtual void setup( types::deviceDescription description, std::vector<window::types::window> windows );
-
       public:
         device() = delete;
         device( types::deviceDescription description, std::vector<window::types::window> windows );
         device( bool, types::deviceDescription description, std::vector<window::types::window> windows );
         ~device();
+        VkFormat formatPriority( const std::vector<VkFormat> &formats, VkImageTiling ImageTiling, VkFormatFeatureFlags FormatFeatureFlags );
+        uint32_t requeredMemoryTypeIndex( uint32_t type, VkMemoryPropertyFlags properties );
         types::swapchain getLink( window::types::window window );
+        class memory
+        {
+            DEFINE_DATA;
+
+          public:
+            memory() = delete;
+            memory( types::device device );
+            ~memory();
+            struct allocationAddres
+            {
+                VkDeviceSize size;
+                VkDeviceSize offset;
+                VkDeviceMemory memory;
+                uint32_t memoryType;
+                size_t memoryBlock;
+            };
+
+            allocationAddres allocate( VkImage image, VkMemoryPropertyFlags flags );
+            allocationAddres allocate( VkBuffer buffer, VkMemoryPropertyFlags flags );
+            void free( allocationAddres &addres );
+        };
+        memory memory;
+        VkCommandPool grapchicPool;
+        VkCommandPool transferPool;
+        VkCommandPool presentPool;
+        VkDevice handle { nullptr };
         // types::shader CreateShader( const char *path, const char *main, ShaderStage stage );
         // types::pipeline CreatePipeline( types::layout layouts, std::vector<types::shader> shaders, types::pass pass );
         // types::texture CreateTexture( const char *path );
@@ -125,22 +146,27 @@ namespace Engine
     {
         DEFINE_DATA;
 
-      private:
-        virtual void setup( types::device device, window::types::window window );
-        void construct( types::device device, window::types::window window );
-
       public:
         swapchain() = delete;
         swapchain( types::device device, window::types::window window );
         swapchain( bool, types::device device, window::types::window window );
         ~swapchain();
+        struct
+        {
+            VkSurfaceCapabilitiesKHR capabilities;
+            std::vector<VkSurfaceFormatKHR> formats;
+            std::vector<VkPresentModeKHR> presentModes;
+        } properties;
         struct image_T
         {
-            types::image image { nullptr };
-            VkSemaphore isAvailable { nullptr };
-            VkSemaphore isRendered { nullptr };
+            types::image image;
+            VkSemaphore available;
+            VkSemaphore rendered;
         };
         std::vector<image_T> images;
+        VkSurfaceFormatKHR format;
+        VkPresentModeKHR presentMode;
+        VkSwapchainKHR handle { nullptr };
     };
 
     class ENGINE_EXPORT image
@@ -149,11 +175,32 @@ namespace Engine
 
       public:
         image() = delete;
-        image( types::device device, VkImageCreateInfo ImageCreateInfo, VkImageViewCreateInfo ImageViewCreateInfo );
+        image( types::device device, VkImageCreateInfo ImageCreateInfo, VkImageViewCreateInfo ImageViewCreateInfo, VkMemoryPropertyFlags memoryPropertiesFlag );
+        ~image();
         image( types::device device, types::image parent, VkImageViewCreateInfo ImageViewCreateInfo );
         void write( std::vector<void *> data, VkExtent3D srcExtend = { 0, 0, 0 }, VkOffset3D srcOffset = { 0, 0, 0 }, VkImageAspectFlags srcAspectMask = VK_IMAGE_ASPECT_COLOR_BIT, uint32_t dstMipLevel = 0, uint32_t arrayLayersCount = 1, uint32_t dstBaseArrayLayer = 0, VkMemoryMapFlags flags = 0 );
         void transition( VkImageLayout newLayout, VkDependencyFlags dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT, VkPipelineStageFlags srcStageMask = 0, VkPipelineStageFlags dstStageMask = 0, uint32_t srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED, uint32_t dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED );
-        ~image();
+        struct
+        {
+            VkExtent3D extent;
+            uint32_t mipLevels;
+            uint32_t arrayLayers;
+            VkImageUsageFlags usage;
+            VkSampleCountFlagBits samples;
+            VkImageType type;
+            VkFormat format;
+            VkImageLayout layout;
+        } properties;
+        struct
+        {
+            VkImageViewType type;
+            VkFormat format;
+            VkImageSubresourceRange range;
+            VkImageView handle { nullptr };
+        } view;
+
+        device::memory::allocationAddres addres;
+        VkImage handle { nullptr };
     };
 
     class buffer
@@ -162,10 +209,10 @@ namespace Engine
 
       public:
         buffer() = delete;
-        buffer( types::device device, VkMemoryPropertyFlags memoryPropertiesFlag, VkBufferCreateInfo BufferCreateInfo );
+        buffer( types::device device, VkBufferCreateInfo BufferCreateInfo, VkMemoryPropertyFlags memoryPropertiesFlag );
+        ~buffer();
         void write( std::vector<void *> data, VkMemoryMapFlags flags = 0 );
         VkBuffer handle { nullptr };
-        ~buffer();
     };
 
     class commandBuffer
@@ -173,56 +220,25 @@ namespace Engine
         DEFINE_DATA;
 
       public:
-        commandBuffer( types::device device, VkCommandPool commandPool, VkCommandBufferLevel level, struct queue &queue );
         commandBuffer() = delete;
+        commandBuffer( types::device device, VkCommandPool commandPool, VkCommandBufferLevel level, struct queue &queue );
+        ~commandBuffer();
         void begin();
         void submit();
         VkCommandBuffer handle { nullptr };
-        ~commandBuffer();
     };
 
-    class renderPass
-    {
-        DEFINE_DATA;
+    // class renderPass
+    // {
+    //     DEFINE_DATA;
 
-      public:
-        struct attachment
-        {
-            VkAttachmentDescriptionFlags flags;
-            VkAttachmentLoadOp loadOp;
-            VkAttachmentStoreOp storeOp;
-            VkAttachmentLoadOp stencilLoadOp;
-            VkAttachmentStoreOp stencilStoreOp;
-            VkImageLayout finalLayout;
-            types::image attachment;
-        };
-
-        struct colorAttachment
-        {
-            attachment ColorAttachment;
-            attachment ResolveAttachment;
-            attachment DepthStencilAttachmen;
-        };
-
-        struct subpass
-        {
-            std::set<attachment> InputAttachments;
-            std::set<colorAttachment> ColorAttachments;
-            VkPipelineStageFlags stageFlags;
-            VkAccessFlags accessFlags;
-            VkDependencyFlags dependencyFlags;
-        };
-
-      private:
-        void construct( types::swapchain swapchain, std::vector<subpass> subpasses );
-        virtual void setup( types::swapchain swapchain, std::vector<subpass> subpasses );
-
-      public:
-        renderPass() = delete;
-        renderPass( types::swapchain swapchain, std::vector<subpass> subpasses );
-        renderPass( bool, types::swapchain swapchain, std::vector<subpass> subpasses );
-        ~renderPass();
-    };
+    //   public:
+    //     renderPass() = delete;
+    //     renderPass( types::swapchain swapchain, std::vector<types::image> attachments );
+    //     renderPass( bool, types::swapchain swapchain, std::vector<types::image> attachments );
+    //     ~renderPass();
+    //     VkRenderPass handle { nullptr };
+    // };
 
     // class ENGINE_EXPORT shader
     // {
@@ -322,20 +338,17 @@ namespace Engine
     {
         DEFINE_DATA;
 
-      protected:
-        void construct( const char *appName, uint32_t appVersion );
-        virtual void setup( const char *appName, uint32_t appVersion );
-
       public:
         instance( const char *appName, uint32_t appVersion );
         instance( bool, const char *appName, uint32_t appVersion );
+        ~instance();
         virtual window::types::window createWindow( window::settings settings );
         virtual types::device createDevice( types::deviceDescription description, std::vector<window::types::window> windows );
         // virtual types::renderPass createRenderPass();
         // virtual std::pair<types::swapchain, types::device> makeLink( window::types::window window, types::deviceDescription description );
         // ? virtual types::pass createRenderPass( types::swapchain swapchain );
         const std::vector<types::deviceDescription> &getDevices();
-        ~instance();
+        VkInstance handle { nullptr };
     };
 } // namespace Engine
 

@@ -1,4 +1,4 @@
-#include <EHI.hxx>
+#include <instance.hxx>
 
 namespace Engine
 {
@@ -62,10 +62,10 @@ namespace Engine
 
     void instance::DATA_TYPE::initDebugLayerCallBack( VkDebugUtilsMessengerCreateInfoEXT createInfo )
     {
-        auto createMsgCallback = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>( vkGetInstanceProcAddr( handle, "vkCreateDebugUtilsMessengerEXT" ) );
+        auto createMsgCallback = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>( vkGetInstanceProcAddr( parent->handle, "vkCreateDebugUtilsMessengerEXT" ) );
         if ( createMsgCallback != nullptr )
         {
-            CHECK_RESULT( createMsgCallback( handle, &createInfo, ALLOCATION_CALLBACK, &debugMessenger ) );
+            CHECK_RESULT( createMsgCallback( parent->handle, &createInfo, ALLOCATION_CALLBACK, &debugMessenger ) );
         }
         else
         {
@@ -77,8 +77,8 @@ namespace Engine
     {
         if ( debugMessenger != VK_NULL_HANDLE )
         {
-            PFN_vkDestroyDebugUtilsMessengerEXT destroyMsgCallback = ( PFN_vkDestroyDebugUtilsMessengerEXT ) vkGetInstanceProcAddr( handle, "vkDestroyDebugUtilsMessengerEXT" );
-            destroyMsgCallback( handle, debugMessenger, ALLOCATION_CALLBACK );
+            PFN_vkDestroyDebugUtilsMessengerEXT destroyMsgCallback = ( PFN_vkDestroyDebugUtilsMessengerEXT ) vkGetInstanceProcAddr( parent->handle, "vkDestroyDebugUtilsMessengerEXT" );
+            destroyMsgCallback( parent->handle, debugMessenger, ALLOCATION_CALLBACK );
         }
     }
 } // namespace Engine
