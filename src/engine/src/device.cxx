@@ -13,88 +13,53 @@ namespace Engine
     deviceDescription::~deviceDescription() {};
 
     device::DATA_TYPE::DATA_TYPE( types::device parent, types::deviceDescription description ) :
-        parent { parent }, description { description }, queuesSet { parent }
+        parent { parent }, description { description }
     {
     }
 
     device::DATA_TYPE::~DATA_TYPE()
     {
+        for ( auto &family : _queues )
+        {
+            for ( auto &q : family )
+                delete q.second;
+        }
     }
 
     device::device( types::deviceDescription description, std::vector<window::types::window> windows ) :
         device( 1, description, windows )
     {
         VkDeviceCreateInfo DeviceCreateInfo {};
-        // VkPhysicalDeviceDescriptorIndexingFeatures indexFeatures {};
-        // DeviceCreateInfo.pNext                                  = &indexFeatures;
-        // indexFeatures.sType                                     = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
-        // indexFeatures.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
-        // indexFeatures.runtimeDescriptorArray                    = VK_TRUE;
-        // indexFeatures.descriptorBindingVariableDescriptorCount  = VK_TRUE;
         VkPhysicalDeviceFeatures features {};
         features.samplerAnisotropy = VK_TRUE;
         features.sampleRateShading = VK_TRUE;
-        if ( data->description->data->queueFamilyProperties.size() - 1 )
+        std::vector<VkDeviceQueueCreateInfo> queues;
+        std::vector<float> priorities;
+        uint32_t i { 0 };
+        for ( uint32_t i { 0 }; i < data->description->data->queueFamilyProperties.size(); ++i )
         {
-            for ( uint32_t i { 0 }; i < data->description->data->queueFamilyProperties.size(); i++ )
+            VkBool32 present;
+            for ( const auto &wnd : windows )
             {
-                VkBool32 presentSupport { false };
-                for ( auto &wnd : windows )
-                {
-                    vkGetPhysicalDeviceSurfaceSupportKHR( data->description->data->phDevice, i, wnd->surface, &presentSupport );
-                    if ( !presentSupport )
-                        break;
-                }
-
-                if ( !data->queuesSet.graphic.familyIndex.has_value() && data->description->data->queueFamilyProperties[ i ].queueFlags & VK_QUEUE_GRAPHICS_BIT )
-                    data->queuesSet.graphic = { i, 1.f };
-                if ( !data->queuesSet.present.familyIndex.has_value() && presentSupport )
-                    data->queuesSet.present = { i, 1.f };
-                else if ( !data->queuesSet.transfer.familyIndex.has_value() && data->description->data->queueFamilyProperties[ i ].queueFlags & VK_QUEUE_TRANSFER_BIT )
-                    data->queuesSet.transfer = { i, 1.f };
-                // else if ( !data->queuesSet.compute.familyIndex.has_value() && data->description->data->queueFamilyProperties[ i ].queueFlags & VK_QUEUE_COMPUTE_BIT )
-                //     data->queuesSet.compute = i;
-                else
+                vkGetPhysicalDeviceSurfaceSupportKHR( data->description->data->phDevice, i, wnd->surface, &present );
+                if ( !present )
                     break;
             }
-        }
-        else
-        {
-            VkBool32 presentSupport { false };
-            for ( auto &wnd : windows )
+            if ( data->description->data->queueFamilyProperties[ i ].queueFlags & ( VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_TRANSFER_BIT ) && present )
             {
-                vkGetPhysicalDeviceSurfaceSupportKHR( data->description->data->phDevice, 0, wnd->surface, &presentSupport );
-            }
-            if ( data->description->data->queueFamilyProperties[ 0 ].queueFlags & ( VK_QUEUE_TRANSFER_BIT | VK_QUEUE_GRAPHICS_BIT ) && presentSupport )
-            {
-                data->queuesSet = { { 0, 0, 1.f }, { 0, 0, 1.f }, { 0, 0, 1.f } };
+                priorities.emplace_back( 1.f );
+                queues.emplace_back( VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO, nullptr, 0, i, 1, priorities.data() );
+                break;
             }
         }
+
         VkPhysicalDeviceFeatures2 physicalDeviceFeatures {};
         DeviceCreateInfo.pEnabledFeatures = &features;
         data->create( DeviceCreateInfo );
+        universalQueue = new queue { this, i, 0, 1.f };
         for ( auto &wnd : windows )
         {
             new swapchain { this, wnd };
-        }
-
-        VkCommandPoolCreateInfo poolCI {};
-        poolCI.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-        poolCI.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-        if ( data->queuesSet.graphic.familyIndex.has_value() )
-        {
-            poolCI.queueFamilyIndex = data->queuesSet.graphic.familyIndex.value();
-            CHECK_RESULT( vkCreateCommandPool( handle, &poolCI, ALLOCATION_CALLBACK, &grapchicPool ) );
-        }
-        if ( data->queuesSet.transfer.familyIndex.has_value() )
-        {
-            poolCI.queueFamilyIndex = data->queuesSet.transfer.familyIndex.value();
-            CHECK_RESULT( vkCreateCommandPool( handle, &poolCI, ALLOCATION_CALLBACK, &transferPool ) );
-        }
-        if ( data->queuesSet.present.familyIndex.has_value() )
-        {
-            poolCI.queueFamilyIndex = data->queuesSet.present.familyIndex.value();
-            CHECK_RESULT( vkCreateCommandPool( handle, &poolCI, ALLOCATION_CALLBACK, &presentPool ) );
         }
     }
 
@@ -107,12 +72,6 @@ namespace Engine
 
     device::~device()
     {
-        if ( grapchicPool )
-            vkDestroyCommandPool( handle, grapchicPool, ALLOCATION_CALLBACK );
-        if ( transferPool )
-            vkDestroyCommandPool( handle, transferPool, ALLOCATION_CALLBACK );
-        if ( presentPool )
-            vkDestroyCommandPool( handle, presentPool, ALLOCATION_CALLBACK );
         for ( auto &img : data->images )
             delete img;
         for ( auto &buf : data->buffers )
@@ -146,7 +105,29 @@ namespace Engine
     {
     }
 
-    types::swapchain device::getLink( window::types::window window )
+    void device::DATA_TYPE::create( VkDeviceCreateInfo createInfo )
+    {
+        _queues.resize( createInfo.queueCreateInfoCount );
+        uint32_t i { 0 };
+        for ( uint32_t i { 0 }; i < createInfo.queueCreateInfoCount; ++i )
+        {
+            _queues[ createInfo.pQueueCreateInfos[ i ].queueFamilyIndex ].resize( createInfo.pQueueCreateInfos[ i ].queueCount );
+            for ( uint32_t ii { 0 }; ii < createInfo.pQueueCreateInfos[ i ].queueCount; ++ii )
+            {
+                _queues[ createInfo.pQueueCreateInfos[ i ].queueFamilyIndex ][ ii ].first  = createInfo.pQueueCreateInfos[ i ].pQueuePriorities[ ii ];
+                _queues[ createInfo.pQueueCreateInfos[ i ].queueFamilyIndex ][ ii ].second = new queue { parent, createInfo.pQueueCreateInfos[ i ].queueFamilyIndex, ii, createInfo.pQueueCreateInfos[ i ].pQueuePriorities[ ii ] };
+            }
+        }
+        std::vector<const char *> exts { createInfo.ppEnabledExtensionNames, createInfo.ppEnabledExtensionNames + createInfo.enabledExtensionCount };
+        setExtensions( exts );
+        assert( supportExtensions() );
+        createInfo.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+        createInfo.enabledExtensionCount   = extensions.size();
+        createInfo.ppEnabledExtensionNames = extensions.data();
+        CHECK_RESULT( vkCreateDevice( description->data->phDevice, &createInfo, ALLOCATION_CALLBACK, &parent->handle ) );
+    }
+
+    types::swapchain device::getLink( window::types::window window ) const noexcept
     {
         for ( auto &swp : data->swapchains )
         {
@@ -156,32 +137,12 @@ namespace Engine
         return nullptr;
     }
 
-    void device::DATA_TYPE::create( VkDeviceCreateInfo createInfo )
+    types::queue device::getQueue( uint32_t familyIndex, uint32_t index ) const noexcept
     {
-        std::vector<VkDeviceQueueCreateInfo> QueuesCreateInfo;
-        QueuesCreateInfo.reserve( queuesSet.getUniqueIndecies().size() );
-        auto d { queuesSet.getUniqueIndecies() };
-        for ( const auto &index : queuesSet.getUniqueIndecies() )
-        {
-            QueuesCreateInfo.push_back( { VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO } );
-            QueuesCreateInfo.back().flags            = index.second.flags;
-            QueuesCreateInfo.back().queueFamilyIndex = index.first;
-            QueuesCreateInfo.back().queueCount       = index.second.prioreties.size();
-            QueuesCreateInfo.back().pQueuePriorities = index.second.prioreties.data();
-        }
-        std::vector<const char *> exts { createInfo.ppEnabledExtensionNames, createInfo.ppEnabledExtensionNames + createInfo.enabledExtensionCount };
-        setExtensions( exts );
-        assert( supportExtensions() );
-        createInfo.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-        createInfo.enabledExtensionCount   = extensions.size();
-        createInfo.ppEnabledExtensionNames = extensions.data();
-        createInfo.queueCreateInfoCount    = QueuesCreateInfo.size();
-        createInfo.pQueueCreateInfos       = QueuesCreateInfo.data();
-        CHECK_RESULT( vkCreateDevice( description->data->phDevice, &createInfo, ALLOCATION_CALLBACK, &parent->handle ) );
-        queuesSet.init( parent->handle );
+        return data->_queues[ familyIndex ][ index ].second;
     }
 
-    VkFormat device::formatPriority( const std::vector<VkFormat> &formats, VkImageTiling ImageTiling, VkFormatFeatureFlags FormatFeatureFlags )
+    VkFormat device::formatPriority( const std::vector<VkFormat> &formats, VkImageTiling ImageTiling, VkFormatFeatureFlags FormatFeatureFlags ) const noexcept
     {
         for ( auto format : formats )
         {
@@ -204,7 +165,7 @@ namespace Engine
         return VK_FORMAT_UNDEFINED;
     }
 
-    uint32_t device::requeredMemoryTypeIndex( uint32_t type, VkMemoryPropertyFlags properties )
+    uint32_t device::requeredMemoryTypeIndex( uint32_t type, VkMemoryPropertyFlags properties ) const
     {
         for ( uint32_t i { 0 }; i < data->description->data->memProperties.memoryTypeCount; i++ )
         {

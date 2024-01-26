@@ -8,9 +8,8 @@
 
 namespace Engine
 {
-    class buffer::DATA_TYPE
+    struct buffer::DATA_TYPE
     {
-      public:
         DATA_TYPE( types::buffer parent, types::device device );
         ~DATA_TYPE();
         types::device device { nullptr };
@@ -18,17 +17,23 @@ namespace Engine
         types::buffer parent { nullptr };
     };
 
-    class commandBuffer::DATA_TYPE
+    struct commandPool::DATA_TYPE
     {
-      public:
-        DATA_TYPE( types::commandBuffer parent, types::device device, VkCommandPool commandPool, Engine::queue &queue );
+        DATA_TYPE( types::commandPool parent, types::queue queue );
         ~DATA_TYPE();
-        types::device device { nullptr };
-        VkCommandPool pool { nullptr };
-        Engine::queue *queue { nullptr };
-        VkFence fence { nullptr };
+        types::queue queue;
+        types::commandPool parent;
+        std::set<types::commandBuffer> commandBuffers;
+    };
+
+    struct commandBuffer::DATA_TYPE
+    {
+        DATA_TYPE( types::commandBuffer parent, types::commandPool commandPool, types::queue queue );
+        ~DATA_TYPE();
+        types::commandPool pool;
+        types::queue queue;
         bool used { 0 };
-        types::commandBuffer parent { nullptr };
+        types::commandBuffer parent;
     };
 } // namespace Engine
 #endif

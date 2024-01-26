@@ -165,21 +165,10 @@ namespace Engine
         parent->properties.capabilities.currentExtent = createInfo.imageExtent;
         if ( !createInfo.imageArrayLayers )
             createInfo.imageArrayLayers = 1;
-        if ( device->data->queuesSet.count() == device->data->queuesSet.getUniqueIndecies().size() )
-        {
-            std::vector<uint32_t> indecies {};
-            indecies.reserve( device->data->queuesSet.getUniqueIndecies().size() );
-            device->data->queuesSet.getUniqueIndecies();
-            for ( const auto &ind : device->data->queuesSet.getUniqueIndecies() )
-                indecies.push_back( ind.first );
-            createInfo.imageSharingMode      = VK_SHARING_MODE_CONCURRENT;
-            createInfo.queueFamilyIndexCount = static_cast<uint32_t>( indecies.size() );
-            createInfo.pQueueFamilyIndices   = indecies.data();
-        }
-        else
-        {
+        if ( !createInfo.queueFamilyIndexCount )
             createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-        }
+        else
+            createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
         createInfo.oldSwapchain = parent->handle;
         vkCreateSwapchainKHR( device->handle, &createInfo, ALLOCATION_CALLBACK, &parent->handle );
         uint32_t c;

@@ -19,17 +19,14 @@
       public:                          \
         class ENGINE_EXPORT DATA_TYPE; \
         const std::unique_ptr<DATA_TYPE> data;
-#    include <set>
-#    include <array>
-#    include <memory>
-#    include <vector>
-#    include <string>
-#    include <stdint.h>
+
 #    include <glm/glm.hpp>
 #    include <glm/gtx/hash.hpp>
+#    include <platform.hxx>
+#    include <common/globals.hxx>
+#    include <common/logging.hxx>
 #    include "engine_export.hxx"
 #    include <glm/gtc/matrix_transform.hpp>
-#    include <platform.hxx>
 
 namespace Engine
 {
@@ -37,20 +34,22 @@ namespace Engine
     DEFINE_HANDLE( deviceDescription );
     DEFINE_HANDLE( device );
     DEFINE_HANDLE( image );
+    DEFINE_HANDLE( queue );
     DEFINE_HANDLE( buffer );
+    DEFINE_HANDLE( commandPool );
     DEFINE_HANDLE( commandBuffer );
     DEFINE_HANDLE( swapchain );
     DEFINE_HANDLE( renderPass );
 
     namespace window
     {
-        struct ENGINE_EXPORT resolution
+        struct ENGINE_EXPORT resolution final
         {
             ENGINE_RESOLUTION_TYPE width { 800 };
             ENGINE_RESOLUTION_TYPE height { 600 };
         };
 
-        struct ENGINE_EXPORT settings
+        struct ENGINE_EXPORT settings final
         {
             resolution size;
             const char *title;
@@ -85,7 +84,7 @@ namespace Engine
         DEFINE_HANDLE( window );
     } // namespace window
 
-    struct ENGINE_EXPORT deviceDescription
+    struct ENGINE_EXPORT deviceDescription final
     {
         DEFINE_DATA;
 
@@ -107,10 +106,11 @@ namespace Engine
         device( types::deviceDescription description, std::vector<window::types::window> windows );
         device( bool, types::deviceDescription description, std::vector<window::types::window> windows );
         ~device();
-        VkFormat formatPriority( const std::vector<VkFormat> &formats, VkImageTiling ImageTiling, VkFormatFeatureFlags FormatFeatureFlags );
-        uint32_t requeredMemoryTypeIndex( uint32_t type, VkMemoryPropertyFlags properties );
-        types::swapchain getLink( window::types::window window );
-        class memory
+        VkFormat formatPriority( const std::vector<VkFormat> &formats, VkImageTiling ImageTiling, VkFormatFeatureFlags FormatFeatureFlags ) const noexcept;
+        uint32_t requeredMemoryTypeIndex( uint32_t type, VkMemoryPropertyFlags properties ) const;
+        types::swapchain getLink( window::types::window window ) const noexcept;
+        types::queue getQueue( uint32_t familyIndex, uint32_t index ) const noexcept;
+        class memory final
         {
             DEFINE_DATA;
 
@@ -132,6 +132,7 @@ namespace Engine
             void free( allocationAddres &addres );
         };
         memory memory;
+        types::queue universalQueue;
         VkCommandPool grapchicPool;
         VkCommandPool transferPool;
         VkCommandPool presentPool;
@@ -151,13 +152,13 @@ namespace Engine
         swapchain( types::device device, window::types::window window );
         swapchain( bool, types::device device, window::types::window window );
         ~swapchain();
-        struct
+        struct final
         {
             VkSurfaceCapabilitiesKHR capabilities;
             std::vector<VkSurfaceFormatKHR> formats;
             std::vector<VkPresentModeKHR> presentModes;
         } properties;
-        struct image_T
+        struct image_T final
         {
             types::image image;
             VkSemaphore available;
@@ -169,7 +170,7 @@ namespace Engine
         VkSwapchainKHR handle { nullptr };
     };
 
-    class ENGINE_EXPORT image
+    class ENGINE_EXPORT image final
     {
         DEFINE_DATA;
 
@@ -178,8 +179,10 @@ namespace Engine
         image( types::device device, VkImageCreateInfo ImageCreateInfo, VkImageViewCreateInfo ImageViewCreateInfo, VkMemoryPropertyFlags memoryPropertiesFlag );
         ~image();
         image( types::device device, types::image parent, VkImageViewCreateInfo ImageViewCreateInfo );
-        void write( std::vector<void *> data, VkExtent3D srcExtend = { 0, 0, 0 }, VkOffset3D srcOffset = { 0, 0, 0 }, VkImageAspectFlags srcAspectMask = VK_IMAGE_ASPECT_COLOR_BIT, uint32_t dstMipLevel = 0, uint32_t arrayLayersCount = 1, uint32_t dstBaseArrayLayer = 0, VkMemoryMapFlags flags = 0 );
-        void transition( VkImageLayout newLayout, VkDependencyFlags dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT, VkPipelineStageFlags srcStageMask = 0, VkPipelineStageFlags dstStageMask = 0, uint32_t srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED, uint32_t dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED );
+        void write( types::commandBuffer commandBuffer, std::vector<void *> data, VkExtent3D srcExtend = { 0, 0, 0 }, VkOffset3D srcOffset = { 0, 0, 0 }, VkImageAspectFlags srcAspectMask = VK_IMAGE_ASPECT_COLOR_BIT, uint32_t dstMipLevel = 0, uint32_t arrayLayersCount = 1, uint32_t dstBaseArrayLayer = 0, VkMemoryMapFlags flags = 0 );
+        void write( types::commandPool commandPool, types::queue queue, std::vector<void *> data, VkExtent3D srcExtend = { 0, 0, 0 }, VkOffset3D srcOffset = { 0, 0, 0 }, VkImageAspectFlags srcAspectMask = VK_IMAGE_ASPECT_COLOR_BIT, uint32_t dstMipLevel = 0, uint32_t arrayLayersCount = 1, uint32_t dstBaseArrayLayer = 0, VkMemoryMapFlags flags = 0 );
+        void transition( types::commandBuffer commandPool, VkImageLayout newLayout, VkDependencyFlags dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT, VkPipelineStageFlags srcStageMask = 0, VkPipelineStageFlags dstStageMask = 0, uint32_t srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED, uint32_t dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED );
+        void transition( types::commandPool commandPool, types::queue queue, VkImageLayout newLayout, VkDependencyFlags dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT, VkPipelineStageFlags srcStageMask = 0, VkPipelineStageFlags dstStageMask = 0, uint32_t srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED, uint32_t dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED );
         struct
         {
             VkExtent3D extent;
@@ -203,7 +206,7 @@ namespace Engine
         VkImage handle { nullptr };
     };
 
-    class buffer
+    class buffer final
     {
         DEFINE_DATA;
 
@@ -211,20 +214,49 @@ namespace Engine
         buffer() = delete;
         buffer( types::device device, VkBufferCreateInfo BufferCreateInfo, VkMemoryPropertyFlags memoryPropertiesFlag );
         ~buffer();
-        void write( std::vector<void *> data, VkMemoryMapFlags flags = 0 );
+        void write( types::commandBuffer commandBuffer, std::vector<void *> &data, VkMemoryMapFlags flags = 0 );
+        void write( types::commandPool commandPool, types::queue queue, std::vector<void *> &data, VkMemoryMapFlags flags = 0 );
         VkBuffer handle { nullptr };
     };
 
-    class commandBuffer
+    class queue final
+    {
+        DEFINE_DATA;
+
+      public:
+        queue() = delete;
+        queue( types::device device, uint32_t familyIndex, uint32_t queueIndex, float priority = 1.f );
+        ~queue();
+        bool operator==( const queue &right );
+        VkQueue handle { nullptr };
+        uint32_t familyIndex;
+        uint32_t index { 0 };
+        float priority { 1.f };
+    };
+
+    class commandPool final
+    {
+        DEFINE_DATA;
+
+      public:
+        commandPool() = delete;
+        commandPool( types::queue queue, VkCommandPoolCreateFlags flags );
+        ~commandPool();
+        void reset( VkCommandPoolResetFlags flags );
+        VkCommandPool handle { nullptr };
+    };
+
+    class commandBuffer final
     {
         DEFINE_DATA;
 
       public:
         commandBuffer() = delete;
-        commandBuffer( types::device device, VkCommandPool commandPool, VkCommandBufferLevel level, struct queue &queue );
+        commandBuffer( types::commandPool commandPool, types::queue queue, VkCommandBufferLevel level );
         ~commandBuffer();
         void begin();
-        void submit();
+        void end();
+        void submit( VkFence fence );
         VkCommandBuffer handle { nullptr };
     };
 

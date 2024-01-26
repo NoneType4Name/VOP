@@ -31,6 +31,7 @@ namespace Engine
         DATA_TYPE( types::device parent, types::deviceDescription description );
         ~DATA_TYPE();
         void create( VkDeviceCreateInfo createInfo );
+        types::queue getQueue( uint32_t familyIndex, uint32_t index );
         std::vector<const char *> extensions;
         std::set<types::swapchain> swapchains;
         std::set<types::image> images;
@@ -40,11 +41,12 @@ namespace Engine
         // std::vector<std::unique_ptr<layout>> layouts;
         // std::vector<std::unique_ptr<pipeline>> pipelines;
         // memoryTypeIndex<<handle, offset>, <size, oversize>>;
-        queueSet queuesSet;
         types::deviceDescription description { nullptr };
         types::device parent;
 
       private:
+        friend device;
+        std::vector<std::vector<std::pair<float, types::queue>>> _queues;
         void setExtensions( std::vector<const char *> &deviceExtensions );
         bool supportExtensions();
         // uint32_t setImageMemory( VkImage image, VkMemoryPropertyFlags properties );

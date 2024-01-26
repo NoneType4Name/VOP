@@ -8,60 +8,43 @@
 namespace Engine
 {
     // typedef std::unordered_map<uint32_t, std::pair<std::unordered_map<uint32_t, float *>, std::vector<float>>> queuesProperties;
-    struct qProperties
+    struct queue::DATA_TYPE
     {
-        VkQueueFlags flags;
-        std::unordered_map<uint32_t, float *> indeciesPriorety;
-        std::vector<float> prioreties;
-    };
-    typedef std::unordered_map<uint32_t, qProperties> queuesProperties;
-    class queueSet;
-    class queue
-    {
-      public:
-        queue( queueSet *pSet );
-        queue( queueSet *pSet, VkDevice device, uint32_t familyIndex, uint32_t queueIndex, VkQueueFlags flags = 0, float priority = 0.f );
-        queue( queueSet *pSet, uint32_t familyIndex, uint32_t queueIndex, VkQueueFlags flags = 0, float priority = 0.f );
-        void init( VkDevice device );
-        void init( VkDevice device, uint32_t familyIndex, uint32_t queueIndex, float priority = 0.f );
-        void operator=( std::pair<uint32_t, float> familyPriority );
-        void operator=( std::tuple<uint32_t, uint32_t, float> familyIndexPriority );
-        bool operator==( const queue &right );
-        bool operator!=( const queue &right );
-        queueSet *set { nullptr };
-        VkQueue handle { nullptr };
-        VkQueueFlags flags { 0 };
-        float priority { 1.f };
-        uint32_t index { 0 };
-        std::optional<uint32_t> familyIndex;
-        ~queue() = default;
+        DATA_TYPE( types::queue parent, types::device device );
+        ~DATA_TYPE();
+        std::set<types::commandPool> commandPools;
+        types::device device;
+        types::queue parent;
     };
 
-    class queueSet
-    {
-      public:
-        Engine::queue graphic;
-        Engine::queue transfer;
-        // Engine::queue compute;
-        Engine::queue present;
-        queueSet();
-        queueSet( types::device parent );
-        void init( VkDevice device );
-        const size_t count() const;
-        void operator=( std::initializer_list<std::pair<uint32_t, float>> familyPriority );
-        void operator=( std::initializer_list<std::tuple<uint32_t, uint32_t, float>> familyIndexPriority );
-        queue *operator[]( size_t index );
-        queuesProperties &getUniqueIndecies();
-        ~queueSet();
+    // struct qProperties
+    // {
+    //     VkQueueFlags flags;
+    //     std::unordered_map<uint32_t, float *> indeciesPriorety;
+    //     std::vector<float> prioreties;
+    // };
 
-      private:
-        friend class queue;
-        types::device parent;
-        // <family<index in family, ptr to priority>, vector of all prioreties in family>
-        queuesProperties _unique;
-    };
+    // typedef std::unordered_map<uint32_t, qProperties> queuesProperties;
+    // class queueSet
+    // {
+    //   public:
+    //     Engine::queue graphic;
+    //     Engine::queue transfer;
+    //     // Engine::queue compute;
+    //     Engine::queue present;
+    //     queueSet();
+    //     queueSet( types::device device );
+    //     void init( VkDevice device );
+    //     const size_t count() const;
+    //     void operator=( std::initializer_list<std::pair<uint32_t, float>> familyPriority );
+    //     void operator=( std::initializer_list<std::tuple<uint32_t, uint32_t, float>> familyIndexPriority );
+    //     queue *operator[]( size_t index );
+    //     queuesProperties &getUniqueIndecies();
+    //     ~queueSet();
 
-    VkDeviceQueueCreateInfo queueCreateInfo( uint32_t index, uint32_t count, const float *priority );
-    queueSet getIndecies( VkPhysicalDevice device );
+    //   private:
+    //     // <family<index in family, ptr to priority>, vector of all prioreties in family>
+    //     queuesProperties _unique;
+    // };
 } // namespace Engine
 #endif
