@@ -95,11 +95,6 @@ namespace Game
             // InstanceCreateInfo.pApplicationInfo        = &ApplicationInfo;
             // data->create( InstanceCreateInfo );
         }
-
-        Engine::window::types::window createWindow( Engine::window::settings settings ) override
-        {
-            return new W { this, settings };
-        }
     };
     std::unique_ptr<E> engine { new E { "test", 0 } };
 
@@ -111,7 +106,7 @@ namespace Game
 
 int main()
 {
-    auto wnd { Game::engine->createWindow( { 800, 600, "test", 0, 1 } ) };
+    auto wnd { Game::W { 800, 600, "test", 0, 1 } };
     auto device { Game::engine->createDevice( Game::engine->getDevices()[ 0 ], { wnd } ) };
     auto swapchain { device->getLink( wnd ) };
     while ( !wnd->shouldClose() )

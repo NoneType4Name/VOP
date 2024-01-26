@@ -51,7 +51,7 @@ namespace Engine
     //     priority    = std::get<2>( right );
     // }
 
-    bool queue::operator==( const queue &right )
+    bool queue::operator==( const queue &right ) const noexcept
     {
         if ( this->familyIndex == right.familyIndex && this->index == right.index && this->priority == right.priority )
             return true;

@@ -152,7 +152,7 @@ namespace Engine
         swapchain( types::device device, window::types::window window );
         swapchain( bool, types::device device, window::types::window window );
         ~swapchain();
-        struct final
+        struct
         {
             VkSurfaceCapabilitiesKHR capabilities;
             std::vector<VkSurfaceFormatKHR> formats;
@@ -177,8 +177,8 @@ namespace Engine
       public:
         image() = delete;
         image( types::device device, VkImageCreateInfo ImageCreateInfo, VkImageViewCreateInfo ImageViewCreateInfo, VkMemoryPropertyFlags memoryPropertiesFlag );
-        ~image();
         image( types::device device, types::image parent, VkImageViewCreateInfo ImageViewCreateInfo );
+        ~image();
         void write( types::commandBuffer commandBuffer, std::vector<void *> data, VkExtent3D srcExtend = { 0, 0, 0 }, VkOffset3D srcOffset = { 0, 0, 0 }, VkImageAspectFlags srcAspectMask = VK_IMAGE_ASPECT_COLOR_BIT, uint32_t dstMipLevel = 0, uint32_t arrayLayersCount = 1, uint32_t dstBaseArrayLayer = 0, VkMemoryMapFlags flags = 0 );
         void write( types::commandPool commandPool, types::queue queue, std::vector<void *> data, VkExtent3D srcExtend = { 0, 0, 0 }, VkOffset3D srcOffset = { 0, 0, 0 }, VkImageAspectFlags srcAspectMask = VK_IMAGE_ASPECT_COLOR_BIT, uint32_t dstMipLevel = 0, uint32_t arrayLayersCount = 1, uint32_t dstBaseArrayLayer = 0, VkMemoryMapFlags flags = 0 );
         void transition( types::commandBuffer commandPool, VkImageLayout newLayout, VkDependencyFlags dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT, VkPipelineStageFlags srcStageMask = 0, VkPipelineStageFlags dstStageMask = 0, uint32_t srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED, uint32_t dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED );
@@ -227,7 +227,7 @@ namespace Engine
         queue() = delete;
         queue( types::device device, uint32_t familyIndex, uint32_t queueIndex, float priority = 1.f );
         ~queue();
-        bool operator==( const queue &right );
+        bool operator==( const queue &right ) const noexcept;
         VkQueue handle { nullptr };
         uint32_t familyIndex;
         uint32_t index { 0 };
@@ -374,8 +374,6 @@ namespace Engine
         instance( const char *appName, uint32_t appVersion );
         instance( bool, const char *appName, uint32_t appVersion );
         ~instance();
-        virtual window::types::window createWindow( window::settings settings );
-        virtual types::device createDevice( types::deviceDescription description, std::vector<window::types::window> windows );
         // virtual types::renderPass createRenderPass();
         // virtual std::pair<types::swapchain, types::device> makeLink( window::types::window window, types::deviceDescription description );
         // ? virtual types::pass createRenderPass( types::swapchain swapchain );

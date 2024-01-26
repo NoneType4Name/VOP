@@ -225,8 +225,7 @@ namespace Engine
     //     return data->pipelines.back().get();
     // }
 
-    const std::vector<types::deviceDescription> &
-        instance::getDevices()
+    const std::vector<types::deviceDescription> &instance::getDevices()
     {
         if ( data->deviceDescriptions.empty() )
         {

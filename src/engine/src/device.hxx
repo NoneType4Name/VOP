@@ -11,7 +11,7 @@
 
 namespace Engine
 {
-    struct deviceDescription::DATA_TYPE
+    struct deviceDescription::DATA_TYPE final
     {
         DATA_TYPE() = delete;
         DATA_TYPE( types::deviceDescription parent, struct instance *instance, VkPhysicalDevice device );
@@ -25,7 +25,7 @@ namespace Engine
         types::deviceDescription parent;
     };
 
-    struct device::DATA_TYPE
+    struct device::DATA_TYPE final
     {
         DATA_TYPE() = delete;
         DATA_TYPE( types::device parent, types::deviceDescription description );
