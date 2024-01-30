@@ -36,6 +36,7 @@ namespace Engine
         std::set<types::swapchain> swapchains;
         std::set<types::image> images;
         std::set<types::buffer> buffers;
+        std::set<types::queue> queues;
         // std::vector<std::unique_ptr<descriptorPool>> descriptorPools;
         // std::vector<std::unique_ptr<shader>> shaders;
         // std::vector<std::unique_ptr<layout>> layouts;

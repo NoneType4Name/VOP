@@ -40,6 +40,7 @@ namespace Engine
     DEFINE_HANDLE( commandBuffer );
     DEFINE_HANDLE( swapchain );
     DEFINE_HANDLE( renderPass );
+    DEFINE_HANDLE( framebuffer );
 
     namespace window
     {
@@ -227,6 +228,7 @@ namespace Engine
         queue() = delete;
         queue( types::device device, uint32_t familyIndex, uint32_t queueIndex, float priority = 1.f );
         ~queue();
+        // types::queue operator=( types::queue queue ) noexcept;
         bool operator==( const queue &right ) const noexcept;
         VkQueue handle { nullptr };
         uint32_t familyIndex;
@@ -258,6 +260,29 @@ namespace Engine
         void end();
         void submit( VkFence fence );
         VkCommandBuffer handle { nullptr };
+    };
+
+    class renderPass
+    {
+        DEFINE_DATA;
+
+      public:
+        renderPass( std::vector<VkAttachmentDescription> attachmentsDescriptions, std::vector<VkSubpassDescription> subpasses, std::vector<VkSubpassDependency> subpassDependency );
+        renderPass( bool, std::vector<VkAttachmentDescription> attachments, std::vector<VkSubpassDescription> subpasses, std::vector<VkSubpassDependency> subpassDependency );
+        ~renderPass();
+        bool compatible( types::renderPass );
+        VkRenderPass handle { nullptr };
+    };
+
+    class framebuffer
+    {
+        DEFINE_DATA;
+
+      public:
+        framebuffer( types::renderPass renderPass, std::vector<types::image> attachments );
+        framebuffer( bool, types::renderPass renderPass, std::vector<types::image> attachments );
+        ~framebuffer();
+        VkFramebuffer handle { nullptr };
     };
 
     // class renderPass

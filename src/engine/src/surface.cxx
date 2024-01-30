@@ -58,9 +58,9 @@ namespace Engine
 
         window::~window()
         {
-            auto sI { data->swapchains.begin() };
-            while ( sI != data->swapchains.end() )
-                delete *sI++;
+            auto i { data->swapchains.begin() };
+            while ( i != data->swapchains.end() )
+                delete *i++;
             data->instance->data->windows.erase( this );
             vkDestroySurfaceKHR( data->instance->handle, surface, ALLOCATION_CALLBACK );
             glfwDestroyWindow( glfwHandle );

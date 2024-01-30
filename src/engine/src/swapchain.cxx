@@ -140,12 +140,15 @@ namespace Engine
 
     swapchain::~swapchain()
     {
-        for ( auto &img : images )
+        auto img { images.begin() };
+        while ( img != images.end() )
         {
-            vkDestroySemaphore( data->device->handle, img.available, ALLOCATION_CALLBACK );
-            vkDestroySemaphore( data->device->handle, img.rendered, ALLOCATION_CALLBACK );
-            delete img.image;
+            vkDestroySemaphore( data->device->handle, img->available, ALLOCATION_CALLBACK );
+            vkDestroySemaphore( data->device->handle, img->rendered, ALLOCATION_CALLBACK );
+            delete img->image;
+            img++;
         }
+
         vkDestroySwapchainKHR( data->device->handle, handle, ALLOCATION_CALLBACK );
         data->device->data->swapchains.erase( this );
         data->window->data->swapchains.erase( this );

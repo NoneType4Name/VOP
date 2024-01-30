@@ -107,16 +107,6 @@ namespace Engine
         CHECK_RESULT( vkCreateInstance( &createInfo, ALLOCATION_CALLBACK, &parent->handle ) );
     }
 
-    window::types::window instance::createWindow( window::settings settings )
-    {
-        return new window::window { this, settings };
-    }
-
-    types::device instance::createDevice( types::deviceDescription description, std::vector<window::types::window> windows )
-    {
-        return new device { description, windows };
-    }
-
     // window::types::window Engine::instance::createWindow( ENGINE_RESOLUTION_TYPE width, ENGINE_RESOLUTION_TYPE height, const char *title )
     // {
     //     return data->windows.emplace_back( new window::window { this, width, height, title } ).get();

@@ -11,9 +11,17 @@ namespace Engine
     {
         DATA_TYPE( types::renderPass parent, types::swapchain swapchain );
         ~DATA_TYPE();
-        void create( VkRenderPassCreateInfo createInfo, std::vector<subpass> subpasses );
+        void create( VkRenderPassCreateInfo createInfo, std::vector<VkAttachmentDescription> attachments, std::vector<VkSubpassDescription> subpasses, std::vector<VkSubpassDependency> subpassDependency );
         types::swapchain swapchain;
         types::renderPass parent;
+    };
+
+    struct framebuffer::DATA_TYPE
+    {
+        DATA_TYPE( types::framebuffer parent, types::renderPass renderPass, std::vector<types::image> attachments );
+        ~DATA_TYPE();
+        void create( VkFramebufferCreateInfo createInfo, types::renderPass renderPass, std::vector<types::image> attachments );
+        types::framebuffer parent;
     };
 } // namespace Engine
 #endif

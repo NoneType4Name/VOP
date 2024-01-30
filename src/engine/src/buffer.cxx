@@ -86,6 +86,15 @@ namespace Engine
         data->queue->data->commandPools.erase( this );
     }
 
+    commandPool::DATA_TYPE::DATA_TYPE( types::commandPool parent, types::queue queue ) :
+        parent { parent }, queue { queue }
+    {
+    }
+
+    commandPool::DATA_TYPE::~DATA_TYPE()
+    {
+    }
+
     void commandPool::reset( VkCommandPoolResetFlags flags )
     {
         CHECK_RESULT( vkResetCommandPool( data->queue->data->device->handle, handle, flags ) );

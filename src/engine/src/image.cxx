@@ -38,8 +38,9 @@ namespace Engine
 
     image::~image()
     {
-        for ( auto &view : data->views )
-            delete view;
+        auto v { data->views.begin() };
+        while ( v != data->views.end() )
+            delete *v++;
         vkDestroyImageView( data->device->handle, view.handle, ALLOCATION_CALLBACK );
         if ( handle )
             vkDestroyImage( data->device->handle, handle, ALLOCATION_CALLBACK );

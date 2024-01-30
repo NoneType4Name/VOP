@@ -19,11 +19,6 @@ namespace Engine
 
     device::DATA_TYPE::~DATA_TYPE()
     {
-        for ( auto &family : _queues )
-        {
-            for ( auto &q : family )
-                delete q.second;
-        }
     }
 
     device::device( types::deviceDescription description, std::vector<window::types::window> windows ) :
@@ -52,11 +47,12 @@ namespace Engine
                 break;
             }
         }
-
+        DeviceCreateInfo.queueCreateInfoCount = queues.size();
+        DeviceCreateInfo.pQueueCreateInfos    = queues.data();
         VkPhysicalDeviceFeatures2 physicalDeviceFeatures {};
         DeviceCreateInfo.pEnabledFeatures = &features;
         data->create( DeviceCreateInfo );
-        universalQueue = new queue { this, i, 0, 1.f };
+        universalQueue = getQueue( 0, 0 );
         for ( auto &wnd : windows )
         {
             new swapchain { this, wnd };
@@ -72,17 +68,23 @@ namespace Engine
 
     device::~device()
     {
-        for ( auto &img : data->images )
-            delete img;
-        for ( auto &buf : data->buffers )
-            delete buf;
+        auto img { data->images.begin() };
+        while ( img != data->images.end() )
+            delete *img++;
+        auto buf { data->buffers.begin() };
+        while ( buf != data->buffers.end() )
+            delete *buf++;
+        auto que { data->queues.begin() };
+        while ( que != data->queues.end() )
+            delete *que++;
         // data->pipelines.clear();
         // data->shaders.clear();
         // data->layouts.clear();
         // data->descriptorPools.clear();
         vkDestroyDevice( handle, ALLOCATION_CALLBACK );
-        for ( auto &s : data->swapchains )
-            delete s;
+        auto swp { data->swapchains.begin() };
+        while ( swp != data->swapchains.end() )
+            delete *swp++;
         data->description->data->instance->data->devices.erase( this );
     }
 
@@ -107,6 +109,13 @@ namespace Engine
 
     void device::DATA_TYPE::create( VkDeviceCreateInfo createInfo )
     {
+        std::vector<const char *> exts { createInfo.ppEnabledExtensionNames, createInfo.ppEnabledExtensionNames + createInfo.enabledExtensionCount };
+        setExtensions( exts );
+        assert( supportExtensions() );
+        createInfo.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+        createInfo.enabledExtensionCount   = extensions.size();
+        createInfo.ppEnabledExtensionNames = extensions.data();
+        CHECK_RESULT( vkCreateDevice( description->data->phDevice, &createInfo, ALLOCATION_CALLBACK, &parent->handle ) );
         _queues.resize( createInfo.queueCreateInfoCount );
         uint32_t i { 0 };
         for ( uint32_t i { 0 }; i < createInfo.queueCreateInfoCount; ++i )
@@ -118,13 +127,6 @@ namespace Engine
                 _queues[ createInfo.pQueueCreateInfos[ i ].queueFamilyIndex ][ ii ].second = new queue { parent, createInfo.pQueueCreateInfos[ i ].queueFamilyIndex, ii, createInfo.pQueueCreateInfos[ i ].pQueuePriorities[ ii ] };
             }
         }
-        std::vector<const char *> exts { createInfo.ppEnabledExtensionNames, createInfo.ppEnabledExtensionNames + createInfo.enabledExtensionCount };
-        setExtensions( exts );
-        assert( supportExtensions() );
-        createInfo.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-        createInfo.enabledExtensionCount   = extensions.size();
-        createInfo.ppEnabledExtensionNames = extensions.data();
-        CHECK_RESULT( vkCreateDevice( description->data->phDevice, &createInfo, ALLOCATION_CALLBACK, &parent->handle ) );
     }
 
     types::swapchain device::getLink( window::types::window window ) const noexcept

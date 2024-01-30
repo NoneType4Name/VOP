@@ -106,9 +106,11 @@ namespace Game
 
 int main()
 {
-    auto wnd { Game::W { 800, 600, "test", 0, 1 } };
-    auto device { Game::engine->createDevice( Game::engine->getDevices()[ 0 ], { wnd } ) };
+    auto wnd { new Game::W { Game::engine.get(), { 800, 600, "test", 0, 1 } } };
+    auto device { new Engine::device { Game::engine->getDevices()[ 0 ], { wnd } } };
     auto swapchain { device->getLink( wnd ) };
+    auto a { new Engine::renderPass { {}, {}, {} } };
+
     while ( !wnd->shouldClose() )
     {
         wnd->updateEvents();

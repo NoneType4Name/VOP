@@ -7,15 +7,19 @@ namespace Engine
     queue::queue( types::device device, uint32_t familyIndex, uint32_t queueIndex, float priority ) :
         index( queueIndex ), familyIndex { familyIndex }, priority { priority }
     {
+        // if ( device->getQueue( familyIndex, queueIndex ) )
+        //     operator=( device->getQueue( familyIndex, queueIndex ) ); // use move semantic
         DEFINE_DATA_FIELD( device );
+        data->device->data->queues.insert( this );
         vkGetDeviceQueue( device->handle, this->familyIndex, index, &handle );
     }
 
     queue::~queue()
     {
-        vkQueueWaitIdle( handle );
+        CHECK_RESULT( vkQueueWaitIdle( handle ) );
         for ( const auto &cmdP : data->commandPools )
             delete cmdP;
+        data->device->data->queues.erase( this );
     }
 
     queue::DATA_TYPE::DATA_TYPE( types::queue parent, types::device device ) :
