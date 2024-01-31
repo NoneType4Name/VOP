@@ -89,10 +89,13 @@ namespace Engine
     {
         DEFINE_DATA;
 
-      public:
+      private:
+        friend instance;
         deviceDescription() = delete;
         deviceDescription( instance *instance, VkPhysicalDevice phDevice );
         ~deviceDescription();
+
+      public:
         const char *name;
         VkPhysicalDeviceType type;
         uint32_t grade;
@@ -207,7 +210,7 @@ namespace Engine
         VkImage handle { nullptr };
     };
 
-    class buffer final
+    class ENGINE_EXPORT buffer final
     {
         DEFINE_DATA;
 
@@ -220,7 +223,7 @@ namespace Engine
         VkBuffer handle { nullptr };
     };
 
-    class queue final
+    class ENGINE_EXPORT queue final
     {
         DEFINE_DATA;
 
@@ -236,7 +239,7 @@ namespace Engine
         float priority { 1.f };
     };
 
-    class commandPool final
+    class ENGINE_EXPORT commandPool final
     {
         DEFINE_DATA;
 
@@ -248,7 +251,7 @@ namespace Engine
         VkCommandPool handle { nullptr };
     };
 
-    class commandBuffer final
+    class ENGINE_EXPORT commandBuffer final
     {
         DEFINE_DATA;
 
@@ -262,7 +265,7 @@ namespace Engine
         VkCommandBuffer handle { nullptr };
     };
 
-    class renderPass
+    class ENGINE_EXPORT renderPass
     {
         DEFINE_DATA;
 
@@ -274,7 +277,7 @@ namespace Engine
         VkRenderPass handle { nullptr };
     };
 
-    class framebuffer
+    class ENGINE_EXPORT framebuffer
     {
         DEFINE_DATA;
 

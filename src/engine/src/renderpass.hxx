@@ -22,8 +22,23 @@ namespace Engine
             VkFormat format;
             VkSampleCountFlagBits samples;
         };
+        struct _colorAttachmentRef
+        {
+            uint32_t ColorAttachment;
+            uint32_t ResolveAttachment;
+            uint32_t DepthStencilAttachment;
+        };
+        struct _subpassDescription
+        {
+            VkSubpassDescriptionFlags flags;
+            VkPipelineBindPoint pipelineBindPoint;
+            std::vector<uint32_t> inputAttachmentRefs;
+            std::vector<_colorAttachmentRef> colorAttachmentRefs;
+            std::vector<uint32_t> preserveAttachmentRefs;
+        };
         std::vector<_attachment> attachments;
-        std::vector<uint32_t> attachmentsRefs;
+        std::vector<_subpassDescription> subpasses;
+        std::vector<VkSubpassDependency> dependencies;
     };
 
     struct framebuffer::DATA_TYPE

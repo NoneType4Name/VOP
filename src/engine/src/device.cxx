@@ -74,6 +74,9 @@ namespace Engine
         auto buf { data->buffers.begin() };
         while ( buf != data->buffers.end() )
             delete *buf++;
+        auto rdp { data->renderpasses.begin() };
+        while ( rdp != data->renderpasses.end() )
+            delete *rdp++;
         auto que { data->queues.begin() };
         while ( que != data->queues.end() )
             delete *que++;

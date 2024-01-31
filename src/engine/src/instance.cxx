@@ -86,6 +86,9 @@ namespace Engine
         auto dI { data->devices.begin() };
         while ( dI != data->devices.end() )
             delete *dI++;
+        auto dDs { data->deviceDescriptions.begin() };
+        while ( dDs != data->deviceDescriptions.end() )
+            delete *dDs++;
         data->destroyDebugLayerCallback();
         vkDestroyInstance( handle, ALLOCATION_CALLBACK );
     }

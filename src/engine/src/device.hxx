@@ -33,6 +33,7 @@ namespace Engine
         void create( VkDeviceCreateInfo createInfo );
         types::queue getQueue( uint32_t familyIndex, uint32_t index );
         std::vector<const char *> extensions;
+        std::set<types::renderPass> renderpasses;
         std::set<types::swapchain> swapchains;
         std::set<types::image> images;
         std::set<types::buffer> buffers;
