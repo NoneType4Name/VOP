@@ -87,23 +87,31 @@ namespace Engine
     //     dataPointer.clear();
     // }
 
-    renderPass::renderPass( bool, types::swapchain swapchain, std::vector<subpass> subpasses )
+    renderPass::renderPass( bool, types::device device, VkRenderPassCreateInfo createInfo )
     {
-        DEFINE_DATA_FIELD( swapchain );
+        DEFINE_DATA_FIELD( device );
     }
 
-    renderPass::renderPass( types::swapchain swapchain, std::vector<subpass> subpasses ) :
-        renderPass( 1, swapchain, subpasses )
+    renderPass::renderPass( types::device device, VkRenderPassCreateInfo createInfo ) :
+        renderPass( 1, device, createInfo )
     {
     }
 
     renderPass::~renderPass()
     {
-        vkDestroyRenderPass( data->swapchain->data->device->handle, data->handle, ALLOCATION_CALLBACK );
+        vkDestroyRenderPass( data->device->handle, handle, ALLOCATION_CALLBACK );
     }
 
-    renderPass::DATA_TYPE::DATA_TYPE( types::renderPass parent, types::swapchain swapchain ) :
-        parent { parent }, swapchain { swapchain }
+    bool renderPass::compatible( types::renderPass right )
+    {
+        for ()
+        {
+        }
+        return false;
+    }
+
+    renderPass::DATA_TYPE::DATA_TYPE( types::renderPass parent, types::device device ) :
+        parent { parent }, device { device }
     {
     }
 
@@ -111,25 +119,61 @@ namespace Engine
     {
     }
 
-    void renderPass::DATA_TYPE::create( VkRenderPassCreateInfo createInfo, std::vector<subpass> subpasses )
+    void renderPass::DATA_TYPE::create( VkRenderPassCreateInfo createInfo )
     {
         createInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-        std::vector<VkAttachmentDescription> attachments;
-        std::vector<VkSubpassDependency> deps;
-        deps.reserve( subpasses.size() );
-        for ( size_t i { 0 }; i < subpasses.size(); ++i )
-        {
-            setSubpasses.insert( subpasses[ i ] );
-            deps.emplace_back();
-            deps.back().srcSubpass      = ( i - 1 ) > 0 ? i - 1 : VK_SUBPASS_EXTERNAL;
-            deps.back().srcAccessMask   = subpasses[ i - 1 ].accessFlags;
-            deps.back().srcStageMask    = subpasses[ i - 1 ].stageFlags;
-            deps.back().dstSubpass      = ( i - subpasses.size() ) ? i - 1 : VK_SUBPASS_EXTERNAL;
-            deps.back().dstAccessMask   = subpasses[ i ].accessFlags;
-            deps.back().dstStageMask    = subpasses[ i ].stageFlags;
-            deps.back().dependencyFlags = subpasses[ i - 1 ].dependencyFlags;
-        }
-        CHECK_RESULT( vkCreateRenderPass( swapchain->data->device->handle, &createInfo, ALLOCATION_CALLBACK, &parent->handle ) );
+        CHECK_RESULT( vkCreateRenderPass( device->handle, &createInfo, ALLOCATION_CALLBACK, &parent->handle ) );
     }
 
+    framebuffer::framebuffer( bool, types::renderPass renderPass, std::vector<types::image> attachments )
+    {
+        DEFINE_DATA_FIELD( renderPass );
+    }
+
+    framebuffer::framebuffer( types::renderPass renderPass, std::vector<types::image> attachments ) :
+        framebuffer( 1, renderPass, attachments )
+    {
+        uint32_t w, h, l;
+        for ( const auto &atch : attachments )
+        {
+            if ( atch->properties.extent.width < w )
+                w = atch->properties.extent.width;
+            if ( atch->properties.extent.height < h )
+                h = atch->properties.extent.height;
+            if ( atch->properties.extent.depth < l )
+                l = atch->properties.extent.depth;
+            VkFramebufferCreateInfo createInfo { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
+            createInfo.width  = w;
+            createInfo.height = h;
+            createInfo.layers = l;
+            data->create( createInfo, attachments );
+        }
+    }
+
+    framebuffer::~framebuffer()
+    {
+        vkDestroyFramebuffer( data->renderpass->data->device->handle, handle, ALLOCATION_CALLBACK );
+    }
+
+    framebuffer::DATA_TYPE::DATA_TYPE( types::framebuffer parent, types::renderPass renderpass ) :
+        parent { parent }, renderpass { renderpass }
+    {
+    }
+
+    framebuffer::DATA_TYPE::~DATA_TYPE()
+    {
+    }
+
+    void framebuffer::DATA_TYPE::create( VkFramebufferCreateInfo createInfo, std::vector<types::image> attachments )
+    {
+        std::vector<VkImageView> attchms;
+        attchms.reserve( attachments.size() );
+        for ( const auto &atch : attachments )
+            attchms.emplace_back( atch->view.handle );
+        createInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        createInfo.renderPass      = renderpass->handle;
+        createInfo.attachmentCount = attchms.size();
+        createInfo.pAttachments    = attchms.data();
+        CHECK_RESULT( vkCreateFramebuffer( renderpass->data->device->handle, &createInfo, ALLOCATION_CALLBACK, &parent->handle ) );
+    }
 } // namespace Engine

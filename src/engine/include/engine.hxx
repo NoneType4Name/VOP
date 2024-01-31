@@ -267,10 +267,10 @@ namespace Engine
         DEFINE_DATA;
 
       public:
-        renderPass( std::vector<VkAttachmentDescription> attachmentsDescriptions, std::vector<VkSubpassDescription> subpasses, std::vector<VkSubpassDependency> subpassDependency );
-        renderPass( bool, std::vector<VkAttachmentDescription> attachments, std::vector<VkSubpassDescription> subpasses, std::vector<VkSubpassDependency> subpassDependency );
+        renderPass( types::device device, VkRenderPassCreateInfo createInfo );
+        renderPass( bool, types::device device, VkRenderPassCreateInfo createInfo );
         ~renderPass();
-        bool compatible( types::renderPass );
+        bool compatible( types::renderPass right );
         VkRenderPass handle { nullptr };
     };
 

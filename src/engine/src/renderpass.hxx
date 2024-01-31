@@ -9,18 +9,29 @@ namespace Engine
 {
     struct renderPass::DATA_TYPE
     {
-        DATA_TYPE( types::renderPass parent, types::swapchain swapchain );
+        DATA_TYPE( types::renderPass parent, types::device device );
         ~DATA_TYPE();
-        void create( VkRenderPassCreateInfo createInfo, std::vector<VkAttachmentDescription> attachments, std::vector<VkSubpassDescription> subpasses, std::vector<VkSubpassDependency> subpassDependency );
-        types::swapchain swapchain;
+        void create( VkRenderPassCreateInfo createInfo );
+        types::device device;
         types::renderPass parent;
+
+      private:
+        friend renderPass;
+        struct _attachment
+        {
+            VkFormat format;
+            VkSampleCountFlagBits samples;
+        };
+        std::vector<_attachment> attachments;
+        std::vector<uint32_t> attachmentsRefs;
     };
 
     struct framebuffer::DATA_TYPE
     {
-        DATA_TYPE( types::framebuffer parent, types::renderPass renderPass, std::vector<types::image> attachments );
+        DATA_TYPE( types::framebuffer parent, types::renderPass renderPass );
         ~DATA_TYPE();
-        void create( VkFramebufferCreateInfo createInfo, types::renderPass renderPass, std::vector<types::image> attachments );
+        void create( VkFramebufferCreateInfo createInfo, std::vector<types::image> attachments );
+        types::renderPass renderpass;
         types::framebuffer parent;
     };
 } // namespace Engine
