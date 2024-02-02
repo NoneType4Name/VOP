@@ -60,7 +60,7 @@ namespace Engine
     }
 
     device::device( bool, types::deviceDescription description, std::vector<window::types::window> windows ) :
-        memory { this }
+        memory { new _memory { this } }
     {
         DEFINE_DATA_FIELD( description );
         data->description->data->instance->data->devices.emplace( this );
@@ -80,6 +80,7 @@ namespace Engine
         auto que { data->queues.begin() };
         while ( que != data->queues.end() )
             delete *que++;
+        delete memory;
         // data->pipelines.clear();
         // data->shaders.clear();
         // data->layouts.clear();

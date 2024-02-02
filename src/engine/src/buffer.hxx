@@ -13,7 +13,7 @@ namespace Engine
         DATA_TYPE( types::buffer parent, types::device device );
         ~DATA_TYPE();
         types::device device { nullptr };
-        device::memory::allocationAddres addres;
+        device::_memory::allocationAddres addres;
         types::buffer parent { nullptr };
     };
 

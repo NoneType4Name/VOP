@@ -14,7 +14,7 @@ namespace Engine
         {
             CHECK_RESULT( vkCreateImage( data->device->handle, &ImageCreateInfo, ALLOCATION_CALLBACK, &handle ) );
             ImageViewCreateInfo.image = handle;
-            addres                    = data->device->memory.allocate( handle, memoryPropertiesFlag );
+            addres                    = data->device->memory->allocate( handle, memoryPropertiesFlag );
         }
         else if ( ImageViewCreateInfo.image && ImageCreateInfo.samples != VK_SAMPLE_COUNT_FLAG_BITS_MAX_ENUM )
         {
@@ -132,7 +132,7 @@ namespace Engine
         bCI.usage                 = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
         bCI.sharingMode           = VK_SHARING_MODE_EXCLUSIVE;
         CHECK_RESULT( vkCreateBuffer( data->device->handle, &bCI, ALLOCATION_CALLBACK, &TransferBuffer ) );
-        auto TransferBufferMemoryAddr { data->device->memory.allocate( TransferBuffer, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ) };
+        auto TransferBufferMemoryAddr { data->device->memory->allocate( TransferBuffer, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ) };
         CHECK_RESULT( vkMapMemory( data->device->handle, TransferBufferMemoryAddr.memory, TransferBufferMemoryAddr.offset, mapped.size(), flags, mapped.data() ) );
         memcpy( mapped.data(), img.data(), img.size() );
         vkUnmapMemory( data->device->handle, TransferBufferMemoryAddr.memory );

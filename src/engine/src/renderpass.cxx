@@ -96,6 +96,7 @@ namespace Engine
     renderPass::renderPass( types::device device, VkRenderPassCreateInfo createInfo ) :
         renderPass( 1, device, createInfo )
     {
+        data->create( createInfo );
     }
 
     renderPass::~renderPass()
@@ -246,7 +247,7 @@ namespace Engine
     framebuffer::framebuffer( types::renderPass renderPass, std::vector<types::image> attachments ) :
         framebuffer( 1, renderPass, attachments )
     {
-        uint32_t w, h, l;
+        uint32_t w { ~0u }, h { ~0u }, l { ~0u };
         for ( const auto &atch : attachments )
         {
             if ( atch->properties.extent.width < w )

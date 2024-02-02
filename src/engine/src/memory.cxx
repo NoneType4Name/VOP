@@ -3,12 +3,12 @@
 
 namespace Engine
 {
-    device::memory::memory( types::device device )
+    device::_memory::_memory( types::device device )
     {
         const_cast<std::unique_ptr<DATA_TYPE> &>( data ) = std::make_unique<DATA_TYPE>( device );
     }
 
-    device::memory::~memory()
+    device::_memory::~_memory()
     {
         for ( auto &memType : data->memories )
             for ( auto &block : memType )
@@ -16,20 +16,20 @@ namespace Engine
                     vkFreeMemory( data->device->handle, block.handle, ALLOCATION_CALLBACK );
     }
 
-    device::memory::DATA_TYPE::DATA_TYPE( types::device device ) :
+    device::_memory::DATA_TYPE::DATA_TYPE( types::device device ) :
         device { device }
     {
     }
 
-    device::memory::DATA_TYPE::~DATA_TYPE()
+    device::_memory::DATA_TYPE::~DATA_TYPE()
     {
     }
 
-    device::memory::allocationAddres device::memory::allocate( VkImage image, VkMemoryPropertyFlags flags )
+    device::_memory::allocationAddres device::_memory::allocate( VkImage image, VkMemoryPropertyFlags flags )
     {
         VkMemoryRequirements mReq;
         vkGetImageMemoryRequirements( data->device->handle, image, &mReq );
-        allocationAddres ret { .memoryType = data->device->requeredMemoryTypeIndex( mReq.memoryTypeBits, flags ) };
+        allocationAddres ret { .size = mReq.size, .memoryType = data->device->requeredMemoryTypeIndex( mReq.memoryTypeBits, flags ) };
         while ( data->used ) continue;
         data->used = 1;
         if ( data->memories.empty() )
@@ -37,14 +37,14 @@ namespace Engine
         auto &memType { data->memories[ ret.memoryType ] };
         for ( size_t block { 0 }; block < memType.size(); ++block )
         {
-            std::pair<VkDeviceSize, VkDeviceSize> min { 0, 0 };
+            std::pair<VkDeviceSize, VkDeviceSize> min { 0, ~0Ui64 };
             ret.memoryBlock = block;
             for ( auto &freeSize : memType[ block ].free )
-                if ( freeSize.second > mReq.size + ( mReq.size % mReq.alignment ) && freeSize.second < min.second )
+                if ( freeSize.second > mReq.size + ( freeSize.first % mReq.alignment ) && freeSize.second < min.second )
                 {
                     min = freeSize;
                 }
-            if ( !min.second )
+            if ( !~min.second )
                 break;
             if ( min.first % mReq.alignment )
             {
@@ -69,38 +69,42 @@ namespace Engine
         info.memoryTypeIndex = ret.memoryType;
         info.allocationSize  = ( data->device->data->description->data->memProperties.memoryHeaps[ data->device->data->description->data->memProperties.memoryTypes[ ret.memoryType ].heapIndex ].size ) / ( data->device->data->description->data->properties.limits.maxMemoryAllocationCount / data->device->data->description->data->memProperties.memoryTypeCount );
         uint32_t MemMultiply { 0 };
-        while ( mReq.size + ( mReq.size % mReq.alignment ) > info.allocationSize * ++MemMultiply )
+        while ( mReq.size > info.allocationSize * ++MemMultiply )
             continue;
         info.allocationSize *= MemMultiply;
-        memType.back().size                                               = info.allocationSize;
-        memType.back().allocated[ 0 ]                                     = mReq.size + ( mReq.size % mReq.alignment );
-        memType.back().free[ mReq.size + ( mReq.size % mReq.alignment ) ] = memType.back().size - mReq.size - ( mReq.size % mReq.alignment );
-        ret.memoryBlock                                                   = memType.size();
-        ret.offset                                                        = 0;
-        data->used                                                        = 0;
+        memType.back().size              = info.allocationSize;
+        memType.back().allocated[ 0 ]    = mReq.size + ( mReq.size % mReq.alignment );
+        memType.back().free[ mReq.size ] = memType.back().size - mReq.size - ( mReq.size % mReq.alignment );
+        ret.memoryBlock                  = memType.size();
+        ret.offset                       = 0;
+        data->used                       = 0;
         vkAllocateMemory( data->device->handle, &info, ALLOCATION_CALLBACK, &memType.back().handle );
         ret.memory = memType.back().handle;
         vkBindImageMemory( data->device->handle, image, ret.memory, ret.offset );
         return ret;
     }
 
-    device::memory::allocationAddres device::memory::allocate( VkBuffer buffer, VkMemoryPropertyFlags flags )
+    device::_memory::allocationAddres device::_memory::allocate( VkBuffer buffer, VkMemoryPropertyFlags flags )
     {
         VkMemoryRequirements mReq;
         vkGetBufferMemoryRequirements( data->device->handle, buffer, &mReq );
-        allocationAddres ret { data->device->requeredMemoryTypeIndex( mReq.memoryTypeBits, flags ) };
+        allocationAddres ret { .size = mReq.size, .memoryType = data->device->requeredMemoryTypeIndex( mReq.memoryTypeBits, flags ) };
         while ( data->used ) continue;
         data->used = 1;
+        if ( data->memories.empty() )
+            data->memories.resize( data->device->data->description->data->memProperties.memoryTypeCount );
         auto &memType { data->memories[ ret.memoryType ] };
         for ( size_t block { 0 }; block < memType.size(); ++block )
         {
-            std::pair<VkDeviceSize, VkDeviceSize> min { 0, 0 };
+            std::pair<VkDeviceSize, VkDeviceSize> min { 0, ~0Ui64 };
             ret.memoryBlock = block;
             for ( auto &freeSize : memType[ block ].free )
-                if ( freeSize.second > mReq.size + mReq.alignment && freeSize.second < min.second )
+                if ( freeSize.second > mReq.size + ( freeSize.first % mReq.alignment ) && freeSize.second < min.second )
                 {
                     min = freeSize;
                 }
+            if ( !~min.second )
+                break;
             if ( min.first % mReq.alignment )
             {
                 memType[ block ].free[ min.first ]                                           = mReq.alignment - min.first % mReq.alignment;
@@ -122,24 +126,24 @@ namespace Engine
         // new block
         memType.emplace_back();
         info.memoryTypeIndex = ret.memoryType;
-        info.allocationSize  = ( data->device->data->description->data->memProperties.memoryHeaps[ data->device->data->description->data->memProperties.memoryTypes[ ret.memoryType ].heapIndex ].size ) / data->device->data->description->data->properties.limits.maxMemoryAllocationCount / data->device->data->description->data->memProperties.memoryTypeCount;
+        info.allocationSize  = ( data->device->data->description->data->memProperties.memoryHeaps[ data->device->data->description->data->memProperties.memoryTypes[ ret.memoryType ].heapIndex ].size ) / ( data->device->data->description->data->properties.limits.maxMemoryAllocationCount / data->device->data->description->data->memProperties.memoryTypeCount );
         uint32_t MemMultiply { 0 };
-        while ( mReq.size + mReq.alignment > info.allocationSize * ++MemMultiply )
+        while ( mReq.size > info.allocationSize * ++MemMultiply )
             continue;
         info.allocationSize *= MemMultiply;
-        memType.back().size                               = info.allocationSize;
-        memType.back().allocated[ 0 ]                     = info.allocationSize;
-        memType.back().free[ mReq.size + mReq.alignment ] = memType.back().size - mReq.size - mReq.alignment;
-        ret.memoryBlock                                   = memType.size();
-        ret.offset                                        = 0;
-        data->used                                        = 0;
+        memType.back().size              = info.allocationSize;
+        memType.back().allocated[ 0 ]    = mReq.size + ( mReq.size % mReq.alignment );
+        memType.back().free[ mReq.size ] = memType.back().size - mReq.size - ( mReq.size % mReq.alignment );
+        ret.memoryBlock                  = memType.size();
+        ret.offset                       = 0;
+        data->used                       = 0;
         vkAllocateMemory( data->device->handle, &info, ALLOCATION_CALLBACK, &memType.back().handle );
         ret.memory = memType.back().handle;
         vkBindBufferMemory( data->device->handle, buffer, ret.memory, ret.offset );
         return ret;
     }
 
-    void device::memory::free( memory::allocationAddres &addr )
+    void device::_memory::free( _memory::allocationAddres &addr )
     {
         while ( data->used ) continue;
         data->used = 1;

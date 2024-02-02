@@ -9,12 +9,12 @@ namespace Engine
         data->device->data->buffers.insert( this );
         BufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
         CHECK_RESULT( vkCreateBuffer( device->handle, &BufferCreateInfo, nullptr, &handle ) );
-        data->addres = data->device->memory.allocate( handle, memoryPropertiesFlag );
+        data->addres = data->device->memory->allocate( handle, memoryPropertiesFlag );
     }
 
     buffer::~buffer()
     {
-        data->device->memory.free( data->addres );
+        data->device->memory->free( data->addres );
         vkDestroyBuffer( data->device->handle, handle, ALLOCATION_CALLBACK );
         data->device->data->buffers.erase( this );
     }
@@ -39,7 +39,7 @@ namespace Engine
         bCI.usage                 = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
         bCI.sharingMode           = VK_SHARING_MODE_EXCLUSIVE;
         CHECK_RESULT( vkCreateBuffer( this->data->device->handle, &bCI, ALLOCATION_CALLBACK, &TransferBuffer ) );
-        auto TransferBufferMemoryAddr { this->data->device->memory.allocate( TransferBuffer, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ) };
+        auto TransferBufferMemoryAddr { this->data->device->memory->allocate( TransferBuffer, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ) };
         CHECK_RESULT( vkMapMemory( this->data->device->handle, TransferBufferMemoryAddr.memory, TransferBufferMemoryAddr.offset, mapped.size(), flags, mapped.data() ) );
         memcpy( mapped.data(), data.data(), data.size() );
         vkUnmapMemory( this->data->device->handle, TransferBufferMemoryAddr.memory );

@@ -114,14 +114,14 @@ namespace Engine
         uint32_t requeredMemoryTypeIndex( uint32_t type, VkMemoryPropertyFlags properties ) const;
         types::swapchain getLink( window::types::window window ) const noexcept;
         types::queue getQueue( uint32_t familyIndex, uint32_t index ) const noexcept;
-        class memory final
+        class _memory final
         {
             DEFINE_DATA;
 
           public:
-            memory() = delete;
-            memory( types::device device );
-            ~memory();
+            _memory() = delete;
+            _memory( types::device device );
+            ~_memory();
             struct allocationAddres
             {
                 VkDeviceSize size;
@@ -135,11 +135,8 @@ namespace Engine
             allocationAddres allocate( VkBuffer buffer, VkMemoryPropertyFlags flags );
             void free( allocationAddres &addres );
         };
-        memory memory;
+        _memory *memory;
         types::queue universalQueue;
-        VkCommandPool grapchicPool;
-        VkCommandPool transferPool;
-        VkCommandPool presentPool;
         VkDevice handle { nullptr };
         // types::shader CreateShader( const char *path, const char *main, ShaderStage stage );
         // types::pipeline CreatePipeline( types::layout layouts, std::vector<types::shader> shaders, types::pass pass );
@@ -206,7 +203,7 @@ namespace Engine
             VkImageView handle { nullptr };
         } view;
 
-        device::memory::allocationAddres addres;
+        device::_memory::allocationAddres addres;
         VkImage handle { nullptr };
     };
 

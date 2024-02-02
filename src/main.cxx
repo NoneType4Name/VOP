@@ -112,7 +112,7 @@ int main()
     VkImageCreateInfo ImageCreateInfo {};
     ImageCreateInfo.usage         = VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
     ImageCreateInfo.tiling        = VK_IMAGE_TILING_OPTIMAL;
-    ImageCreateInfo.samples       = VK_SAMPLE_COUNT_1_BIT;
+    ImageCreateInfo.samples       = VK_SAMPLE_COUNT_2_BIT;
     ImageCreateInfo.imageType     = VK_IMAGE_TYPE_2D;
     ImageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     ImageCreateInfo.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;
@@ -131,14 +131,16 @@ int main()
     ImageViewCreateInfo.subresourceRange.layerCount     = 1;
     auto colorImage { new Engine::image { device, ImageCreateInfo, ImageViewCreateInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT } };
 
-    ImageCreateInfo.usage         = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-    ImageCreateInfo.format        = device->formatPriority( { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT }, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT );
-    ImageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    ImageCreateInfo.usage                           = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+    ImageCreateInfo.format                          = device->formatPriority( { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT }, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT );
+    ImageCreateInfo.initialLayout                   = VK_IMAGE_LAYOUT_UNDEFINED;
+    ImageViewCreateInfo.format                      = ImageCreateInfo.format;
+    ImageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
     auto depthImage { new Engine::image { device, ImageCreateInfo, ImageViewCreateInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT } };
 
     VkAttachmentDescription ColorAttachment {};
     ColorAttachment.format         = swapchain->format.format;
-    ColorAttachment.samples        = VK_SAMPLE_COUNT_1_BIT;
+    ColorAttachment.samples        = VK_SAMPLE_COUNT_2_BIT;
     ColorAttachment.loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
     ColorAttachment.storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
     ColorAttachment.stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -158,7 +160,7 @@ int main()
 
     VkAttachmentDescription DepthAttachment {};
     DepthAttachment.format         = VK_FORMAT_D32_SFLOAT;
-    DepthAttachment.samples        = VK_SAMPLE_COUNT_1_BIT;
+    DepthAttachment.samples        = VK_SAMPLE_COUNT_2_BIT;
     DepthAttachment.loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
     DepthAttachment.storeOp        = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     DepthAttachment.stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -210,30 +212,5 @@ int main()
     {
         wnd->updateEvents();
     }
-    // Engine::types::device device { engine->CreateDevice( devices[ 0 ] ) };
-    // Engine::types::Device
-    // engine.InitDevice( devices[ 0 ] );
-    // auto rectangle{ Engine::CreateModel( Engine::modelType::MODEL_TYPE_ENTITY, "./assets/models/rectangle/model.obj" ) };
-    // auto rectangle_texture { Engine::CreateTexture( "./assets/textures/rectangle/model.png" ) };
-    // auto rectangle_model { Engine::CreateModel( Engine::modelType::MODEL_TYPE_ENTITY, "./assets/models/rectangle/model.obj" ) };
-    // auto devices { Engine::GetGraphicDevices( Engine::DISCRETE_GPU | Engine::INTEGRATED_GPU ) };
-    // auto pipeline { Engine::CreatePipeline(
-    //     { { Engine::CreateShader( "./assets/shaders/binary.vert.spv", "main", Engine::ShaderStage::VERTEX_SHADER_TYPE ),
-    //         Engine::CreateShader( "./assets/shaders/binary.frag.spv", "main", Engine::ShaderStage::FRAGMENT_SHADER_TYPE ) } } ) };
-    // Engine::AppCreateInfo App {};
-    // App.width                       = 0;
-    // App.height                      = 0;
-    // App.title                       = "Quest App.";
-    // App.device                      = devices.front();
-    // App.settings.MultiSamplingCount = Engine::MultiSamplingCount::SAMPLE_COUNT_2_BIT;
-
-    // Engine::init( App );
-    // Engine::window::setKeyEventsCallback( []( int key, int scancode, int action, int mods )
-    //                                       { SPDLOG_DEBUG( "key pressed code: {}", std::to_string( key ) ); } );
-    // while ( !Engine::window::shouldClose() )
-    // {
-    //     Engine::window::updateEvents();
-    // }
-    // Engine::shutdown();
     return 0;
 }

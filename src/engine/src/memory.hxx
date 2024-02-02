@@ -7,7 +7,7 @@
 
 namespace Engine
 {
-    struct device::memory::DATA_TYPE
+    struct device::_memory::DATA_TYPE
     {
         DATA_TYPE() = delete;
         DATA_TYPE( types::device device );
