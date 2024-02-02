@@ -12,8 +12,9 @@ namespace Engine
         ImageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
         if ( !ImageViewCreateInfo.image )
         {
-            CHECK_RESULT( vkCreateImage( data->device->handle, &ImageCreateInfo, ALLOCATION_CALLBACK, &ImageViewCreateInfo.image ) );
-            addres = data->device->memory.allocate( handle, memoryPropertiesFlag );
+            CHECK_RESULT( vkCreateImage( data->device->handle, &ImageCreateInfo, ALLOCATION_CALLBACK, &handle ) );
+            ImageViewCreateInfo.image = handle;
+            addres                    = data->device->memory.allocate( handle, memoryPropertiesFlag );
         }
         else if ( ImageViewCreateInfo.image && ImageCreateInfo.samples != VK_SAMPLE_COUNT_FLAG_BITS_MAX_ENUM )
         {

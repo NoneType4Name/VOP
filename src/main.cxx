@@ -109,6 +109,33 @@ int main()
     auto wnd { new Game::W { Game::engine.get(), { 800, 600, "test", 0, 1 } } };
     auto device { new Engine::device { Game::engine->getDevices()[ 0 ], { wnd } } };
     auto swapchain { device->getLink( wnd ) };
+    VkImageCreateInfo ImageCreateInfo {};
+    ImageCreateInfo.usage         = VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    ImageCreateInfo.tiling        = VK_IMAGE_TILING_OPTIMAL;
+    ImageCreateInfo.samples       = VK_SAMPLE_COUNT_1_BIT;
+    ImageCreateInfo.imageType     = VK_IMAGE_TYPE_2D;
+    ImageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    ImageCreateInfo.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;
+    ImageCreateInfo.format        = swapchain->format.format;
+    ImageCreateInfo.extent        = swapchain->images[ 0 ].image->properties.extent;
+    ImageCreateInfo.mipLevels     = 1;
+    ImageCreateInfo.arrayLayers   = 1;
+
+    VkImageViewCreateInfo ImageViewCreateInfo {};
+    ImageViewCreateInfo.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
+    ImageViewCreateInfo.format                          = swapchain->format.format;
+    ImageViewCreateInfo.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+    ImageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
+    ImageViewCreateInfo.subresourceRange.baseMipLevel   = 0;
+    ImageViewCreateInfo.subresourceRange.levelCount     = 1;
+    ImageViewCreateInfo.subresourceRange.layerCount     = 1;
+    auto colorImage { new Engine::image { device, ImageCreateInfo, ImageViewCreateInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT } };
+
+    ImageCreateInfo.usage         = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+    ImageCreateInfo.format        = device->formatPriority( { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT }, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT );
+    ImageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    auto depthImage { new Engine::image { device, ImageCreateInfo, ImageViewCreateInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT } };
+
     VkAttachmentDescription ColorAttachment {};
     ColorAttachment.format         = swapchain->format.format;
     ColorAttachment.samples        = VK_SAMPLE_COUNT_1_BIT;
@@ -176,7 +203,8 @@ int main()
     renderPassInfo.pSubpasses      = &subpass;
     renderPassInfo.dependencyCount = 1;
     renderPassInfo.pDependencies   = &dependency;
-    auto a { new Engine::renderPass { device, renderPassInfo } };
+    auto renderpass { new Engine::renderPass { device, renderPassInfo } };
+    auto framebuffer { new Engine::framebuffer { renderpass, { colorImage, depthImage, swapchain->images[ 0 ].image } } };
 
     while ( !wnd->shouldClose() )
     {

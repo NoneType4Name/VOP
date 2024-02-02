@@ -100,6 +100,9 @@ namespace Engine
 
     renderPass::~renderPass()
     {
+        auto frm { data->framebuffers.begin() };
+        while ( frm != data->framebuffers.end() )
+            delete *frm++;
         vkDestroyRenderPass( data->device->handle, handle, ALLOCATION_CALLBACK );
         data->device->data->renderpasses.erase( this );
     }
@@ -237,6 +240,7 @@ namespace Engine
     framebuffer::framebuffer( bool, types::renderPass renderPass, std::vector<types::image> attachments )
     {
         DEFINE_DATA_FIELD( renderPass );
+        data->renderpass->data->framebuffers.insert( this );
     }
 
     framebuffer::framebuffer( types::renderPass renderPass, std::vector<types::image> attachments ) :
@@ -251,17 +255,18 @@ namespace Engine
                 h = atch->properties.extent.height;
             if ( atch->properties.extent.depth < l )
                 l = atch->properties.extent.depth;
-            VkFramebufferCreateInfo createInfo { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
-            createInfo.width  = w;
-            createInfo.height = h;
-            createInfo.layers = l;
-            data->create( createInfo, attachments );
         }
+        VkFramebufferCreateInfo createInfo { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
+        createInfo.width  = w;
+        createInfo.height = h;
+        createInfo.layers = l;
+        data->create( createInfo, attachments );
     }
 
     framebuffer::~framebuffer()
     {
         vkDestroyFramebuffer( data->renderpass->data->device->handle, handle, ALLOCATION_CALLBACK );
+        data->renderpass->data->framebuffers.erase( this );
     }
 
     framebuffer::DATA_TYPE::DATA_TYPE( types::framebuffer parent, types::renderPass renderpass ) :

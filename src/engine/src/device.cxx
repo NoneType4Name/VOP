@@ -43,7 +43,7 @@ namespace Engine
             if ( data->description->data->queueFamilyProperties[ i ].queueFlags & ( VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_TRANSFER_BIT ) && present )
             {
                 priorities.emplace_back( 1.f );
-                queues.emplace_back( VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO, nullptr, 0, i, 1, priorities.data() );
+                queues.emplace_back( VkDeviceQueueCreateInfo { VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO, nullptr, 0, i, 1, priorities.data() } );
                 break;
             }
         }
@@ -180,6 +180,7 @@ namespace Engine
         assert( 0 );
         return -1;
     }
+
     // device::DATA_TYPE::vector<_T>::vector( device::DATA_TYPE *parent ) :
     //     parent { parent }
     // {

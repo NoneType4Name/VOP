@@ -12,6 +12,7 @@ namespace Engine
         DATA_TYPE( types::renderPass parent, types::device device );
         ~DATA_TYPE();
         void create( VkRenderPassCreateInfo createInfo );
+        std::set<types::framebuffer> framebuffers;
         types::device device;
         types::renderPass parent;
 

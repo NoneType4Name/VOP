@@ -29,7 +29,7 @@ namespace Engine
     {
         VkMemoryRequirements mReq;
         vkGetImageMemoryRequirements( data->device->handle, image, &mReq );
-        allocationAddres ret { data->device->requeredMemoryTypeIndex( mReq.memoryTypeBits, flags ) };
+        allocationAddres ret { .memoryType = data->device->requeredMemoryTypeIndex( mReq.memoryTypeBits, flags ) };
         while ( data->used ) continue;
         data->used = 1;
         if ( data->memories.empty() )
@@ -40,10 +40,12 @@ namespace Engine
             std::pair<VkDeviceSize, VkDeviceSize> min { 0, 0 };
             ret.memoryBlock = block;
             for ( auto &freeSize : memType[ block ].free )
-                if ( freeSize.second > mReq.size + mReq.alignment && freeSize.second < min.second )
+                if ( freeSize.second > mReq.size + ( mReq.size % mReq.alignment ) && freeSize.second < min.second )
                 {
                     min = freeSize;
                 }
+            if ( !min.second )
+                break;
             if ( min.first % mReq.alignment )
             {
                 memType[ block ].free[ min.first ]                                           = mReq.alignment - min.first % mReq.alignment;
@@ -65,17 +67,17 @@ namespace Engine
         // new block
         memType.emplace_back();
         info.memoryTypeIndex = ret.memoryType;
-        info.allocationSize  = ( data->device->data->description->data->memProperties.memoryHeaps[ data->device->data->description->data->memProperties.memoryTypes[ ret.memoryType ].heapIndex ].size ) / data->device->data->description->data->properties.limits.maxMemoryAllocationCount / data->device->data->description->data->memProperties.memoryTypeCount;
+        info.allocationSize  = ( data->device->data->description->data->memProperties.memoryHeaps[ data->device->data->description->data->memProperties.memoryTypes[ ret.memoryType ].heapIndex ].size ) / ( data->device->data->description->data->properties.limits.maxMemoryAllocationCount / data->device->data->description->data->memProperties.memoryTypeCount );
         uint32_t MemMultiply { 0 };
-        while ( mReq.size + mReq.alignment > info.allocationSize * ++MemMultiply )
+        while ( mReq.size + ( mReq.size % mReq.alignment ) > info.allocationSize * ++MemMultiply )
             continue;
         info.allocationSize *= MemMultiply;
-        memType.back().size                               = info.allocationSize;
-        memType.back().allocated[ 0 ]                     = info.allocationSize;
-        memType.back().free[ mReq.size + mReq.alignment ] = memType.back().size - mReq.size - mReq.alignment;
-        ret.memoryBlock                                   = memType.size();
-        ret.offset                                        = 0;
-        data->used                                        = 0;
+        memType.back().size                                               = info.allocationSize;
+        memType.back().allocated[ 0 ]                                     = mReq.size + ( mReq.size % mReq.alignment );
+        memType.back().free[ mReq.size + ( mReq.size % mReq.alignment ) ] = memType.back().size - mReq.size - ( mReq.size % mReq.alignment );
+        ret.memoryBlock                                                   = memType.size();
+        ret.offset                                                        = 0;
+        data->used                                                        = 0;
         vkAllocateMemory( data->device->handle, &info, ALLOCATION_CALLBACK, &memType.back().handle );
         ret.memory = memType.back().handle;
         vkBindImageMemory( data->device->handle, image, ret.memory, ret.offset );
