@@ -2,7 +2,6 @@
 #ifndef MEMORY_HXX
 #    define MEMORY_HXX
 #    include <common/globals.hxx>
-#    include <common/logging.hxx>
 #    include <platform.hxx>
 
 namespace Engine

@@ -14,14 +14,16 @@ project("quest"
 )
 
 set(EXECUTABLE_NAME "app")
-
 add_subdirectory(src/assets/shaders)
 add_subdirectory(src/engine)
 file(COPY ${CMAKE_SOURCE_DIR}/src/assets/models DESTINATION ${CMAKE_SOURCE_DIR}/bin/app/assets/)
 file(COPY ${CMAKE_SOURCE_DIR}/src/assets/textures DESTINATION ${CMAKE_SOURCE_DIR}/bin/app/assets/)
-
+find_package(tinyobjloader PATHS "${CMAKE_SOURCE_DIR}/bin/conan_build")
+find_package(stb PATHS "${CMAKE_SOURCE_DIR}/bin/conan_build")
 
 add_executable(${EXECUTABLE_NAME} "src/main.cxx")
 add_dependencies(${EXECUTABLE_NAME} shaders)
 
+target_link_libraries(${EXECUTABLE_NAME} PUBLIC stb::stb)
+target_link_libraries(${EXECUTABLE_NAME} PUBLIC tinyobjloader::tinyobjloader)
 target_link_libraries(${EXECUTABLE_NAME} PRIVATE engine::engine)

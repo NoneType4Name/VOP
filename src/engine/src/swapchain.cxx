@@ -3,6 +3,7 @@
 #include <surface.hxx>
 // #include <image.hxx>
 #include <instance.hxx>
+#include <common/logging.hxx>
 
 namespace Engine
 {
@@ -116,12 +117,12 @@ namespace Engine
         }
 
         int width, height;
-        glfwGetFramebufferSize( window->glfwHandle, &width, &height );
+        glfwGetFramebufferSize( data->window->glfwHandle, &width, &height );
         createInfo.imageUsage         = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
         createInfo.imageFormat        = SurfaceFormat.format;
         createInfo.imageExtent.width  = std::clamp( static_cast<uint32_t>( width ), properties.capabilities.minImageExtent.width, properties.capabilities.maxImageExtent.width );
         createInfo.imageExtent.height = std::clamp( static_cast<uint32_t>( height ), properties.capabilities.minImageExtent.height, properties.capabilities.maxImageExtent.height );
-        createInfo.minImageCount      = properties.capabilities.minImageCount;
+        createInfo.minImageCount      = properties.capabilities.maxImageCount;
         createInfo.clipped            = VK_FALSE;
         createInfo.oldSwapchain       = handle;
         createInfo.preTransform       = properties.capabilities.currentTransform;
@@ -134,7 +135,7 @@ namespace Engine
         // std::vector<void *> swapchainData;
         // std::vector<void *> pData;
         // data->window->data->instance->data->setup->swapchainInfo( this, data->createInfo, swapchainData, data->window->data->instance->data->userPointer );
-        // CHECK_RESULT( vkCreateSwapchainKHR( data->device->handle, &data->createInfo, ALLOCATION_CALLBACK, &data->swapchain ) );
+        // CHECK_RESULT( vkCreateSwapchainKHR( data->device->handle, &data->createInfo, ENGINE_ALLOCATION_CALLBACK, &data->swapchain ) );
         // data->setupImgs();
     }
 
@@ -143,13 +144,13 @@ namespace Engine
         auto img { images.begin() };
         while ( img != images.end() )
         {
-            vkDestroySemaphore( data->device->handle, img->available, ALLOCATION_CALLBACK );
-            vkDestroySemaphore( data->device->handle, img->rendered, ALLOCATION_CALLBACK );
+            vkDestroySemaphore( data->device->handle, img->available, ENGINE_ALLOCATION_CALLBACK );
+            vkDestroySemaphore( data->device->handle, img->rendered, ENGINE_ALLOCATION_CALLBACK );
             delete img->image;
             img++;
         }
 
-        vkDestroySwapchainKHR( data->device->handle, handle, ALLOCATION_CALLBACK );
+        vkDestroySwapchainKHR( data->device->handle, handle, ENGINE_ALLOCATION_CALLBACK );
         data->device->data->swapchains.erase( this );
         data->window->data->swapchains.erase( this );
     };
@@ -173,7 +174,7 @@ namespace Engine
         else
             createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
         createInfo.oldSwapchain = parent->handle;
-        vkCreateSwapchainKHR( device->handle, &createInfo, ALLOCATION_CALLBACK, &parent->handle );
+        vkCreateSwapchainKHR( device->handle, &createInfo, ENGINE_ALLOCATION_CALLBACK, &parent->handle );
         uint32_t c;
         vkGetSwapchainImagesKHR( device->handle, parent->handle, &c, nullptr );
         std::vector<VkImage> imgs { c };
@@ -191,8 +192,8 @@ namespace Engine
             imCreateInfo.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
             imCreateInfo.extent        = { createInfo.imageExtent.width, createInfo.imageExtent.height, 1 };
             parent->images[ i ].image  = new image { device, imCreateInfo, { .image = imgs[ i ], .viewType = VK_IMAGE_VIEW_TYPE_2D, .format = parent->format.format, .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 } }, 0 };
-            CHECK_RESULT( vkCreateSemaphore( device->handle, &semaphoreInfo, ALLOCATION_CALLBACK, &parent->images[ i ].available ) );
-            CHECK_RESULT( vkCreateSemaphore( device->handle, &semaphoreInfo, ALLOCATION_CALLBACK, &parent->images[ i ].rendered ) );
+            CHECK_RESULT( vkCreateSemaphore( device->handle, &semaphoreInfo, ENGINE_ALLOCATION_CALLBACK, &parent->images[ i ].available ) );
+            CHECK_RESULT( vkCreateSemaphore( device->handle, &semaphoreInfo, ENGINE_ALLOCATION_CALLBACK, &parent->images[ i ].rendered ) );
         }
     }
 

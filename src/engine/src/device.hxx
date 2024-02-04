@@ -38,11 +38,7 @@ namespace Engine
         std::set<types::image> images;
         std::set<types::buffer> buffers;
         std::set<types::queue> queues;
-        // std::vector<std::unique_ptr<descriptorPool>> descriptorPools;
-        // std::vector<std::unique_ptr<shader>> shaders;
-        // std::vector<std::unique_ptr<layout>> layouts;
-        // std::vector<std::unique_ptr<pipeline>> pipelines;
-        // memoryTypeIndex<<handle, offset>, <size, oversize>>;
+        std::unordered_map<std::string, VkShaderModule> shaders;
         types::deviceDescription description { nullptr };
         types::device parent;
 

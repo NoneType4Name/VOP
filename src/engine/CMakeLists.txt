@@ -25,19 +25,16 @@ if(WIN32)
 endif()
 
 find_package(Vulkan)
-find_package(glfw3 PATHS "${CMAKE_SOURCE_DIR}/conan_build")
-find_package(spdlog PATHS "${CMAKE_SOURCE_DIR}/conan_build")
-find_package(glm PATHS "${CMAKE_SOURCE_DIR}/conan_build")
-find_package(tinyobjloader PATHS "${CMAKE_SOURCE_DIR}/conan_build")
-find_package(stb PATHS "${CMAKE_SOURCE_DIR}/conan_build")
+find_package(glfw3 PATHS "${CMAKE_SOURCE_DIR}/bin/conan_build")
+find_package(spdlog PATHS "${CMAKE_SOURCE_DIR}/bin/conan_build")
+find_package(glm PATHS "${CMAKE_SOURCE_DIR}/bin/conan_build")
 
 target_include_directories(engine PRIVATE ${glfw3_INCLUDE_DIRS})
 target_link_libraries(engine glfw)
-target_link_libraries(engine stb::stb)
 target_link_libraries(engine Vulkan::Vulkan)
 target_link_libraries(engine spdlog::spdlog)
-target_link_libraries(engine tinyobjloader::tinyobjloader)
 target_link_libraries(engine glm::glm)
+
 
 # if(${ENGINE_MODIFY_SUPPORT})
     target_include_directories(

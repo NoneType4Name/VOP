@@ -1,9 +1,8 @@
-#include <common/globals.hxx>
-#include <common/logging.hxx>
 #include <platform.hxx>
 #include <surface.hxx>
 #include <swapchain.hxx>
 #include <instance.hxx>
+#include <common/logging.hxx>
 
 namespace Engine
 {
@@ -62,7 +61,7 @@ namespace Engine
             while ( i != data->swapchains.end() )
                 delete *i++;
             data->instance->data->windows.erase( this );
-            vkDestroySurfaceKHR( data->instance->handle, surface, ALLOCATION_CALLBACK );
+            vkDestroySurfaceKHR( data->instance->handle, surface, ENGINE_ALLOCATION_CALLBACK );
             glfwDestroyWindow( glfwHandle );
         }
 

@@ -1,5 +1,6 @@
 #include <buffer.hxx>
 #include <device.hxx>
+#include <common/logging.hxx>
 
 namespace Engine
 {
@@ -15,7 +16,7 @@ namespace Engine
     buffer::~buffer()
     {
         data->device->memory->free( data->addres );
-        vkDestroyBuffer( data->device->handle, handle, ALLOCATION_CALLBACK );
+        vkDestroyBuffer( data->device->handle, handle, ENGINE_ALLOCATION_CALLBACK );
         data->device->data->buffers.erase( this );
     }
 
@@ -28,43 +29,12 @@ namespace Engine
     {
     }
 
-    void buffer::write( types::commandBuffer commandBuffer, std::vector<void *> &data, VkMemoryMapFlags flags )
+    void buffer::write( std::vector<char> &data, uint32_t offset, VkMemoryMapFlags flags )
     {
-        VkBuffer TransferBuffer;
         std::vector<void *> mapped( data.size() );
-        VkBufferCreateInfo bCI { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
-        bCI.size                  = data.size();
-        bCI.queueFamilyIndexCount = 1;
-        bCI.pQueueFamilyIndices   = &commandBuffer->data->queue->familyIndex;
-        bCI.usage                 = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-        bCI.sharingMode           = VK_SHARING_MODE_EXCLUSIVE;
-        CHECK_RESULT( vkCreateBuffer( this->data->device->handle, &bCI, ALLOCATION_CALLBACK, &TransferBuffer ) );
-        auto TransferBufferMemoryAddr { this->data->device->memory->allocate( TransferBuffer, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ) };
-        CHECK_RESULT( vkMapMemory( this->data->device->handle, TransferBufferMemoryAddr.memory, TransferBufferMemoryAddr.offset, mapped.size(), flags, mapped.data() ) );
+        CHECK_RESULT( vkMapMemory( this->data->device->handle, this->data->addres.memory, offset, mapped.size(), flags, mapped.data() ) );
         memcpy( mapped.data(), data.data(), data.size() );
-        vkUnmapMemory( this->data->device->handle, TransferBufferMemoryAddr.memory );
-        VkBufferCopy copyInfo {};
-        copyInfo.srcOffset = TransferBufferMemoryAddr.offset;
-        copyInfo.dstOffset = this->data->addres.offset;
-        copyInfo.size      = bCI.size;
-        if ( !commandBuffer->data->used )
-            commandBuffer->begin();
-        vkCmdCopyBuffer( commandBuffer->handle, TransferBuffer, this->handle, 1, &copyInfo );
-    }
-
-    void buffer::write( types::commandPool commandPool, types::queue queue, std::vector<void *> &data, VkMemoryMapFlags flags )
-    {
-        auto cmdB { new commandBuffer { commandPool, queue, VK_COMMAND_BUFFER_LEVEL_PRIMARY } };
-        VkFence fence;
-        VkFenceCreateInfo fCI { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
-        vkCreateFence( commandPool->data->queue->data->device->handle, &fCI, ALLOCATION_CALLBACK, &fence );
-        VkSubmitInfo submit {};
-        submit.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        submit.commandBufferCount = 1;
-        submit.pCommandBuffers    = &cmdB->handle;
-        CHECK_RESULT( vkQueueSubmit( queue->handle, 1, &submit, fence ) );
-        CHECK_RESULT( vkWaitForFences( queue->data->device->handle, 1, &fence, true, -1ui64 ) );
-        delete cmdB;
+        vkUnmapMemory( this->data->device->handle, this->data->addres.memory );
     }
 
     commandPool::commandPool( types::queue queue, VkCommandPoolCreateFlags flags )
@@ -75,7 +45,7 @@ namespace Engine
         CommandPoolCreateInfo.sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
         CommandPoolCreateInfo.flags            = flags;
         CommandPoolCreateInfo.queueFamilyIndex = data->queue->familyIndex;
-        CHECK_RESULT( vkCreateCommandPool( data->queue->data->device->handle, &CommandPoolCreateInfo, ALLOCATION_CALLBACK, &handle ) );
+        CHECK_RESULT( vkCreateCommandPool( data->queue->data->device->handle, &CommandPoolCreateInfo, ENGINE_ALLOCATION_CALLBACK, &handle ) );
     }
 
     commandPool::~commandPool()
@@ -100,9 +70,9 @@ namespace Engine
         CHECK_RESULT( vkResetCommandPool( data->queue->data->device->handle, handle, flags ) );
     }
 
-    commandBuffer::commandBuffer( types::commandPool commandPool, types::queue queue, VkCommandBufferLevel level )
+    commandBuffer::commandBuffer( types::commandPool commandPool, VkCommandBufferLevel level )
     {
-        DEFINE_DATA_FIELD( commandPool, queue );
+        DEFINE_DATA_FIELD( commandPool );
         data->pool->data->commandBuffers.insert( this );
         VkCommandBufferAllocateInfo CommandBufferAllocateInfo {};
         CommandBufferAllocateInfo.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -155,12 +125,12 @@ namespace Engine
         SubmitInfo.commandBufferCount = 1;
         SubmitInfo.pCommandBuffers    = &handle;
         CHECK_RESULT( vkResetFences( data->pool->data->queue->data->device->handle, 1, &fence ) );
-        CHECK_RESULT( vkQueueSubmit( data->queue->handle, 1, &SubmitInfo, fence ) );
+        CHECK_RESULT( vkQueueSubmit( data->pool->data->queue->handle, 1, &SubmitInfo, fence ) );
         CHECK_RESULT( vkWaitForFences( data->pool->data->queue->data->device->handle, 1, &fence, true, -1ui64 ) );
     }
 
-    commandBuffer::DATA_TYPE::DATA_TYPE( types::commandBuffer parent, types::commandPool commandPool, types::queue queue ) :
-        pool { commandPool }, queue { queue }
+    commandBuffer::DATA_TYPE::DATA_TYPE( types::commandBuffer parent, types::commandPool commandPool ) :
+        pool { commandPool }
     {
     }
 

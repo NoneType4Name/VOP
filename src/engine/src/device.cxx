@@ -77,15 +77,13 @@ namespace Engine
         auto rdp { data->renderpasses.begin() };
         while ( rdp != data->renderpasses.end() )
             delete *rdp++;
+        for ( const auto &shr : data->shaders )
+            vkDestroyShaderModule( handle, shr.second, ENGINE_ALLOCATION_CALLBACK );
         auto que { data->queues.begin() };
         while ( que != data->queues.end() )
             delete *que++;
         delete memory;
-        // data->pipelines.clear();
-        // data->shaders.clear();
-        // data->layouts.clear();
-        // data->descriptorPools.clear();
-        vkDestroyDevice( handle, ALLOCATION_CALLBACK );
+        vkDestroyDevice( handle, ENGINE_ALLOCATION_CALLBACK );
         auto swp { data->swapchains.begin() };
         while ( swp != data->swapchains.end() )
             delete *swp++;
@@ -119,7 +117,7 @@ namespace Engine
         createInfo.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
         createInfo.enabledExtensionCount   = extensions.size();
         createInfo.ppEnabledExtensionNames = extensions.data();
-        CHECK_RESULT( vkCreateDevice( description->data->phDevice, &createInfo, ALLOCATION_CALLBACK, &parent->handle ) );
+        CHECK_RESULT( vkCreateDevice( description->data->phDevice, &createInfo, ENGINE_ALLOCATION_CALLBACK, &parent->handle ) );
         _queues.resize( createInfo.queueCreateInfoCount );
         uint32_t i { 0 };
         for ( uint32_t i { 0 }; i < createInfo.queueCreateInfoCount; ++i )
@@ -146,6 +144,32 @@ namespace Engine
     types::queue device::getQueue( uint32_t familyIndex, uint32_t index ) const noexcept
     {
         return data->_queues[ familyIndex ][ index ].second;
+    }
+
+    VkShaderModule device::loadShader( const char *path, VkShaderModuleCreateFlags flags, const void *pNext )
+    {
+        if ( data->shaders.contains( path ) )
+            return data->shaders[ path ];
+        std::ifstream File { path, std::fstream::ate | std::fstream::binary };
+        if ( !File.is_open() )
+        {
+            SPDLOG_CRITICAL( "Failed to open %s.", path );
+            return nullptr;
+        }
+        auto shBsize { File.tellg() };
+        std::vector<char> Data( shBsize );
+        File.seekg( 0 );
+        File.read( Data.data(), shBsize );
+        File.close();
+        VkShaderModuleCreateInfo createInfo {};
+        createInfo.sType      = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+        createInfo.flags      = flags;
+        createInfo.pNext      = pNext;
+        createInfo.codeSize   = Data.size();
+        createInfo.pCode      = reinterpret_cast<const uint32_t *>( Data.data() );
+        data->shaders[ path ] = nullptr;
+        CHECK_RESULT( vkCreateShaderModule( handle, &createInfo, ENGINE_ALLOCATION_CALLBACK, &data->shaders[ path ] ) );
+        return data->shaders[ path ];
     }
 
     VkFormat device::formatPriority( const std::vector<VkFormat> &formats, VkImageTiling ImageTiling, VkFormatFeatureFlags FormatFeatureFlags ) const noexcept

@@ -24,7 +24,6 @@
 #    include <glm/gtx/hash.hpp>
 #    include <platform.hxx>
 #    include <common/globals.hxx>
-#    include <common/logging.hxx>
 #    include "engine_export.hxx"
 #    include <glm/gtc/matrix_transform.hpp>
 
@@ -41,6 +40,9 @@ namespace Engine
     DEFINE_HANDLE( swapchain );
     DEFINE_HANDLE( renderPass );
     DEFINE_HANDLE( framebuffer );
+    DEFINE_HANDLE( descriptorSetLayout );
+    DEFINE_HANDLE( descriptorSet );
+    DEFINE_HANDLE( descriptorsPool );
 
     namespace window
     {
@@ -114,6 +116,7 @@ namespace Engine
         uint32_t requeredMemoryTypeIndex( uint32_t type, VkMemoryPropertyFlags properties ) const;
         types::swapchain getLink( window::types::window window ) const noexcept;
         types::queue getQueue( uint32_t familyIndex, uint32_t index ) const noexcept;
+        VkShaderModule loadShader( const char *path, VkShaderModuleCreateFlags flags = 0, const void *pNext = 0 );
         class _memory final
         {
             DEFINE_DATA;
@@ -138,10 +141,6 @@ namespace Engine
         _memory *memory;
         types::queue universalQueue;
         VkDevice handle { nullptr };
-        // types::shader CreateShader( const char *path, const char *main, ShaderStage stage );
-        // types::pipeline CreatePipeline( types::layout layouts, std::vector<types::shader> shaders, types::pass pass );
-        // types::texture CreateTexture( const char *path );
-        // types::model CreateModel( const char *path, types::texture texture );
     };
 
     class ENGINE_EXPORT swapchain
@@ -180,10 +179,10 @@ namespace Engine
         image( types::device device, VkImageCreateInfo ImageCreateInfo, VkImageViewCreateInfo ImageViewCreateInfo, VkMemoryPropertyFlags memoryPropertiesFlag );
         image( types::device device, types::image parent, VkImageViewCreateInfo ImageViewCreateInfo );
         ~image();
-        void write( types::commandBuffer commandBuffer, std::vector<void *> data, VkExtent3D srcExtend = { 0, 0, 0 }, VkOffset3D srcOffset = { 0, 0, 0 }, VkImageAspectFlags srcAspectMask = VK_IMAGE_ASPECT_COLOR_BIT, uint32_t dstMipLevel = 0, uint32_t arrayLayersCount = 1, uint32_t dstBaseArrayLayer = 0, VkMemoryMapFlags flags = 0 );
-        void write( types::commandPool commandPool, types::queue queue, std::vector<void *> data, VkExtent3D srcExtend = { 0, 0, 0 }, VkOffset3D srcOffset = { 0, 0, 0 }, VkImageAspectFlags srcAspectMask = VK_IMAGE_ASPECT_COLOR_BIT, uint32_t dstMipLevel = 0, uint32_t arrayLayersCount = 1, uint32_t dstBaseArrayLayer = 0, VkMemoryMapFlags flags = 0 );
-        void transition( types::commandBuffer commandPool, VkImageLayout newLayout, VkDependencyFlags dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT, VkPipelineStageFlags srcStageMask = 0, VkPipelineStageFlags dstStageMask = 0, uint32_t srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED, uint32_t dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED );
-        void transition( types::commandPool commandPool, types::queue queue, VkImageLayout newLayout, VkDependencyFlags dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT, VkPipelineStageFlags srcStageMask = 0, VkPipelineStageFlags dstStageMask = 0, uint32_t srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED, uint32_t dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED );
+        void write( types::commandBuffer commandBuffer, std::vector<char> data, VkExtent3D srcExtend = { 0, 0, 0 }, VkOffset3D srcOffset = { 0, 0, 0 }, VkImageAspectFlags srcAspectMask = VK_IMAGE_ASPECT_COLOR_BIT, uint32_t dstMipLevel = 0, uint32_t arrayLayersCount = 1, uint32_t dstBaseArrayLayer = 0, VkMemoryMapFlags flags = 0 );
+        void write( types::commandPool commandPool, std::vector<char> data, VkExtent3D srcExtend = { 0, 0, 0 }, VkOffset3D srcOffset = { 0, 0, 0 }, VkImageAspectFlags srcAspectMask = VK_IMAGE_ASPECT_COLOR_BIT, uint32_t dstMipLevel = 0, uint32_t arrayLayersCount = 1, uint32_t dstBaseArrayLayer = 0, VkMemoryMapFlags flags = 0 );
+        void transition( types::commandBuffer commandBuffer, VkImageLayout newLayout, VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask, VkDependencyFlags dependencyFlags, VkPipelineStageFlags srcStageMask, VkPipelineStageFlags dstStageMask, VkImageAspectFlags aspectMask, uint32_t srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED, uint32_t dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED );
+        void transition( types::commandPool commandPool, VkImageLayout newLayout, VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask, VkDependencyFlags dependencyFlags, VkPipelineStageFlags srcStageMask, VkPipelineStageFlags dstStageMask, VkImageAspectFlags aspectMask, uint32_t srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED, uint32_t dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED );
         struct
         {
             VkExtent3D extent;
@@ -215,8 +214,7 @@ namespace Engine
         buffer() = delete;
         buffer( types::device device, VkBufferCreateInfo BufferCreateInfo, VkMemoryPropertyFlags memoryPropertiesFlag );
         ~buffer();
-        void write( types::commandBuffer commandBuffer, std::vector<void *> &data, VkMemoryMapFlags flags = 0 );
-        void write( types::commandPool commandPool, types::queue queue, std::vector<void *> &data, VkMemoryMapFlags flags = 0 );
+        void write( std::vector<char> &data, uint32_t offset = 0, VkMemoryMapFlags flags = 0 );
         VkBuffer handle { nullptr };
     };
 
@@ -254,7 +252,7 @@ namespace Engine
 
       public:
         commandBuffer() = delete;
-        commandBuffer( types::commandPool commandPool, types::queue queue, VkCommandBufferLevel level );
+        commandBuffer( types::commandPool commandPool, VkCommandBufferLevel level );
         ~commandBuffer();
         void begin();
         void end();
@@ -267,6 +265,7 @@ namespace Engine
         DEFINE_DATA;
 
       public:
+        renderPass() = delete;
         renderPass( types::device device, VkRenderPassCreateInfo createInfo );
         renderPass( bool, types::device device, VkRenderPassCreateInfo createInfo );
         ~renderPass();
@@ -279,117 +278,12 @@ namespace Engine
         DEFINE_DATA;
 
       public:
+        framebuffer() = delete;
         framebuffer( types::renderPass renderPass, std::vector<types::image> attachments );
         framebuffer( bool, types::renderPass renderPass, std::vector<types::image> attachments );
         ~framebuffer();
         VkFramebuffer handle { nullptr };
     };
-
-    // class renderPass
-    // {
-    //     DEFINE_DATA;
-
-    //   public:
-    //     renderPass() = delete;
-    //     renderPass( types::swapchain swapchain, std::vector<types::image> attachments );
-    //     renderPass( bool, types::swapchain swapchain, std::vector<types::image> attachments );
-    //     ~renderPass();
-    //     VkRenderPass handle { nullptr };
-    // };
-
-    // class ENGINE_EXPORT shader
-    // {
-    //   private:
-    //     class ENGINE_EXPORT DATA_TYPE;
-    //     shader( types::device device, const char *path, const char *mainFuncName, ShaderStage stage );
-    //     friend device;
-
-    //   public:
-    //     shader();
-    //     ~shader();
-    //     DATA_PTR data;
-    // };
-
-    // class ENGINE_EXPORT layout
-    // {
-    //   private:
-    //     class ENGINE_EXPORT DATA_TYPE;
-    //     layout( types::device device, types::descriptorPool pool, void *userData );
-    //     friend device;
-
-    //   public:
-    //     struct pushConstantRange
-    //     {
-    //         uint32_t offset;
-    //         uint32_t size;
-    //         ShaderStageFlags stage;
-    //     };
-
-    //     layout();
-    //     ~layout();
-    //     DATA_PTR data;
-    // };
-
-    // class ENGINE_EXPORT descriptorPool
-    // {
-    //   private:
-    //     class ENGINE_EXPORT DATA_TYPE;
-    //     descriptorPool( types::device device, void *userData );
-    //     friend device;
-
-    //   public:
-    //     descriptorPool();
-    //     ~descriptorPool();
-    //     struct descriptorSetLayoutInfo;
-    //     typedef std::vector<std::vector<descriptorSetLayoutInfo>> SetOfBindingsInfo;
-    //     DATA_PTR data;
-    // };
-
-    // class ENGINE_EXPORT pipeline
-    // {
-    //   private:
-    //     class ENGINE_EXPORT DATA_TYPE;
-    //     pipeline( types::device device, types::modelsPool pool, std::vector<types::shader> shaders, types::pass pass );
-    //     friend device;
-
-    //   public:
-    //     pipeline();
-    //     ~pipeline();
-    //     DATA_PTR data;
-    // };
-
-    // class ENGINE_EXPORT pass
-    // {
-    //   private:
-    //     pass( Engine::types::swapchain swapchain );
-    //     class ENGINE_EXPORT DATA_TYPE;
-    //     friend instance;
-
-    //   public:
-    //     pass();
-    //     ~pass();
-
-    //     DATA_PTR data;
-    // };
-
-    // class ENGINE_EXPORT model
-    // {
-    //   private:
-    //     model( types::instance device );
-    //     class ENGINE_EXPORT DATA_TYPE;
-
-    //   public:
-    //     model( const char *path );
-    //     void draw( where );
-    //     types::texture getTexture() const;
-    //     types::texture bindTexture( types::texture texture );
-    //     types::buffer getBuffer() const;
-    //     types::buffer bindBuffer( types::buffer buffer );
-    //     void setPosition( glm::vec3 positionVector );
-    //     void setScale( glm::mat4 scaleMatrix );
-    //     void setRotation( glm::mat4 rotateMatrix );
-    //     ~model();
-    // };
 
     class ENGINE_EXPORT instance
     {
@@ -399,9 +293,6 @@ namespace Engine
         instance( const char *appName, uint32_t appVersion );
         instance( bool, const char *appName, uint32_t appVersion );
         ~instance();
-        // virtual types::renderPass createRenderPass();
-        // virtual std::pair<types::swapchain, types::device> makeLink( window::types::window window, types::deviceDescription description );
-        // ? virtual types::pass createRenderPass( types::swapchain swapchain );
         const std::vector<types::deviceDescription> &getDevices();
         VkInstance handle { nullptr };
     };

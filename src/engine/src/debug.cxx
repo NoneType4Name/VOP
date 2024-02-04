@@ -1,4 +1,5 @@
 #include <instance.hxx>
+#include <common/logging.hxx>
 
 namespace Engine
 {
@@ -65,7 +66,7 @@ namespace Engine
         auto createMsgCallback = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>( vkGetInstanceProcAddr( parent->handle, "vkCreateDebugUtilsMessengerEXT" ) );
         if ( createMsgCallback != nullptr )
         {
-            CHECK_RESULT( createMsgCallback( parent->handle, &createInfo, ALLOCATION_CALLBACK, &debugMessenger ) );
+            CHECK_RESULT( createMsgCallback( parent->handle, &createInfo, ENGINE_ALLOCATION_CALLBACK, &debugMessenger ) );
         }
         else
         {
@@ -78,7 +79,7 @@ namespace Engine
         if ( debugMessenger != VK_NULL_HANDLE )
         {
             PFN_vkDestroyDebugUtilsMessengerEXT destroyMsgCallback = ( PFN_vkDestroyDebugUtilsMessengerEXT ) vkGetInstanceProcAddr( parent->handle, "vkDestroyDebugUtilsMessengerEXT" );
-            destroyMsgCallback( parent->handle, debugMessenger, ALLOCATION_CALLBACK );
+            destroyMsgCallback( parent->handle, debugMessenger, ENGINE_ALLOCATION_CALLBACK );
         }
     }
 } // namespace Engine

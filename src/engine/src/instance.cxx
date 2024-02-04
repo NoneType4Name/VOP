@@ -13,6 +13,7 @@
 // #include <descriptorSet.hxx>
 // #include <pipeline.hxx>
 // #include <sampler.hxx>
+#include <common/logging.hxx>
 
 namespace
 {
@@ -90,7 +91,7 @@ namespace Engine
         while ( dDs != data->deviceDescriptions.end() )
             delete *dDs++;
         data->destroyDebugLayerCallback();
-        vkDestroyInstance( handle, ALLOCATION_CALLBACK );
+        vkDestroyInstance( handle, ENGINE_ALLOCATION_CALLBACK );
     }
 
     void instance::DATA_TYPE::create( VkInstanceCreateInfo createInfo )
@@ -107,7 +108,7 @@ namespace Engine
         createInfo.ppEnabledLayerNames     = layers.data();
         createInfo.enabledExtensionCount   = extensions.size();
         createInfo.ppEnabledExtensionNames = extensions.data();
-        CHECK_RESULT( vkCreateInstance( &createInfo, ALLOCATION_CALLBACK, &parent->handle ) );
+        CHECK_RESULT( vkCreateInstance( &createInfo, ENGINE_ALLOCATION_CALLBACK, &parent->handle ) );
     }
 
     // window::types::window Engine::instance::createWindow( ENGINE_RESOLUTION_TYPE width, ENGINE_RESOLUTION_TYPE height, const char *title )

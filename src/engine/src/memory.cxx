@@ -1,5 +1,6 @@
 #include <memory.hxx>
 #include <device.hxx>
+#include <common/logging.hxx>
 
 namespace Engine
 {
@@ -13,7 +14,7 @@ namespace Engine
         for ( auto &memType : data->memories )
             for ( auto &block : memType )
                 if ( block.handle )
-                    vkFreeMemory( data->device->handle, block.handle, ALLOCATION_CALLBACK );
+                    vkFreeMemory( data->device->handle, block.handle, ENGINE_ALLOCATION_CALLBACK );
     }
 
     device::_memory::DATA_TYPE::DATA_TYPE( types::device device ) :
@@ -61,6 +62,7 @@ namespace Engine
             }
             ret.memory = memType[ block ].handle;
             vkBindImageMemory( data->device->handle, image, memType[ block ].handle, ret.offset );
+            data->used = 0;
             return ret;
         }
         VkMemoryAllocateInfo info { VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO };
@@ -78,7 +80,7 @@ namespace Engine
         ret.memoryBlock                  = memType.size();
         ret.offset                       = 0;
         data->used                       = 0;
-        vkAllocateMemory( data->device->handle, &info, ALLOCATION_CALLBACK, &memType.back().handle );
+        vkAllocateMemory( data->device->handle, &info, ENGINE_ALLOCATION_CALLBACK, &memType.back().handle );
         ret.memory = memType.back().handle;
         vkBindImageMemory( data->device->handle, image, ret.memory, ret.offset );
         return ret;
@@ -120,6 +122,7 @@ namespace Engine
             }
             ret.memory = memType[ block ].handle;
             vkBindBufferMemory( data->device->handle, buffer, memType[ block ].handle, ret.offset );
+            data->used = 0;
             return ret;
         }
         VkMemoryAllocateInfo info { VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO };
@@ -137,7 +140,7 @@ namespace Engine
         ret.memoryBlock                  = memType.size();
         ret.offset                       = 0;
         data->used                       = 0;
-        vkAllocateMemory( data->device->handle, &info, ALLOCATION_CALLBACK, &memType.back().handle );
+        vkAllocateMemory( data->device->handle, &info, ENGINE_ALLOCATION_CALLBACK, &memType.back().handle );
         ret.memory = memType.back().handle;
         vkBindBufferMemory( data->device->handle, buffer, ret.memory, ret.offset );
         return ret;
@@ -147,21 +150,20 @@ namespace Engine
     {
         while ( data->used ) continue;
         data->used = 1;
-        auto &mType { data->memories[ addr.memoryType ] };
-        auto &mBlock { mType[ addr.memoryBlock ] };
-        mBlock.allocated.erase( addr.offset );
-        if ( mBlock.allocated.empty() )
+        // error: free blocks and removed indecies.
+        data->memories[ addr.memoryType ][ addr.memoryBlock ].allocated.erase( addr.offset );
+        if ( data->memories[ addr.memoryType ][ addr.memoryBlock ].allocated.empty() )
         {
-            vkFreeMemory( data->device->handle, mBlock.handle, ALLOCATION_CALLBACK );
-            mType.erase( mType.begin() + addr.memoryBlock );
+            vkFreeMemory( data->device->handle, data->memories[ addr.memoryType ][ addr.memoryBlock ].handle, ENGINE_ALLOCATION_CALLBACK );
+            data->memories[ addr.memoryType ].erase( data->memories[ addr.memoryType ].begin() + addr.memoryBlock );
             goto ret;
         }
-        if ( mBlock.free.contains( addr.offset + addr.size ) )
-            addr.size += mBlock.free[ addr.offset + addr.size ];
-        if ( addr.offset > addr.size && mBlock.free.contains( addr.offset - addr.size ) )
-            mBlock.free[ addr.offset - addr.size ] += addr.size;
+        if ( data->memories[ addr.memoryType ][ addr.memoryBlock ].free.contains( addr.offset + addr.size ) )
+            addr.size += data->memories[ addr.memoryType ][ addr.memoryBlock ].free[ addr.offset + addr.size ];
+        if ( addr.offset > addr.size && data->memories[ addr.memoryType ][ addr.memoryBlock ].free.contains( addr.offset - addr.size ) )
+            data->memories[ addr.memoryType ][ addr.memoryBlock ].free[ addr.offset - addr.size ] += addr.size;
         else
-            mBlock.free[ addr.offset ] = addr.size;
+            data->memories[ addr.memoryType ][ addr.memoryBlock ].free[ addr.offset ] = addr.size;
     ret:
         data->used  = 0;
         addr.memory = VK_NULL_HANDLE;
@@ -179,8 +181,8 @@ namespace Engine
     //     if ( images[ allocateInfo.memoryTypeIndex ].second.second < images[ allocateInfo.memoryTypeIndex ].second.first + mReq.size )
     //     {
     //         images[ allocateInfo.memoryTypeIndex ].second.second = allocateInfo.allocationSize = images[ allocateInfo.memoryTypeIndex ].second.first + mReq.size;
-    //         vkFreeMemory( handle, imagesMemory, ALLOCATION_CALLBACK );
-    //         vkAllocateMemory( handle, &allocateInfo, ALLOCATION_CALLBACK, &imagesMemory );
+    //         vkFreeMemory( handle, imagesMemory, ENGINE_ALLOCATION_CALLBACK );
+    //         vkAllocateMemory( handle, &allocateInfo, ENGINE_ALLOCATION_CALLBACK, &imagesMemory );
     //         images[ allocateInfo.memoryTypeIndex ].second.first = 0;
     //         for ( const auto img : images[ allocateInfo.memoryTypeIndex ].first )
     //         {
@@ -204,8 +206,8 @@ namespace Engine
     //     // if
     //     allocateInfo.allocationSize                         = images[ allocateInfo.memoryTypeIndex ].second.second += size;
     //     images[ allocateInfo.memoryTypeIndex ].second.first = 0;
-    //     vkFreeMemory( handle, imagesMemory, ALLOCATION_CALLBACK );
-    //     vkAllocateMemory( handle, &allocateInfo, ALLOCATION_CALLBACK, &imagesMemory );
+    //     vkFreeMemory( handle, imagesMemory, ENGINE_ALLOCATION_CALLBACK );
+    //     vkAllocateMemory( handle, &allocateInfo, ENGINE_ALLOCATION_CALLBACK, &imagesMemory );
     //     for ( auto &buf : images[ allocateInfo.memoryTypeIndex ].first )
     //     {
     //         vkBindImageMemory( handle, buf.first, imagesMemory, images[ allocateInfo.memoryTypeIndex ].second.first );
@@ -226,8 +228,8 @@ namespace Engine
     //     if ( buffers[ allocateInfo.memoryTypeIndex ].second.second < buffers[ allocateInfo.memoryTypeIndex ].second.first + mReq.size )
     //     {
     //         buffers[ allocateInfo.memoryTypeIndex ].second.second = allocateInfo.allocationSize = buffers[ allocateInfo.memoryTypeIndex ].second.first + mReq.size;
-    //         vkFreeMemory( handle, buffersMemory, ALLOCATION_CALLBACK );
-    //         vkAllocateMemory( handle, &allocateInfo, ALLOCATION_CALLBACK, &buffersMemory );
+    //         vkFreeMemory( handle, buffersMemory, ENGINE_ALLOCATION_CALLBACK );
+    //         vkAllocateMemory( handle, &allocateInfo, ENGINE_ALLOCATION_CALLBACK, &buffersMemory );
     //         buffers[ allocateInfo.memoryTypeIndex ].second.first = 0;
     //         for ( const auto img : buffers[ allocateInfo.memoryTypeIndex ].first )
     //         {
@@ -250,8 +252,8 @@ namespace Engine
     //     allocateInfo.memoryTypeIndex                         = index;
     //     allocateInfo.allocationSize                          = buffers[ allocateInfo.memoryTypeIndex ].second.second += size;
     //     buffers[ allocateInfo.memoryTypeIndex ].second.first = 0;
-    //     vkFreeMemory( handle, buffersMemory, ALLOCATION_CALLBACK );
-    //     vkAllocateMemory( handle, &allocateInfo, ALLOCATION_CALLBACK, &buffersMemory );
+    //     vkFreeMemory( handle, buffersMemory, ENGINE_ALLOCATION_CALLBACK );
+    //     vkAllocateMemory( handle, &allocateInfo, ENGINE_ALLOCATION_CALLBACK, &buffersMemory );
     //     for ( auto &buf : buffers[ allocateInfo.memoryTypeIndex ].first )
     //     {
     //         vkBindBufferMemory( handle, buf.first, buffersMemory, buffers[ allocateInfo.memoryTypeIndex ].second.first );
@@ -274,8 +276,8 @@ namespace Engine
     //     if ( buffers[ allocateInfo.memoryTypeIndex ].second.second < buffers[ allocateInfo.memoryTypeIndex ].second.first + mReq.size )
     //     {
     //         buffers[ allocateInfo.memoryTypeIndex ].second.second = allocateInfo.allocationSize = buffers[ allocateInfo.memoryTypeIndex ].second.first + mReq.size;
-    //         vkFreeMemory( handle, buffersMemory, ALLOCATION_CALLBACK );
-    //         vkAllocateMemory( handle, &allocateInfo, ALLOCATION_CALLBACK, &buffersMemory );
+    //         vkFreeMemory( handle, buffersMemory, ENGINE_ALLOCATION_CALLBACK );
+    //         vkAllocateMemory( handle, &allocateInfo, ENGINE_ALLOCATION_CALLBACK, &buffersMemory );
     //         buffers[ allocateInfo.memoryTypeIndex ].second.first = 0;
     //         for ( const auto img : buffers[ allocateInfo.memoryTypeIndex ].first )
     //         {

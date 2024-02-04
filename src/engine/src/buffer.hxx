@@ -2,7 +2,6 @@
 #ifndef BUFFER_HXX
 #    define BUFFER_HXX
 #    include <common/globals.hxx>
-#    include <common/logging.hxx>
 #    include <platform.hxx>
 #    include <memory.hxx>
 
@@ -28,10 +27,9 @@ namespace Engine
 
     struct commandBuffer::DATA_TYPE
     {
-        DATA_TYPE( types::commandBuffer parent, types::commandPool commandPool, types::queue queue );
+        DATA_TYPE( types::commandBuffer parent, types::commandPool commandPool );
         ~DATA_TYPE();
         types::commandPool pool;
-        types::queue queue;
         bool used { 0 };
         types::commandBuffer parent;
     };

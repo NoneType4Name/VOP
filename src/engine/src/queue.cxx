@@ -1,6 +1,7 @@
 #include <queue.hxx>
 #include <device.hxx>
 #include <instance.hxx>
+#include <common/logging.hxx>
 
 namespace Engine
 {

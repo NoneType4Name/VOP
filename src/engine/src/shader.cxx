@@ -1,4 +1,5 @@
 #include <shader.hxx>
+#include <common/logging.hxx>
 
 namespace Engine
 {
@@ -58,7 +59,7 @@ namespace Engine
     }
     shader::~shader()
     {
-        vkDestroyShaderModule( data->device->handle, data->module, ALLOCATION_CALLBACK );
+        vkDestroyShaderModule( data->device->handle, data->module, ENGINE_ALLOCATION_CALLBACK );
     }
 
     void InstanceSetup::shader( types::shader shader, VkPipelineShaderStageCreateInfo &stageCreateInfo, void *userPoiner )

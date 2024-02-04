@@ -1,4 +1,3 @@
-#include <common/logging.hxx>
 #include <common/globals.hxx>
 #include <platform.hxx>
 #include <image.hxx>

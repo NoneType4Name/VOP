@@ -2,7 +2,6 @@
 #ifndef SHADER_HXX
 #    define SHADER_HXX
 #    include <common/globals.hxx>
-#    include <common/logging.hxx>
 #    include <platform.hxx>
 #    include <EHI.hxx>
 
