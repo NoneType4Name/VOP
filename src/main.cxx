@@ -502,10 +502,9 @@ int main()
         }
     }
     delete transferBuffer;
-    bCI.size = sizeof( Vertex ) * primitive.vertecies.size();
-    ...;
-    transferBuffer = new Engine::buffer( device, bCI, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT );
-
+    bCI.size       = sizeof( Vertex ) * primitive.vertecies.size();
+    transferBuffer = new Engine::buffer { device, bCI, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT };
+    transferBuffer->write( primitive.vertecies.data(), primitive.vertecies.size() * sizeof( Vertex ) );
     while ( !wnd->shouldClose() )
     {
         wnd->updateEvents();

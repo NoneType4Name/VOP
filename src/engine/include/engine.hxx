@@ -217,7 +217,7 @@ namespace Engine
         buffer() = delete;
         buffer( types::device device, VkBufferCreateInfo BufferCreateInfo, VkMemoryPropertyFlags memoryPropertiesFlag );
         ~buffer();
-        void write( std::vector<char> &data, uint32_t offset = 0, VkMemoryMapFlags flags = 0 );
+        void write( const void *data, size_t size, uint32_t offset = 0, VkMemoryMapFlags flags = 0 );
         VkBuffer handle { nullptr };
     };
 

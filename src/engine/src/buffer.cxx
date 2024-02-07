@@ -29,11 +29,11 @@ namespace Engine
     {
     }
 
-    void buffer::write( std::vector<char> &data, uint32_t offset, VkMemoryMapFlags flags )
+    void buffer::write( const void *data, size_t size, uint32_t offset, VkMemoryMapFlags flags )
     {
-        std::vector<void *> mapped( data.size() );
-        CHECK_RESULT( vkMapMemory( this->data->device->handle, this->data->addres.memory, offset, mapped.size(), flags, mapped.data() ) );
-        memcpy( mapped.data(), data.data(), data.size() );
+        void *mapped;
+        CHECK_RESULT( vkMapMemory( this->data->device->handle, this->data->addres.memory, offset, size, flags, &mapped ) );
+        memcpy( mapped, data, size );
         vkUnmapMemory( this->data->device->handle, this->data->addres.memory );
     }
 
