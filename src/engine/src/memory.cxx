@@ -13,8 +13,11 @@ namespace Engine
     {
         for ( auto &memType : data->memories )
             for ( auto &block : memType )
-                if ( block.handle )
-                    vkFreeMemory( data->device->handle, block.handle, ENGINE_ALLOCATION_CALLBACK );
+            {
+                if ( block->handle )
+                    vkFreeMemory( data->device->handle, block->handle, ENGINE_ALLOCATION_CALLBACK );
+                delete block;
+            }
     }
 
     device::_memory::DATA_TYPE::DATA_TYPE( types::device device ) :
@@ -30,17 +33,19 @@ namespace Engine
     {
         VkMemoryRequirements mReq;
         vkGetImageMemoryRequirements( data->device->handle, image, &mReq );
-        allocationAddres ret { .size = mReq.size, .memoryType = data->device->requeredMemoryTypeIndex( mReq.memoryTypeBits, flags ) };
+        allocationAddres ret {};
+        ret.size       = mReq.size;
+        ret.memoryType = data->device->requeredMemoryTypeIndex( mReq.memoryTypeBits, flags );
         while ( data->used ) continue;
         data->used = 1;
         if ( data->memories.empty() )
             data->memories.resize( data->device->data->description->data->memProperties.memoryTypeCount );
         auto &memType { data->memories[ ret.memoryType ] };
-        for ( size_t block { 0 }; block < memType.size(); ++block )
+        for ( auto memBlock : memType )
         {
             std::pair<VkDeviceSize, VkDeviceSize> min { 0, ~0Ui64 };
-            ret.memoryBlock = block;
-            for ( auto &freeSize : memType[ block ].free )
+            ret.block = memBlock;
+            for ( auto &freeSize : memBlock->free )
                 if ( freeSize.second > mReq.size + ( freeSize.first % mReq.alignment ) && freeSize.second < min.second )
                 {
                     min = freeSize;
@@ -49,39 +54,38 @@ namespace Engine
                 break;
             if ( min.first % mReq.alignment )
             {
-                memType[ block ].free[ min.first ]                                           = mReq.alignment - min.first % mReq.alignment;
-                memType[ block ].allocated[ min.first + memType[ block ].free[ min.first ] ] = mReq.size;
+                memBlock->free[ min.first ]                                    = mReq.alignment - min.first % mReq.alignment;
+                memBlock->allocated[ min.first + memBlock->free[ min.first ] ] = mReq.size;
             }
             else
             {
-                ret.offset                               = min.first;
-                memType[ block ].allocated[ ret.offset ] = mReq.size;
+                ret.offset                        = min.first;
+                memBlock->allocated[ ret.offset ] = mReq.size;
                 if ( min.second > mReq.size )
-                    memType[ block ].free[ ret.offset + mReq.size ] = min.second - mReq.size;
-                memType[ block ].free.erase( ret.offset );
+                    memBlock->free[ ret.offset + mReq.size ] = min.second - mReq.size;
+                memBlock->free.erase( ret.offset );
             }
-            ret.memory = memType[ block ].handle;
-            vkBindImageMemory( data->device->handle, image, memType[ block ].handle, ret.offset );
+            ret.memory = memBlock->handle;
+            vkBindImageMemory( data->device->handle, image, memBlock->handle, ret.offset );
             data->used = 0;
             return ret;
         }
         VkMemoryAllocateInfo info { VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO };
         // new block
-        memType.emplace_back();
         info.memoryTypeIndex = ret.memoryType;
         info.allocationSize  = ( data->device->data->description->data->memProperties.memoryHeaps[ data->device->data->description->data->memProperties.memoryTypes[ ret.memoryType ].heapIndex ].size ) / ( data->device->data->description->data->properties.limits.maxMemoryAllocationCount / data->device->data->description->data->memProperties.memoryTypeCount );
         uint32_t MemMultiply { 0 };
         while ( mReq.size > info.allocationSize * ++MemMultiply )
             continue;
         info.allocationSize *= MemMultiply;
-        memType.back().size              = info.allocationSize;
-        memType.back().allocated[ 0 ]    = mReq.size + ( mReq.size % mReq.alignment );
-        memType.back().free[ mReq.size ] = memType.back().size - mReq.size - ( mReq.size % mReq.alignment );
-        ret.memoryBlock                  = memType.size();
-        ret.offset                       = 0;
-        data->used                       = 0;
-        vkAllocateMemory( data->device->handle, &info, ENGINE_ALLOCATION_CALLBACK, &memType.back().handle );
-        ret.memory = memType.back().handle;
+        auto memBlock { const_cast<device::_memory::DATA_TYPE::memoryBlock *>( *memType.insert( new device::_memory::DATA_TYPE::memoryBlock { .size = info.allocationSize } ).first ) };
+        memBlock->allocated[ 0 ]    = mReq.size + ( mReq.size % mReq.alignment );
+        memBlock->free[ mReq.size ] = memBlock->size - mReq.size - ( mReq.size % mReq.alignment );
+        ret.block                   = memBlock;
+        ret.offset                  = 0;
+        data->used                  = 0;
+        vkAllocateMemory( data->device->handle, &info, ENGINE_ALLOCATION_CALLBACK, &memBlock->handle );
+        ret.memory = memBlock->handle;
         vkBindImageMemory( data->device->handle, image, ret.memory, ret.offset );
         return ret;
     }
@@ -90,17 +94,19 @@ namespace Engine
     {
         VkMemoryRequirements mReq;
         vkGetBufferMemoryRequirements( data->device->handle, buffer, &mReq );
-        allocationAddres ret { .size = mReq.size, .memoryType = data->device->requeredMemoryTypeIndex( mReq.memoryTypeBits, flags ) };
+        allocationAddres ret {};
+        ret.size       = mReq.size;
+        ret.memoryType = data->device->requeredMemoryTypeIndex( mReq.memoryTypeBits, flags );
         while ( data->used ) continue;
         data->used = 1;
         if ( data->memories.empty() )
             data->memories.resize( data->device->data->description->data->memProperties.memoryTypeCount );
         auto &memType { data->memories[ ret.memoryType ] };
-        for ( size_t block { 0 }; block < memType.size(); ++block )
+        for ( auto memBlock : memType )
         {
             std::pair<VkDeviceSize, VkDeviceSize> min { 0, ~0Ui64 };
-            ret.memoryBlock = block;
-            for ( auto &freeSize : memType[ block ].free )
+            ret.block = memBlock;
+            for ( auto &freeSize : memBlock->free )
                 if ( freeSize.second > mReq.size + ( freeSize.first % mReq.alignment ) && freeSize.second < min.second )
                 {
                     min = freeSize;
@@ -109,39 +115,38 @@ namespace Engine
                 break;
             if ( min.first % mReq.alignment )
             {
-                memType[ block ].free[ min.first ]                                           = mReq.alignment - min.first % mReq.alignment;
-                memType[ block ].allocated[ min.first + memType[ block ].free[ min.first ] ] = mReq.size;
+                memBlock->free[ min.first ]                                    = mReq.alignment - min.first % mReq.alignment;
+                memBlock->allocated[ min.first + memBlock->free[ min.first ] ] = mReq.size;
             }
             else
             {
-                ret.offset                               = min.first;
-                memType[ block ].allocated[ ret.offset ] = mReq.size;
+                ret.offset                        = min.first;
+                memBlock->allocated[ ret.offset ] = mReq.size;
                 if ( min.second > mReq.size )
-                    memType[ block ].free[ ret.offset + mReq.size ] = min.second - mReq.size;
-                memType[ block ].free.erase( ret.offset );
+                    memBlock->free[ ret.offset + mReq.size ] = min.second - mReq.size;
+                memBlock->free.erase( ret.offset );
             }
-            ret.memory = memType[ block ].handle;
-            vkBindBufferMemory( data->device->handle, buffer, memType[ block ].handle, ret.offset );
+            ret.memory = memBlock->handle;
+            vkBindBufferMemory( data->device->handle, buffer, memBlock->handle, ret.offset );
             data->used = 0;
             return ret;
         }
         VkMemoryAllocateInfo info { VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO };
         // new block
-        memType.emplace_back();
         info.memoryTypeIndex = ret.memoryType;
         info.allocationSize  = ( data->device->data->description->data->memProperties.memoryHeaps[ data->device->data->description->data->memProperties.memoryTypes[ ret.memoryType ].heapIndex ].size ) / ( data->device->data->description->data->properties.limits.maxMemoryAllocationCount / data->device->data->description->data->memProperties.memoryTypeCount );
         uint32_t MemMultiply { 0 };
         while ( mReq.size > info.allocationSize * ++MemMultiply )
             continue;
         info.allocationSize *= MemMultiply;
-        memType.back().size              = info.allocationSize;
-        memType.back().allocated[ 0 ]    = mReq.size + ( mReq.size % mReq.alignment );
-        memType.back().free[ mReq.size ] = memType.back().size - mReq.size - ( mReq.size % mReq.alignment );
-        ret.memoryBlock                  = memType.size();
-        ret.offset                       = 0;
-        data->used                       = 0;
-        vkAllocateMemory( data->device->handle, &info, ENGINE_ALLOCATION_CALLBACK, &memType.back().handle );
-        ret.memory = memType.back().handle;
+        auto memBlock { const_cast<device::_memory::DATA_TYPE::memoryBlock *>( *memType.insert( new device::_memory::DATA_TYPE::memoryBlock { .size = info.allocationSize } ).first ) };
+        memBlock->allocated[ 0 ]    = mReq.size + ( mReq.size % mReq.alignment );
+        memBlock->free[ mReq.size ] = memBlock->size - mReq.size - ( mReq.size % mReq.alignment );
+        ret.block                   = memBlock;
+        ret.offset                  = 0;
+        data->used                  = 0;
+        vkAllocateMemory( data->device->handle, &info, ENGINE_ALLOCATION_CALLBACK, &memBlock->handle );
+        ret.memory = memBlock->handle;
         vkBindBufferMemory( data->device->handle, buffer, ret.memory, ret.offset );
         return ret;
     }
@@ -151,19 +156,21 @@ namespace Engine
         while ( data->used ) continue;
         data->used = 1;
         // error: free blocks and removed indecies.
-        data->memories[ addr.memoryType ][ addr.memoryBlock ].allocated.erase( addr.offset );
-        if ( data->memories[ addr.memoryType ][ addr.memoryBlock ].allocated.empty() )
+        auto block { static_cast<device::_memory::DATA_TYPE::memoryBlock *>( addr.block ) };
+        block->allocated.erase( addr.offset );
+        if ( block->allocated.empty() )
         {
-            vkFreeMemory( data->device->handle, data->memories[ addr.memoryType ][ addr.memoryBlock ].handle, ENGINE_ALLOCATION_CALLBACK );
-            data->memories[ addr.memoryType ].erase( data->memories[ addr.memoryType ].begin() + addr.memoryBlock );
+            vkFreeMemory( data->device->handle, block->handle, ENGINE_ALLOCATION_CALLBACK );
+            delete block;
+            data->memories[ addr.memoryType ].erase( block );
             goto ret;
         }
-        if ( data->memories[ addr.memoryType ][ addr.memoryBlock ].free.contains( addr.offset + addr.size ) )
-            addr.size += data->memories[ addr.memoryType ][ addr.memoryBlock ].free[ addr.offset + addr.size ];
-        if ( addr.offset > addr.size && data->memories[ addr.memoryType ][ addr.memoryBlock ].free.contains( addr.offset - addr.size ) )
-            data->memories[ addr.memoryType ][ addr.memoryBlock ].free[ addr.offset - addr.size ] += addr.size;
+        if ( block->free.contains( addr.offset + addr.size ) )
+            addr.size += block->free[ addr.offset + addr.size ];
+        if ( addr.offset > addr.size && block->free.contains( addr.offset - addr.size ) )
+            block->free[ addr.offset - addr.size ] += addr.size;
         else
-            data->memories[ addr.memoryType ][ addr.memoryBlock ].free[ addr.offset ] = addr.size;
+            block->free[ addr.offset ] = addr.size;
     ret:
         data->used  = 0;
         addr.memory = VK_NULL_HANDLE;

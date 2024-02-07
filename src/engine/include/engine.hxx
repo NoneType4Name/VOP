@@ -131,7 +131,10 @@ namespace Engine
                 VkDeviceSize offset;
                 VkDeviceMemory memory;
                 uint32_t memoryType;
-                size_t memoryBlock;
+
+              private:
+                friend device;
+                void *block;
             };
 
             allocationAddres allocate( VkImage image, VkMemoryPropertyFlags flags );

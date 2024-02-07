@@ -18,8 +18,9 @@ namespace Engine
     queue::~queue()
     {
         CHECK_RESULT( vkQueueWaitIdle( handle ) );
-        for ( const auto &cmdP : data->commandPools )
-            delete cmdP;
+        auto cmdP { data->commandPools.begin() };
+        while ( cmdP != data->commandPools.end() )
+            delete *cmdP++;
         data->device->data->queues.erase( this );
     }
 

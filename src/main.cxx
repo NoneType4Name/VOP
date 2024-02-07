@@ -1,8 +1,9 @@
-// #include <tiny_obj_loader.h>
+#define TINYOBJLOADER_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
+#include <tiny_obj_loader.h>
 #include <stb_image.h>
 #include <engine.hxx>
-#include <ehi.hxx>
+#include <EHI.hxx>
 
 std::unique_ptr<Engine::instance> engine { new Engine::instance { "test", 0 } };
 auto wnd { new Engine::window::window { engine.get(), { 800, 600, "test", 0, 1 } } };
@@ -125,8 +126,8 @@ int main()
     bCI.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     bCI.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     bCI.usage       = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-    auto transferBuffer { Engine::buffer { device, bCI, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT } };
-    transferBuffer.write( img );
+    auto transferBuffer { new Engine::buffer { device, bCI, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT } };
+    transferBuffer->write( img );
 
     // attahcments
     VkImageCreateInfo ImageCreateInfo {};
@@ -179,7 +180,7 @@ int main()
     BufferImageCopy.imageSubresource.layerCount     = 1;
     BufferImageCopy.imageSubresource.baseArrayLayer = 0;
     BufferImageCopy.imageSubresource.mipLevel       = 0;
-    vkCmdCopyBufferToImage( commandBuffer->handle, transferBuffer.handle, texture->handle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &BufferImageCopy );
+    vkCmdCopyBufferToImage( commandBuffer->handle, transferBuffer->handle, texture->handle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &BufferImageCopy );
 
     ImageCreateInfo.usage                           = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
     ImageCreateInfo.format                          = device->formatPriority( { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT }, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT );
@@ -463,6 +464,47 @@ int main()
     GraphicPipeLineCreateInfo.layout              = PipelineLayout;
     GraphicPipeLineCreateInfo.renderPass          = renderpass->handle;
     GraphicPipeLineCreateInfo.subpass             = 0;
+
+    tinyobj::attrib_t attrib;
+    std::vector<tinyobj::shape_t> shapes;
+    std::vector<tinyobj::material_t> materials;
+    std::string warn, err;
+    if ( !tinyobj::LoadObj( &attrib, &shapes, &materials, &warn, &err, "assets/models/rectangle/model.obj" ) )
+    {
+        SPDLOG_CRITICAL( "Failed to Load model warning:\t{}\nerror:\t{}.", warn, err );
+    }
+    if ( warn.length() )
+        SPDLOG_WARN( "Warn in load model: {}", warn );
+    if ( err.length() )
+        SPDLOG_ERROR( "Error in load model: {}", err );
+    std::unordered_map<Vertex, uint32_t> uniqueVertices {};
+    std::vector<uint32_t> indecies {};
+    for ( const auto &shape : shapes )
+    {
+        for ( const auto &index : shape.mesh.indices )
+        {
+            Vertex vertex {};
+
+            vertex.coordinate = {
+                attrib.vertices[ 3 * index.vertex_index + 0 ],
+                attrib.vertices[ 3 * index.vertex_index + 1 ],
+                attrib.vertices[ 3 * index.vertex_index + 2 ] };
+
+            vertex.texture = {
+                attrib.texcoords[ 2 * index.texcoord_index + 0 ],
+                1.0f - attrib.texcoords[ 2 * index.texcoord_index + 1 ] };
+
+            vertex.color = { 1.0f, 1.0f, 1.0f, 1.f };
+
+            if ( uniqueVertices.count( vertex ) == 0 )
+                uniqueVertices[ vertex ] = uniqueVertices.size();
+            primitive.indecies.emplace_back( uniqueVertices[ vertex ] );
+        }
+    }
+    delete transferBuffer;
+    bCI.size = sizeof( Vertex ) * primitive.vertecies.size();
+    ...;
+    transferBuffer = new Engine::buffer( device, bCI, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT );
 
     while ( !wnd->shouldClose() )
     {

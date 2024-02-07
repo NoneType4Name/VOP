@@ -153,7 +153,7 @@ namespace Engine
         std::ifstream File { path, std::fstream::ate | std::fstream::binary };
         if ( !File.is_open() )
         {
-            SPDLOG_CRITICAL( "Failed to open %s.", path );
+            SPDLOG_CRITICAL( "Failed to open {}.", path );
             return nullptr;
         }
         auto shBsize { File.tellg() };

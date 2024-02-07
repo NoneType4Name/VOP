@@ -50,9 +50,10 @@ namespace Engine
 
     commandPool::~commandPool()
     {
-        for ( const auto &cmdB : data->commandBuffers )
-            delete cmdB;
-        CHECK_RESULT( vkResetCommandPool( data->queue->data->device->handle, handle, VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT ) );
+        auto cmdB { data->commandBuffers.begin() };
+        while ( cmdB != data->commandBuffers.end() )
+            delete *cmdB++;
+        vkDestroyCommandPool( data->queue->data->device->handle, handle, ENGINE_ALLOCATION_CALLBACK );
         data->queue->data->commandPools.erase( this );
     }
 

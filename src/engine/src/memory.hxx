@@ -21,7 +21,7 @@ namespace Engine
         };
         bool used { false };
         // mem type <memory blocks<>>
-        std::vector<std::vector<memoryBlock>> memories;
+        std::vector<std::set<memoryBlock *>> memories;
         types::device device;
     };
 } // namespace Engine
