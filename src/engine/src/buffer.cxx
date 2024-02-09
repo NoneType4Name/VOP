@@ -129,6 +129,22 @@ namespace Engine
         CHECK_RESULT( vkQueueSubmit( data->pool->data->queue->handle, 1, &SubmitInfo, fence ) );
         CHECK_RESULT( vkWaitForFences( data->pool->data->queue->data->device->handle, 1, &fence, true, -1ui64 ) );
     }
+    void commandBuffer::reset( VkCommandBufferResetFlags flags )
+    {
+        vkResetCommandBuffer( handle, flags );
+    }
+
+    void commandBuffer::submit()
+    {
+        if ( data->used )
+            end();
+
+        VkSubmitInfo SubmitInfo {};
+        SubmitInfo.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        SubmitInfo.commandBufferCount = 1;
+        SubmitInfo.pCommandBuffers    = &handle;
+        CHECK_RESULT( vkQueueSubmit( data->pool->data->queue->handle, 1, &SubmitInfo, nullptr ) );
+    }
 
     commandBuffer::DATA_TYPE::DATA_TYPE( types::commandBuffer parent, types::commandPool commandPool ) :
         pool { commandPool }

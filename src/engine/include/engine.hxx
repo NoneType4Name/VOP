@@ -161,13 +161,7 @@ namespace Engine
             std::vector<VkSurfaceFormatKHR> formats;
             std::vector<VkPresentModeKHR> presentModes;
         } properties;
-        struct image_T final
-        {
-            types::image image;
-            VkSemaphore available;
-            VkSemaphore rendered;
-        };
-        std::vector<image_T> images;
+        std::vector<types::image> images;
         VkSurfaceFormatKHR format;
         VkPresentModeKHR presentMode;
         VkSwapchainKHR handle { nullptr };
@@ -257,9 +251,11 @@ namespace Engine
         commandBuffer() = delete;
         commandBuffer( types::commandPool commandPool, VkCommandBufferLevel level );
         ~commandBuffer();
+        void reset( VkCommandBufferResetFlags flags );
         void begin();
         void end();
         void submit( VkFence fence );
+        void submit();
         VkCommandBuffer handle { nullptr };
     };
 

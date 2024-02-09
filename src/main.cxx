@@ -2,6 +2,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <tiny_obj_loader.h>
 #include <stb_image.h>
+#include <chrono>
 #include <engine.hxx>
 #include <EHI.hxx>
 
@@ -9,7 +10,7 @@ std::unique_ptr<Engine::instance> engine { new Engine::instance { "test", 0 } };
 auto wnd { new Engine::window::window { engine.get(), { 800, 600, "test", 0, 1 } } };
 auto device { new Engine::device { engine->getDevices()[ 0 ], { wnd } } };
 auto swapchain { device->getLink( wnd ) };
-auto commandPool { new Engine::commandPool { device->universalQueue, 0 } };
+auto commandPool { new Engine::commandPool { device->universalQueue, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT } };
 auto commandBuffer { new Engine::commandBuffer { commandPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY } };
 
 struct Vertex
@@ -70,7 +71,9 @@ struct Model
 {
     std::vector<Vertex> vertecies;
     std::vector<uint32_t> indecies;
-    Engine::types::buffer buffer;
+    Engine::types::buffer verteciesBuffer;
+    Engine::types::buffer indeciesBuffer;
+    Engine::types::image texture;
 } primitive;
 
 struct DemensionUniformObject
@@ -83,10 +86,16 @@ struct DemensionUniformObject
 VkDescriptorSetLayout dLayout;
 std::vector<VkDescriptorSet> dSet;
 std::vector<Engine::types::buffer> uniformBuffers;
+std::vector<Engine::types::framebuffer> frameBuffers;
 VkDescriptorPool dPool;
 VkPipelineLayout PipelineLayout;
-VkFence fence;
+VkPipeline pipeline;
+std::vector<VkSemaphore> imageSemaphores;
+std::vector<VkSemaphore> renderedSemaphores;
+std::vector<VkFence> renderedFences;
+std::vector<Engine::types::commandBuffer> renderCommandBuffers;
 VkSampler sampler;
+VkFence fence;
 
 int main()
 {
@@ -112,8 +121,6 @@ int main()
     SamplerCreateInfo.maxLod     = 1;
 
     CHECK_RESULT( vkCreateSampler( device->handle, &SamplerCreateInfo, ENGINE_ALLOCATION_CALLBACK, &sampler ) );
-    VkFenceCreateInfo fCI { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
-    vkCreateFence( commandPool->data->queue->data->device->handle, &fCI, ENGINE_ALLOCATION_CALLBACK, &fence );
     commandBuffer->begin();
 
     const char *path { "./assets/textures/rectangle/model.png" };
@@ -127,7 +134,7 @@ int main()
     bCI.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     bCI.usage       = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
     auto transferBuffer { new Engine::buffer { device, bCI, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT } };
-    transferBuffer->write( img );
+    transferBuffer->write( content, Size );
 
     // attahcments
     VkImageCreateInfo ImageCreateInfo {};
@@ -138,7 +145,7 @@ int main()
     ImageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     ImageCreateInfo.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;
     ImageCreateInfo.format        = swapchain->format.format;
-    ImageCreateInfo.extent        = swapchain->images[ 0 ].image->properties.extent;
+    ImageCreateInfo.extent        = swapchain->images[ 0 ]->properties.extent;
     ImageCreateInfo.mipLevels     = 1;
     ImageCreateInfo.arrayLayers   = 1;
 
@@ -155,8 +162,8 @@ int main()
     ImageCreateInfo.usage      = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
     ImageCreateInfo.format     = VK_FORMAT_R8G8B8A8_SRGB;
     ImageViewCreateInfo.format = ImageCreateInfo.format;
-    auto texture { new Engine::image( device, ImageCreateInfo, ImageViewCreateInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT ) };
-    texture->transition(
+    primitive.texture          = new Engine::image { device, ImageCreateInfo, ImageViewCreateInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT };
+    primitive.texture->transition(
         commandBuffer,
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
         0,
@@ -180,7 +187,16 @@ int main()
     BufferImageCopy.imageSubresource.layerCount     = 1;
     BufferImageCopy.imageSubresource.baseArrayLayer = 0;
     BufferImageCopy.imageSubresource.mipLevel       = 0;
-    vkCmdCopyBufferToImage( commandBuffer->handle, transferBuffer->handle, texture->handle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &BufferImageCopy );
+    vkCmdCopyBufferToImage( commandBuffer->handle, transferBuffer->handle, primitive.texture->handle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &BufferImageCopy );
+
+    primitive.texture->transition( commandBuffer,
+                                   VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                   VK_ACCESS_TRANSFER_WRITE_BIT,
+                                   VK_ACCESS_SHADER_READ_BIT,
+                                   0,
+                                   VK_PIPELINE_STAGE_TRANSFER_BIT,
+                                   VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                                   VK_IMAGE_ASPECT_COLOR_BIT );
 
     ImageCreateInfo.usage                           = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
     ImageCreateInfo.format                          = device->formatPriority( { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT }, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT );
@@ -190,7 +206,11 @@ int main()
     ImageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
     auto depthImage { new Engine::image { device, ImageCreateInfo, ImageViewCreateInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT } };
     depthImage->transition( commandBuffer, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 0, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, VK_DEPENDENCY_BY_REGION_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT, VK_IMAGE_ASPECT_DEPTH_BIT );
+    VkFenceCreateInfo fCI { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO, 0, VK_FENCE_CREATE_SIGNALED_BIT };
+    vkCreateFence( device->handle, &fCI, ENGINE_ALLOCATION_CALLBACK, &fence );
     commandBuffer->submit( fence );
+    delete commandBuffer;
+    commandBuffer = new Engine::commandBuffer { commandPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY };
 
     // renderpass
 
@@ -262,10 +282,9 @@ int main()
     renderPassInfo.dependencyCount = 1;
     renderPassInfo.pDependencies   = &dependency;
     auto renderpass { new Engine::renderPass { device, renderPassInfo } };
-    std::vector<Engine::types::framebuffer> frameBuffers;
     frameBuffers.reserve( swapchain->images.size() );
     for ( const auto &swpImg : swapchain->images )
-        frameBuffers.emplace_back( new Engine::framebuffer { renderpass, { colorImage, depthImage, swpImg.image } } );
+        frameBuffers.emplace_back( new Engine::framebuffer { renderpass, { colorImage, depthImage, swpImg } } );
 
     // descriptor set
 
@@ -314,10 +333,15 @@ int main()
 
     dSet.resize( swapchain->images.size() );
     CHECK_RESULT( vkAllocateDescriptorSets( device->handle, &DescriptorSetAllocateInfo, dSet.data() ) );
+    bCI.size  = sizeof( DemensionUniformObject );
+    bCI.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+    imageSemaphores.resize( swapchain->images.size() );
+    renderedSemaphores.resize( swapchain->images.size() );
+    renderedFences.resize( swapchain->images.size() );
+    renderCommandBuffers.resize( swapchain->images.size() );
+    VkSemaphoreCreateInfo sCI { VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
     for ( size_t i { 0 }; i < swapchain->images.size(); i++ )
     {
-        bCI.size  = sizeof( DemensionUniformObject );
-        bCI.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
         uniformBuffers.emplace_back( new Engine::buffer( device, bCI, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ) );
         VkDescriptorBufferInfo DescriptorBufferInfo {};
         DescriptorBufferInfo.buffer = uniformBuffers[ i ]->handle;
@@ -335,7 +359,7 @@ int main()
 
         VkDescriptorImageInfo DescriptorImageInfo {};
         DescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        DescriptorImageInfo.imageView   = texture->view.handle;
+        DescriptorImageInfo.imageView   = primitive.texture->view.handle;
         DescriptorImageInfo.sampler     = sampler;
 
         VkWriteDescriptorSet WriteSamplerDescriptorSet {};
@@ -349,6 +373,10 @@ int main()
 
         VkWriteDescriptorSet WriteDescriptorSet[] { WriteUBDescriptorSet, WriteSamplerDescriptorSet };
         vkUpdateDescriptorSets( device->handle, sizeof( WriteDescriptorSet ) / sizeof( WriteDescriptorSet[ 0 ] ), WriteDescriptorSet, 0, nullptr );
+        vkCreateSemaphore( device->handle, &sCI, ENGINE_ALLOCATION_CALLBACK, &imageSemaphores[ i ] );
+        vkCreateSemaphore( device->handle, &sCI, ENGINE_ALLOCATION_CALLBACK, &renderedSemaphores[ i ] );
+        vkCreateFence( device->handle, &fCI, ENGINE_ALLOCATION_CALLBACK, &renderedFences[ i ] );
+        renderCommandBuffers[ i ] = new Engine::commandBuffer { commandPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY };
     }
 
     // pipeline
@@ -367,7 +395,7 @@ int main()
 
     auto ShaderStage = { VertexShaderStage, FragmentShaderStage };
 
-    VkDynamicState dStates[] { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR, VK_DYNAMIC_STATE_VERTEX_INPUT_BINDING_STRIDE };
+    VkDynamicState dStates[] { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
 
     VkPipelineDynamicStateCreateInfo dStatescreateInfo {};
     dStatescreateInfo.sType             = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
@@ -464,6 +492,7 @@ int main()
     GraphicPipeLineCreateInfo.layout              = PipelineLayout;
     GraphicPipeLineCreateInfo.renderPass          = renderpass->handle;
     GraphicPipeLineCreateInfo.subpass             = 0;
+    vkCreateGraphicsPipelines( device->handle, nullptr, 1, &GraphicPipeLineCreateInfo, ENGINE_ALLOCATION_CALLBACK, &pipeline );
 
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
@@ -501,19 +530,131 @@ int main()
             primitive.indecies.emplace_back( uniqueVertices[ vertex ] );
         }
     }
+    for ( const auto &vert : uniqueVertices )
+        primitive.vertecies.emplace_back( vert.first );
     delete transferBuffer;
-    bCI.size       = sizeof( Vertex ) * primitive.vertecies.size();
-    transferBuffer = new Engine::buffer { device, bCI, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT };
+    bCI.usage                 = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    bCI.size                  = sizeof( Vertex ) * primitive.vertecies.size();
+    transferBuffer            = new Engine::buffer { device, bCI, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT };
+    bCI.usage                 = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+    primitive.verteciesBuffer = new Engine::buffer { device, bCI, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT };
     transferBuffer->write( primitive.vertecies.data(), primitive.vertecies.size() * sizeof( Vertex ) );
+    commandBuffer->begin();
+    VkBufferCopy vCI {};
+    vCI.srcOffset = 0;
+    vCI.dstOffset = 0;
+    vCI.size      = bCI.size;
+    vkCmdCopyBuffer( commandBuffer->handle, transferBuffer->handle, primitive.verteciesBuffer->handle, 1, &vCI );
+    delete transferBuffer;
+    bCI.usage                = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    bCI.size                 = sizeof( uint32_t ) * primitive.indecies.size();
+    transferBuffer           = new Engine::buffer { device, bCI, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT };
+    bCI.usage                = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+    primitive.indeciesBuffer = new Engine::buffer { device, bCI, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT };
+    transferBuffer->write( primitive.vertecies.data(), primitive.vertecies.size() * sizeof( Vertex ) );
+    vCI.srcOffset = 0;
+    vCI.dstOffset = 0;
+    vCI.size      = bCI.size;
+    vkCmdCopyBuffer( commandBuffer->handle, transferBuffer->handle, primitive.indeciesBuffer->handle, 1, &vCI );
+    commandBuffer->submit( fence );
+    vkDestroyFence( device->handle, fence, ENGINE_ALLOCATION_CALLBACK );
+
+    uint32_t currentFrame { 0 };
+    uint32_t image { 0 };
     while ( !wnd->shouldClose() )
     {
         wnd->updateEvents();
+        vkWaitForFences( device->handle, 1, &renderedFences[ currentFrame ], VK_TRUE, UINT64_MAX );
+        vkResetFences( device->handle, 1, &renderedFences[ currentFrame ] );
+        vkResetCommandBuffer( renderCommandBuffers[ currentFrame ]->handle, 0 );
+        switch ( vkAcquireNextImageKHR( device->handle, swapchain->handle, UINT64_MAX, imageSemaphores[ currentFrame ], nullptr, &image ) )
+        {
+            case VK_SUCCESS:
+                break;
+            case VK_ERROR_OUT_OF_DATE_KHR:
+                continue;
+            default:
+                SPDLOG_CRITICAL( "Failed to acqueire image." );
+        }
+        DemensionUniformObject Obj {};
+        static auto time { std::chrono::high_resolution_clock::now() };
+        auto cTime = std::chrono::high_resolution_clock::now();
+        float delta { std::chrono::duration<float, std::chrono::seconds::period>( cTime - time ).count() };
+        Obj.model = glm::rotate( glm::mat4( 1.f ), glm::radians( 90.f ) * delta, glm::vec3( .0f, 1.0f, .0f ) );
+        Obj.view  = glm::lookAt( glm::vec3( .0f, .0f, 1.0f ), glm::vec3( .0f, .0f, .0f ), glm::vec3( .0f, 1.0f, .0f ) ); // Y = -Y
+        Obj.proj  = glm::perspective( glm::radians( 120.f ), swapchain->properties.capabilities.currentExtent.width / static_cast<float>( swapchain->properties.capabilities.currentExtent.height ), .01f, 2000.f );
+        uniformBuffers[ currentFrame ]->write( &Obj, sizeof( Obj ) );
+        renderCommandBuffers[ currentFrame ]->begin();
+        VkRenderPassBeginInfo RenderPassBeginInfo {};
+        RenderPassBeginInfo.sType             = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        RenderPassBeginInfo.renderPass        = renderpass->handle;
+        RenderPassBeginInfo.framebuffer       = frameBuffers[ currentFrame ]->handle;
+        RenderPassBeginInfo.renderArea.offset = { 0, 0 };
+        RenderPassBeginInfo.renderArea.extent = { swapchain->images[ currentFrame ]->properties.extent.width, swapchain->images[ currentFrame ]->properties.extent.height };
+        VkClearValue ClsClrImgBuffer { 0.68f, .0f, 1.f, 1.f };
+        VkClearValue ClsClrDepthImgBuffer {};
+        ClsClrDepthImgBuffer.depthStencil = { 1.f, 0 };
+        VkClearValue ClsClr[] { ClsClrImgBuffer, ClsClrDepthImgBuffer };
+        RenderPassBeginInfo.clearValueCount = 2;
+        RenderPassBeginInfo.pClearValues    = ClsClr;
+
+        vkCmdBeginRenderPass( renderCommandBuffers[ currentFrame ]->handle, &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE );
+        vkCmdBindPipeline( renderCommandBuffers[ currentFrame ]->handle, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline );
+
+        VkViewport Viewport {};
+        Viewport.x        = .0f;
+        Viewport.y        = .0f;
+        Viewport.width    = swapchain->properties.capabilities.currentExtent.width;
+        Viewport.height   = swapchain->properties.capabilities.currentExtent.height;
+        Viewport.minDepth = .0f;
+        Viewport.maxDepth = 1.f;
+        vkCmdSetViewport( renderCommandBuffers[ currentFrame ]->handle, 0, 1, &Viewport );
+
+        VkRect2D Scissor {};
+        Scissor.offset = { 0, 0 };
+        Scissor.extent = swapchain->properties.capabilities.currentExtent;
+        vkCmdSetScissor( renderCommandBuffers[ currentFrame ]->handle, 0, 1, &Scissor );
+
+        VkDeviceSize offset[] { 0 };
+        vkCmdBindDescriptorSets( renderCommandBuffers[ currentFrame ]->handle, VK_PIPELINE_BIND_POINT_GRAPHICS, PipelineLayout, 0, 1, &dSet[ currentFrame ], 0, nullptr );
+        vkCmdBindVertexBuffers( renderCommandBuffers[ currentFrame ]->handle, 0, 1, &primitive.verteciesBuffer->handle, offset );
+        vkCmdBindIndexBuffer( renderCommandBuffers[ currentFrame ]->handle, primitive.indeciesBuffer->handle, 0, VK_INDEX_TYPE_UINT32 );
+        vkCmdDrawIndexed( renderCommandBuffers[ currentFrame ]->handle, primitive.indecies.size(), 1, 0, 0, 0 );
+        vkCmdEndRenderPass( renderCommandBuffers[ currentFrame ]->handle );
+        renderCommandBuffers[ currentFrame ]->end();
+        VkPipelineStageFlags waitStages { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+        VkSubmitInfo submitInfo {};
+        submitInfo.sType                = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        submitInfo.waitSemaphoreCount   = 1;
+        submitInfo.pWaitSemaphores      = &imageSemaphores[ currentFrame ];
+        submitInfo.pWaitDstStageMask    = &waitStages;
+        submitInfo.commandBufferCount   = 1;
+        submitInfo.pCommandBuffers      = &renderCommandBuffers[ currentFrame ]->handle;
+        submitInfo.signalSemaphoreCount = 1;
+        submitInfo.pSignalSemaphores    = &renderedSemaphores[ currentFrame ];
+        CHECK_RESULT( vkQueueSubmit( device->universalQueue->handle, 1, &submitInfo, renderedFences[ currentFrame ] ) );
+        VkPresentInfoKHR PresentInfo {};
+        PresentInfo.sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+        PresentInfo.waitSemaphoreCount = 1;
+        PresentInfo.pWaitSemaphores    = &renderedSemaphores[ currentFrame ];
+        PresentInfo.swapchainCount     = 1;
+        PresentInfo.pSwapchains        = &swapchain->handle;
+        PresentInfo.pImageIndices      = &image;
+        vkQueuePresentKHR( device->universalQueue->handle, &PresentInfo );
+        currentFrame = ++currentFrame % swapchain->images.size();
+    }
+    vkDeviceWaitIdle( device->handle );
+    for ( uint32_t i { 0 }; i < swapchain->images.size(); ++i )
+    {
+        vkDestroySemaphore( device->handle, imageSemaphores[ i ], ENGINE_ALLOCATION_CALLBACK );
+        vkDestroySemaphore( device->handle, renderedSemaphores[ i ], ENGINE_ALLOCATION_CALLBACK );
+        vkDestroyFence( device->handle, renderedFences[ i ], ENGINE_ALLOCATION_CALLBACK );
     }
 
     vkDestroyDescriptorPool( device->handle, dPool, ENGINE_ALLOCATION_CALLBACK );
     vkDestroyDescriptorSetLayout( device->handle, dLayout, ENGINE_ALLOCATION_CALLBACK );
     vkDestroyPipelineLayout( device->handle, PipelineLayout, ENGINE_ALLOCATION_CALLBACK );
-    vkDestroyFence( device->handle, fence, ENGINE_ALLOCATION_CALLBACK );
+    vkDestroyPipeline( device->handle, pipeline, ENGINE_ALLOCATION_CALLBACK );
     vkDestroySampler( device->handle, sampler, ENGINE_ALLOCATION_CALLBACK );
     return 0;
 }
