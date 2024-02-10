@@ -1,17 +1,15 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
+#define GLFW_EXPOSE_NATIVE_WIN32
+#define VK_USE_PLATFORM_WIN32_KHR
+#include <vulkan/vulkan.h>
+#include <GLFW/glfw3.h>
+#include <GLFW/glfw3native.h>
 #include <tiny_obj_loader.h>
 #include <stb_image.h>
 #include <chrono>
 #include <engine.hxx>
-#include <EHI.hxx>
-
-std::unique_ptr<Engine::instance> engine { new Engine::instance { "test", 0 } };
-auto wnd { new Engine::window::window { engine.get(), { 800, 600, "test", 0, 1 } } };
-auto device { new Engine::device { engine->getDevices()[ 0 ], { wnd } } };
-auto swapchain { device->getLink( wnd ) };
-auto commandPool { new Engine::commandPool { device->universalQueue, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT } };
-auto commandBuffer { new Engine::commandBuffer { commandPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY } };
+#include <ehi.hxx>
 
 struct Vertex
 {
@@ -99,6 +97,20 @@ VkFence fence;
 
 int main()
 {
+    glfwInit();
+    glfwWindowHint( GLFW_CLIENT_API, GLFW_NO_API );
+    auto window { glfwCreateWindow( 700, 600, "title", nullptr, nullptr ) };
+    VkWin32SurfaceCreateInfoKHR surfaceCreateInfo { VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR };
+    surfaceCreateInfo.hinstance = GetModuleHandle( nullptr );
+    surfaceCreateInfo.hwnd      = glfwGetWin32Window( window );
+    VkSurfaceKHR surface;
+    std::unique_ptr<Engine::instance> engine { new Engine::instance { "test", 0 } };
+    vkCreateWin32SurfaceKHR( engine->handle, &surfaceCreateInfo, ENGINE_ALLOCATION_CALLBACK, &surface );
+    auto wnd { new Engine::surface { engine.get(), 700, 600, surface } };
+    auto device { new Engine::device { engine->getDevices()[ 0 ], { wnd } } };
+    auto swapchain { device->getLink( wnd ) };
+    auto commandPool { new Engine::commandPool { device->universalQueue, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT } };
+    auto commandBuffer { new Engine::commandBuffer { commandPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY } };
     VkSamplerCreateInfo SamplerCreateInfo {};
     SamplerCreateInfo.sType     = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
     SamplerCreateInfo.magFilter = VK_FILTER_LINEAR;
@@ -137,6 +149,7 @@ int main()
     transferBuffer->write( content, Size );
 
     // attahcments
+
     VkImageCreateInfo ImageCreateInfo {};
     ImageCreateInfo.usage         = VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
     ImageCreateInfo.tiling        = VK_IMAGE_TILING_OPTIMAL;
@@ -158,11 +171,23 @@ int main()
     ImageViewCreateInfo.subresourceRange.levelCount     = 1;
     ImageViewCreateInfo.subresourceRange.layerCount     = 1;
     auto colorImage { new Engine::image { device, ImageCreateInfo, ImageViewCreateInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT } };
-    ImageCreateInfo.samples    = VK_SAMPLE_COUNT_1_BIT;
-    ImageCreateInfo.usage      = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
-    ImageCreateInfo.format     = VK_FORMAT_R8G8B8A8_SRGB;
-    ImageViewCreateInfo.format = ImageCreateInfo.format;
-    primitive.texture          = new Engine::image { device, ImageCreateInfo, ImageViewCreateInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT };
+
+    ImageCreateInfo.usage                           = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+    ImageCreateInfo.format                          = device->formatPriority( { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT }, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT );
+    ImageViewCreateInfo.format                      = ImageCreateInfo.format;
+    ImageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+    auto depthImage { new Engine::image { device, ImageCreateInfo, ImageViewCreateInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT } };
+    depthImage->transition( commandBuffer, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 0, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, VK_DEPENDENCY_BY_REGION_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT, VK_IMAGE_ASPECT_DEPTH_BIT );
+
+    // texture
+
+    ImageCreateInfo.extent                          = { static_cast<uint32_t>( imgW ), static_cast<uint32_t>( imgH ), 1 };
+    ImageCreateInfo.samples                         = VK_SAMPLE_COUNT_1_BIT;
+    ImageCreateInfo.usage                           = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+    ImageCreateInfo.format                          = VK_FORMAT_R8G8B8A8_SRGB;
+    ImageViewCreateInfo.format                      = ImageCreateInfo.format;
+    ImageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    primitive.texture                               = new Engine::image { device, ImageCreateInfo, ImageViewCreateInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT };
     primitive.texture->transition(
         commandBuffer,
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
@@ -188,7 +213,6 @@ int main()
     BufferImageCopy.imageSubresource.baseArrayLayer = 0;
     BufferImageCopy.imageSubresource.mipLevel       = 0;
     vkCmdCopyBufferToImage( commandBuffer->handle, transferBuffer->handle, primitive.texture->handle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &BufferImageCopy );
-
     primitive.texture->transition( commandBuffer,
                                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                                    VK_ACCESS_TRANSFER_WRITE_BIT,
@@ -198,14 +222,6 @@ int main()
                                    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
                                    VK_IMAGE_ASPECT_COLOR_BIT );
 
-    ImageCreateInfo.usage                           = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-    ImageCreateInfo.format                          = device->formatPriority( { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT }, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT );
-    ImageCreateInfo.samples                         = VK_SAMPLE_COUNT_2_BIT;
-    ImageCreateInfo.initialLayout                   = VK_IMAGE_LAYOUT_UNDEFINED;
-    ImageViewCreateInfo.format                      = ImageCreateInfo.format;
-    ImageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-    auto depthImage { new Engine::image { device, ImageCreateInfo, ImageViewCreateInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT } };
-    depthImage->transition( commandBuffer, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 0, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, VK_DEPENDENCY_BY_REGION_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT, VK_IMAGE_ASPECT_DEPTH_BIT );
     VkFenceCreateInfo fCI { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO, 0, VK_FENCE_CREATE_SIGNALED_BIT };
     vkCreateFence( device->handle, &fCI, ENGINE_ALLOCATION_CALLBACK, &fence );
     commandBuffer->submit( fence );
@@ -521,23 +537,25 @@ int main()
 
             vertex.texture = {
                 attrib.texcoords[ 2 * index.texcoord_index + 0 ],
-                1.0f - attrib.texcoords[ 2 * index.texcoord_index + 1 ] };
+                attrib.texcoords[ 2 * index.texcoord_index + 1 ] };
 
             vertex.color = { 1.0f, 1.0f, 1.0f, 1.f };
 
             if ( uniqueVertices.count( vertex ) == 0 )
+            {
                 uniqueVertices[ vertex ] = uniqueVertices.size();
+                primitive.vertecies.emplace_back( vertex );
+            }
             primitive.indecies.emplace_back( uniqueVertices[ vertex ] );
         }
     }
-    for ( const auto &vert : uniqueVertices )
-        primitive.vertecies.emplace_back( vert.first );
+    uniqueVertices.clear();
     delete transferBuffer;
     bCI.usage                 = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
     bCI.size                  = sizeof( Vertex ) * primitive.vertecies.size();
     transferBuffer            = new Engine::buffer { device, bCI, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT };
     bCI.usage                 = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-    primitive.verteciesBuffer = new Engine::buffer { device, bCI, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT };
+    primitive.verteciesBuffer = new Engine::buffer { device, bCI, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT };
     transferBuffer->write( primitive.vertecies.data(), primitive.vertecies.size() * sizeof( Vertex ) );
     commandBuffer->begin();
     VkBufferCopy vCI {};
@@ -550,8 +568,8 @@ int main()
     bCI.size                 = sizeof( uint32_t ) * primitive.indecies.size();
     transferBuffer           = new Engine::buffer { device, bCI, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT };
     bCI.usage                = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-    primitive.indeciesBuffer = new Engine::buffer { device, bCI, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT };
-    transferBuffer->write( primitive.vertecies.data(), primitive.vertecies.size() * sizeof( Vertex ) );
+    primitive.indeciesBuffer = new Engine::buffer { device, bCI, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT };
+    transferBuffer->write( primitive.indecies.data(), primitive.indecies.size() * sizeof( uint32_t ) );
     vCI.srcOffset = 0;
     vCI.dstOffset = 0;
     vCI.size      = bCI.size;
@@ -561,9 +579,9 @@ int main()
 
     uint32_t currentFrame { 0 };
     uint32_t image { 0 };
-    while ( !wnd->shouldClose() )
+    while ( !glfwWindowShouldClose( window ) )
     {
-        wnd->updateEvents();
+        glfwPollEvents();
         vkWaitForFences( device->handle, 1, &renderedFences[ currentFrame ], VK_TRUE, UINT64_MAX );
         vkResetFences( device->handle, 1, &renderedFences[ currentFrame ] );
         vkResetCommandBuffer( renderCommandBuffers[ currentFrame ]->handle, 0 );
@@ -581,8 +599,8 @@ int main()
         auto cTime = std::chrono::high_resolution_clock::now();
         float delta { std::chrono::duration<float, std::chrono::seconds::period>( cTime - time ).count() };
         Obj.model = glm::rotate( glm::mat4( 1.f ), glm::radians( 90.f ) * delta, glm::vec3( .0f, 1.0f, .0f ) );
-        Obj.view  = glm::lookAt( glm::vec3( .0f, .0f, 1.0f ), glm::vec3( .0f, .0f, .0f ), glm::vec3( .0f, 1.0f, .0f ) ); // Y = -Y
-        Obj.proj  = glm::perspective( glm::radians( 120.f ), swapchain->properties.capabilities.currentExtent.width / static_cast<float>( swapchain->properties.capabilities.currentExtent.height ), .01f, 2000.f );
+        Obj.view  = glm::lookAt( glm::vec3( .0f, -1.0f, 2.f ), glm::vec3( .0f, .0f, .0f ), glm::vec3( .0f, 1.0f, .0f ) ); // Y = -Y
+        Obj.proj  = glm::perspective( glm::radians( 90.f ), swapchain->properties.capabilities.currentExtent.width / static_cast<float>( swapchain->properties.capabilities.currentExtent.height ), .01f, 2000.f );
         uniformBuffers[ currentFrame ]->write( &Obj, sizeof( Obj ) );
         renderCommandBuffers[ currentFrame ]->begin();
         VkRenderPassBeginInfo RenderPassBeginInfo {};
@@ -591,7 +609,7 @@ int main()
         RenderPassBeginInfo.framebuffer       = frameBuffers[ currentFrame ]->handle;
         RenderPassBeginInfo.renderArea.offset = { 0, 0 };
         RenderPassBeginInfo.renderArea.extent = { swapchain->images[ currentFrame ]->properties.extent.width, swapchain->images[ currentFrame ]->properties.extent.height };
-        VkClearValue ClsClrImgBuffer { 0.68f, .0f, 1.f, 1.f };
+        VkClearValue ClsClrImgBuffer { 0.5f, .5f, .5f, 1.f };
         VkClearValue ClsClrDepthImgBuffer {};
         ClsClrDepthImgBuffer.depthStencil = { 1.f, 0 };
         VkClearValue ClsClr[] { ClsClrImgBuffer, ClsClrDepthImgBuffer };

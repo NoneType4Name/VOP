@@ -1,13 +1,6 @@
 #pragma once
 #ifndef ENGINE_HXX
 #    define ENGINE_HXX
-#    ifndef ENGINE_RESOLUTION_TYPE
-#        define ENGINE_RESOLUTION_TYPE uint16_t
-#    endif
-#    define TINYOBJLOADER_IMPLEMENTATION
-#    define GLM_FORCE_RADIANS
-#    define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#    define STB_IMAGE_IMPLEMENTATION
 #    define DEFINE_HANDLE( object ) \
         class ENGINE_EXPORT object; \
         namespace types             \
@@ -19,12 +12,13 @@
       public:                          \
         class ENGINE_EXPORT DATA_TYPE; \
         const std::unique_ptr<DATA_TYPE> data;
-
-#    include <glm/glm.hpp>
-#    include <glm/gtx/hash.hpp>
-#    include <platform.hxx>
-#    include <common/globals.hxx>
+#    ifndef VULKAN_H_
+#        include <vulkan/vulkan.h>
+#        warning you should declare macro VK_USE_PLATFORM_XXX before include this header
+#    endif
 #    include "engine_export.hxx"
+#    include <vulkan/vk_enum_string_helper.h>
+#    include <common/globals.hxx>
 #    include <glm/gtc/matrix_transform.hpp>
 
 namespace Engine
@@ -44,48 +38,20 @@ namespace Engine
     DEFINE_HANDLE( descriptorSet );
     DEFINE_HANDLE( descriptorsPool );
 
-    namespace window
+    class ENGINE_EXPORT surface
     {
-        struct ENGINE_EXPORT resolution final
-        {
-            ENGINE_RESOLUTION_TYPE width { 800 };
-            ENGINE_RESOLUTION_TYPE height { 600 };
-        };
+        DEFINE_DATA;
 
-        struct ENGINE_EXPORT settings final
-        {
-            resolution size;
-            const char *title;
-            int fullScreenRefreshRate { 0 };
-            bool resize { true };
-            bool decorated { true };
-            bool floating { false };
-            bool visible { true };
-        };
-
-        class ENGINE_EXPORT window
-        {
-            DEFINE_DATA;
-
-          public:
-            window() = delete;
-            window( instance *instance, settings settings );
-            window( bool, Engine::instance *instance, settings settings );
-            ~window();
-            types::swapchain getLink( types::device device );
-            resolution getDisplayResolution();
-            void setTitle( const char *title );
-            void updateProperties( settings properties );
-            void updateEvents();
-            bool shouldClose();
-            virtual void eventCallBack( int key, int scancode, int action, int mods );
-            virtual void resizeCallBack( int width, int height );
-            const settings properties {};
-            GLFWwindow *glfwHandle;
-            VkSurfaceKHR surface;
-        };
-        DEFINE_HANDLE( window );
-    } // namespace window
+      public:
+        surface() = delete;
+        surface( instance *instance, uint32_t width, uint32_t height, VkSurfaceKHR handle );
+        surface( bool, instance *instance, uint32_t width, uint32_t height, VkSurfaceKHR handle );
+        ~surface();
+        types::swapchain getLink( types::device device );
+        void updateResolution( uint32_t width, uint32_t height );
+        VkSurfaceKHR handle;
+    };
+    DEFINE_HANDLE( surface );
 
     struct ENGINE_EXPORT deviceDescription final
     {
@@ -109,12 +75,12 @@ namespace Engine
 
       public:
         device() = delete;
-        device( types::deviceDescription description, std::vector<window::types::window> windows );
-        device( bool, types::deviceDescription description, std::vector<window::types::window> windows );
+        device( types::deviceDescription description, std::vector<types::surface> windows );
+        device( bool, types::deviceDescription description, std::vector<types::surface> windows );
         ~device();
         VkFormat formatPriority( const std::vector<VkFormat> &formats, VkImageTiling ImageTiling, VkFormatFeatureFlags FormatFeatureFlags ) const noexcept;
         uint32_t requeredMemoryTypeIndex( uint32_t type, VkMemoryPropertyFlags properties ) const;
-        types::swapchain getLink( window::types::window window ) const noexcept;
+        types::swapchain getLink( types::surface surface ) const noexcept;
         types::queue getQueue( uint32_t familyIndex, uint32_t index ) const noexcept;
         VkShaderModule loadShader( const char *path, VkShaderModuleCreateFlags flags = 0, const void *pNext = 0 );
         class _memory final
@@ -152,8 +118,8 @@ namespace Engine
 
       public:
         swapchain() = delete;
-        swapchain( types::device device, window::types::window window );
-        swapchain( bool, types::device device, window::types::window window );
+        swapchain( types::device device, types::surface surface );
+        swapchain( bool, types::device device, types::surface surface );
         ~swapchain();
         struct
         {
@@ -165,6 +131,7 @@ namespace Engine
         VkSurfaceFormatKHR format;
         VkPresentModeKHR presentMode;
         VkSwapchainKHR handle { nullptr };
+        virtual void reCreate();
     };
 
     class ENGINE_EXPORT image final

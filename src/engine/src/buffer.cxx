@@ -32,7 +32,7 @@ namespace Engine
     void buffer::write( const void *data, size_t size, uint32_t offset, VkMemoryMapFlags flags )
     {
         void *mapped;
-        CHECK_RESULT( vkMapMemory( this->data->device->handle, this->data->addres.memory, offset, size, flags, &mapped ) );
+        CHECK_RESULT( vkMapMemory( this->data->device->handle, this->data->addres.memory, this->data->addres.offset + offset, size, flags, &mapped ) );
         memcpy( mapped, data, size );
         vkUnmapMemory( this->data->device->handle, this->data->addres.memory );
     }

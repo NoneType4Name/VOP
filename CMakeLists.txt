@@ -20,6 +20,7 @@ file(COPY ${CMAKE_SOURCE_DIR}/src/assets/models DESTINATION ${CMAKE_SOURCE_DIR}/
 file(COPY ${CMAKE_SOURCE_DIR}/src/assets/textures DESTINATION ${CMAKE_SOURCE_DIR}/bin/app/assets/)
 find_package(tinyobjloader PATHS "${CMAKE_SOURCE_DIR}/bin/conan_build")
 find_package(stb PATHS "${CMAKE_SOURCE_DIR}/bin/conan_build")
+find_package(glfw3 PATHS "${CMAKE_SOURCE_DIR}/bin/conan_build")
 
 add_executable(${EXECUTABLE_NAME} "src/main.cxx")
 add_dependencies(${EXECUTABLE_NAME} shaders)
@@ -27,3 +28,5 @@ add_dependencies(${EXECUTABLE_NAME} shaders)
 target_link_libraries(${EXECUTABLE_NAME} PUBLIC stb::stb)
 target_link_libraries(${EXECUTABLE_NAME} PUBLIC tinyobjloader::tinyobjloader)
 target_link_libraries(${EXECUTABLE_NAME} PRIVATE engine::engine)
+target_include_directories(${EXECUTABLE_NAME} PUBLIC ${glfw3_INCLUDE_DIRS})
+target_link_libraries(${EXECUTABLE_NAME} PUBLIC glfw)

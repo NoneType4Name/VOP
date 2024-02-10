@@ -1,4 +1,3 @@
-#include <platform.hxx>
 #include <instance.hxx>
 #include <device.hxx>
 #include <common/logging.hxx>
@@ -8,23 +7,15 @@ namespace Engine
     namespace tools
     {
         std::vector<const char *> DefaultInstanceLayers {
-#ifdef ENGINE_PLATFORM_WINDOWS
-            "VK_LAYER_KHRONOS_validation"
-#endif
-        };
+            "VK_LAYER_KHRONOS_validation" };
         std::vector<const char *> DefaultInstanceExtensions {
             VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
             VK_EXT_DEBUG_REPORT_EXTENSION_NAME,
-            VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME
-#ifdef ENGINE_PLATFORM_WINDOWS
-#endif
+            VK_KHR_SURFACE_EXTENSION_NAME,
         };
         std::vector<const char *> DefaultDeviceExtensions {
-#ifdef ENGINE_PLATFORM_WINDOWS
             VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-            VK_KHR_MAINTENANCE3_EXTENSION_NAME
-#endif
-        };
+            VK_KHR_MAINTENANCE3_EXTENSION_NAME };
 
     } // namespace tools
 
@@ -71,9 +62,6 @@ namespace Engine
     {
         extensions.insert( extensions.end(), nExtensions.begin(), nExtensions.end() );
         extensions.insert( extensions.end(), tools::DefaultInstanceExtensions.begin(), tools::DefaultInstanceExtensions.end() );
-        uint32_t _c;
-        const char **req_exts { glfwGetRequiredInstanceExtensions( &_c ) };
-        extensions.insert( extensions.end(), &req_exts[ 0 ], &req_exts[ _c ] );
     }
 
     bool instance::DATA_TYPE::supportLayers()

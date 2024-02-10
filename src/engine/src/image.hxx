@@ -2,7 +2,7 @@
 #ifndef IMAGE_HXX
 #    define IMAGE_HXX
 #    include <common/globals.hxx>
-#    include <platform.hxx>
+
 #    include <memory.hxx>
 
 namespace Engine

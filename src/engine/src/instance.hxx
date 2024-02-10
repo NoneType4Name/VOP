@@ -1,7 +1,7 @@
 #pragma once
 #ifndef EHI_HXX
 #    define EHI_HXX
-#    include <platform.hxx>
+
 #    include <common/globals.hxx>
 // #    include <device.hxx>
 // #    include <image.hxx>
@@ -26,7 +26,7 @@ namespace Engine
         std::vector<const char *> extensions;
         VkDebugUtilsMessengerEXT debugMessenger { nullptr };
         instance *parent;
-        std::unordered_map<window::types::window, std::vector<types::swapchain>> windows;
+        std::unordered_map<types::surface, std::vector<types::swapchain>> surfaces;
         std::vector<types::deviceDescription> deviceDescriptions;
         std::set<types::device> devices;
         // std::vector<types::pass> passes;

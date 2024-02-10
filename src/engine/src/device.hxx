@@ -3,7 +3,6 @@
 #    define DEVICE_HXX
 #    include <common/globals.hxx>
 #    include <common/logging.hxx>
-#    include <platform.hxx>
 #    include <surface.hxx>
 #    include <buffer.hxx>
 #    include <image.hxx>

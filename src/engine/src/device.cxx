@@ -21,8 +21,8 @@ namespace Engine
     {
     }
 
-    device::device( types::deviceDescription description, std::vector<window::types::window> windows ) :
-        device( 1, description, windows )
+    device::device( types::deviceDescription description, std::vector<types::surface> surfaces ) :
+        device( 1, description, surfaces )
     {
         VkDeviceCreateInfo DeviceCreateInfo {};
         VkPhysicalDeviceFeatures features {};
@@ -34,9 +34,9 @@ namespace Engine
         for ( uint32_t i { 0 }; i < data->description->data->queueFamilyProperties.size(); ++i )
         {
             VkBool32 present;
-            for ( const auto &wnd : windows )
+            for ( const auto &srf : surfaces )
             {
-                vkGetPhysicalDeviceSurfaceSupportKHR( data->description->data->phDevice, i, wnd->surface, &present );
+                vkGetPhysicalDeviceSurfaceSupportKHR( data->description->data->phDevice, i, srf->handle, &present );
                 if ( !present )
                     break;
             }
@@ -53,13 +53,13 @@ namespace Engine
         DeviceCreateInfo.pEnabledFeatures = &features;
         data->create( DeviceCreateInfo );
         universalQueue = getQueue( 0, 0 );
-        for ( auto &wnd : windows )
+        for ( auto &wnd : surfaces )
         {
             new swapchain { this, wnd };
         }
     }
 
-    device::device( bool, types::deviceDescription description, std::vector<window::types::window> windows ) :
+    device::device( bool, types::deviceDescription description, std::vector<types::surface> windows ) :
         memory { new _memory { this } }
     {
         DEFINE_DATA_FIELD( description );
@@ -131,11 +131,11 @@ namespace Engine
         }
     }
 
-    types::swapchain device::getLink( window::types::window window ) const noexcept
+    types::swapchain device::getLink( types::surface surface ) const noexcept
     {
         for ( auto &swp : data->swapchains )
         {
-            if ( swp->data->window == window )
+            if ( swp->data->surface == surface )
                 return swp;
         }
         return nullptr;

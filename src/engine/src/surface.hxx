@@ -2,18 +2,18 @@
 #ifndef SURFACE_HXX
 #    define SURFACE_HXX
 #    include <common/globals.hxx>
-#    include <platform.hxx>
 
 namespace Engine
 {
-    struct window::window::DATA_TYPE
+    struct surface::DATA_TYPE
     {
-        DATA_TYPE( types::window parent, instance *instance );
-        void createSurface( const void *pNext, VkFlags flags );
+        DATA_TYPE( types::surface parent, instance *instance, uint32_t width, uint32_t height );
         ~DATA_TYPE();
+        uint32_t width;
+        uint32_t height;
         std::set<Engine::types::swapchain> swapchains;
         Engine::instance *instance;
-        types::window parent;
+        types::surface parent;
     };
 } // namespace Engine
 #endif
