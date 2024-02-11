@@ -149,6 +149,7 @@ int main()
     bCI.usage       = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
     auto transferBuffer { new Engine::buffer { device, bCI, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT } };
     transferBuffer->write( content, Size );
+    stbi_image_free( content );
 
     // attahcments
 
@@ -727,5 +728,6 @@ int main()
     vkDestroyPipelineLayout( device->handle, PipelineLayout, ENGINE_ALLOCATION_CALLBACK );
     vkDestroyPipeline( device->handle, pipeline, ENGINE_ALLOCATION_CALLBACK );
     vkDestroySampler( device->handle, sampler, ENGINE_ALLOCATION_CALLBACK );
+    glfwTerminate();
     return 0;
 }
