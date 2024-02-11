@@ -38,7 +38,18 @@ namespace Engine
     void surface::updateResolution( uint32_t width, uint32_t height )
     {
         data->width  = width;
-        data->height = width;
+        data->height = height;
+        for ( const auto &swp : data->swapchains )
+        {
+            uint32_t c;
+            vkGetPhysicalDeviceSurfaceCapabilitiesKHR( swp->data->device->data->description->data->phDevice, handle, &swp->properties.capabilities );
+            vkGetPhysicalDeviceSurfaceFormatsKHR( swp->data->device->data->description->data->phDevice, handle, &c, nullptr );
+            swp->properties.formats.resize( c );
+            vkGetPhysicalDeviceSurfaceFormatsKHR( swp->data->device->data->description->data->phDevice, handle, &c, swp->properties.formats.data() );
+            vkGetPhysicalDeviceSurfacePresentModesKHR( swp->data->device->data->description->data->phDevice, handle, &c, nullptr );
+            swp->properties.presentModes.resize( c );
+            vkGetPhysicalDeviceSurfacePresentModesKHR( swp->data->device->data->description->data->phDevice, handle, &c, swp->properties.presentModes.data() );
+        }
     }
 
     types::swapchain surface::getLink( Engine::types::device device )

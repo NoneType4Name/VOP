@@ -34,6 +34,8 @@ namespace Engine
     {
         DEFINE_DATA_FIELD( device, image );
         data->device->data->images.insert( this );
+        if ( data->parentImage )
+            data->parentImage->data->views.emplace_back( this );
         ImageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         CHECK_RESULT( vkCreateImageView( data->device->handle, &ImageViewCreateInfo, ENGINE_ALLOCATION_CALLBACK, &view.handle ) );
     }
@@ -142,8 +144,6 @@ namespace Engine
     image::DATA_TYPE::DATA_TYPE( types::image parent, types::device device, types::image image ) :
         parent { parent }, device { device }, parentImage { image }
     {
-        if ( image )
-            image->data->views.emplace_back( parent );
     }
 
     image::DATA_TYPE::DATA_TYPE( types::image parent, types::device device ) :

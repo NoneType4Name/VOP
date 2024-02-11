@@ -41,33 +41,16 @@ namespace Engine
 
         createInfo.imageUsage         = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
         createInfo.imageFormat        = SurfaceFormat.format;
-        createInfo.imageExtent.width  = std::clamp( data->surface->data->width, properties.capabilities.minImageExtent.width, properties.capabilities.maxImageExtent.width );
-        createInfo.imageExtent.height = std::clamp( data->surface->data->height, properties.capabilities.minImageExtent.height, properties.capabilities.maxImageExtent.height );
+        createInfo.imageColorSpace    = SurfaceFormat.colorSpace;
+        createInfo.imageExtent.width  = std::clamp( properties.capabilities.currentExtent.width, properties.capabilities.minImageExtent.width, properties.capabilities.maxImageExtent.width );
+        createInfo.imageExtent.height = std::clamp( properties.capabilities.currentExtent.width, properties.capabilities.minImageExtent.height, properties.capabilities.maxImageExtent.height );
         createInfo.minImageCount      = properties.capabilities.maxImageCount;
         createInfo.clipped            = VK_FALSE;
         createInfo.oldSwapchain       = handle;
         createInfo.preTransform       = properties.capabilities.currentTransform;
+        createInfo.presentMode        = presentMode;
         createInfo.compositeAlpha     = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
         data->create( createInfo );
-    }
-
-    void swapchain::reCreate()
-    {
-        VkSwapchainCreateInfoKHR createInfo {};
-        createInfo.imageUsage         = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-        createInfo.imageFormat        = images[ 0 ]->properties.format;
-        createInfo.imageExtent.width  = std::clamp( data->surface->data->width, properties.capabilities.minImageExtent.width, properties.capabilities.maxImageExtent.width );
-        createInfo.imageExtent.height = std::clamp( data->surface->data->height, properties.capabilities.minImageExtent.height, properties.capabilities.maxImageExtent.height );
-        createInfo.minImageCount      = properties.capabilities.maxImageCount;
-        createInfo.clipped            = VK_FALSE;
-        createInfo.oldSwapchain       = handle;
-        createInfo.preTransform       = properties.capabilities.currentTransform;
-        createInfo.compositeAlpha     = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-        auto img { images.begin() };
-        while ( img != images.end() )
-            delete *img++;
-        data->create( createInfo );
-        vkDestroySwapchainKHR( data->device->handle, handle, ENGINE_ALLOCATION_CALLBACK );
     }
 
     swapchain::~swapchain()
@@ -89,8 +72,8 @@ namespace Engine
         parent->format.format                         = createInfo.imageFormat;
         parent->format.colorSpace                     = createInfo.imageColorSpace;
         parent->presentMode                           = createInfo.presentMode;
-        createInfo.imageExtent.width                  = std::clamp( static_cast<uint32_t>( createInfo.imageExtent.width ), parent->properties.capabilities.minImageExtent.width, parent->properties.capabilities.maxImageExtent.width );
-        createInfo.imageExtent.height                 = std::clamp( static_cast<uint32_t>( createInfo.imageExtent.height ), parent->properties.capabilities.minImageExtent.height, parent->properties.capabilities.maxImageExtent.height );
+        createInfo.imageExtent.width                  = std::clamp( static_cast<uint32_t>( parent->properties.capabilities.currentExtent.width ), parent->properties.capabilities.minImageExtent.width, parent->properties.capabilities.maxImageExtent.width );
+        createInfo.imageExtent.height                 = std::clamp( static_cast<uint32_t>( parent->properties.capabilities.currentExtent.height ), parent->properties.capabilities.minImageExtent.height, parent->properties.capabilities.maxImageExtent.height );
         parent->properties.capabilities.currentExtent = createInfo.imageExtent;
         if ( !createInfo.imageArrayLayers )
             createInfo.imageArrayLayers = 1;
@@ -100,6 +83,11 @@ namespace Engine
             createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
         createInfo.oldSwapchain = parent->handle;
         CHECK_RESULT( vkCreateSwapchainKHR( device->handle, &createInfo, ENGINE_ALLOCATION_CALLBACK, &parent->handle ) );
+        if ( parent->handle )
+            vkDestroySwapchainKHR( device->handle, createInfo.oldSwapchain, ENGINE_ALLOCATION_CALLBACK );
+        if ( createInfo.oldSwapchain )
+            for ( const auto &img : parent->images )
+                delete img;
         uint32_t c;
         CHECK_RESULT( vkGetSwapchainImagesKHR( device->handle, parent->handle, &c, nullptr ) );
         std::vector<VkImage> imgs { c };
@@ -118,6 +106,29 @@ namespace Engine
         }
     }
 
+    void swapchain::reCreate()
+    {
+        VkSwapchainCreateInfoKHR createInfo {};
+        presentMode = VK_PRESENT_MODE_FIFO_KHR;
+        for ( const auto &mode : properties.presentModes )
+        {
+            if ( mode == VK_PRESENT_MODE_MAILBOX_KHR ) presentMode = mode;
+        }
+
+        createInfo.imageUsage         = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+        createInfo.imageFormat        = format.format;
+        createInfo.imageColorSpace    = format.colorSpace;
+        createInfo.imageExtent.width  = data->surface->data->width;
+        createInfo.imageExtent.height = data->surface->data->height;
+        createInfo.minImageCount      = properties.capabilities.maxImageCount;
+        createInfo.clipped            = VK_FALSE;
+        createInfo.oldSwapchain       = handle;
+        createInfo.preTransform       = properties.capabilities.currentTransform;
+        createInfo.presentMode        = presentMode;
+        createInfo.compositeAlpha     = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+        data->create( createInfo );
+    }
+
     swapchain::DATA_TYPE::DATA_TYPE( types::swapchain parent, types::device device, types::surface surface ) :
         parent { parent }
     {
@@ -128,24 +139,4 @@ namespace Engine
     swapchain::DATA_TYPE::~DATA_TYPE()
     {
     }
-
-    // uint32_t AcquireImageIndex( VkSemaphore &semaphore )
-    // {
-    //     _semaphoreIndex = ( _semaphoreIndex + 1 ) % _swapchainImages.size();
-    //     CHECK_RESULT( vkAcquireNextImageKHR( tools::getDevice(), _swapchain, UINT32_MAX, _swapchainImages[ _semaphoreIndex ].isAvailable, nullptr, &_imageIndex ) )
-    //     semaphore = _swapchainImages[ _imageIndex ].isAvailable;
-    //     return _imageIndex;
-    // }
-
-    // void swapchainPresent( VkSemaphore *semaphore )
-    // {
-    //     VkPresentInfoKHR PresentInfo {};
-    //     PresentInfo.sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-    //     PresentInfo.waitSemaphoreCount = 1;
-    //     PresentInfo.pWaitSemaphores    = semaphore;
-    //     PresentInfo.swapchainCount     = 1;
-    //     PresentInfo.pSwapchains        = &_swapchain;
-    //     PresentInfo.pImageIndices      = &_imageIndex;
-    //     vkQueuePresentKHR( tools::getQueues().present.GetHandle(), &PresentInfo );
-    // }
 } // namespace Engine

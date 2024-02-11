@@ -16,10 +16,6 @@ add_library(engine::engine ALIAS engine)
 
 if(WIN32)
     add_compile_definitions(engine VK_USE_PLATFORM_WIN32_KHR)
-    # set_target_properties(engine PROPERTIES
-    #     INTERFACE_COMPILE_DEFINITIONS -DENGINE_PLATFORM_WINDOWS
-    #     COMPILE_DEFINITIONS -DVK_USE...
-    # )
 endif()
 
 find_package(Vulkan)

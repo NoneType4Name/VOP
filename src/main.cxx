@@ -99,14 +99,16 @@ int main()
 {
     glfwInit();
     glfwWindowHint( GLFW_CLIENT_API, GLFW_NO_API );
+    glfwWindowHint( GLFW_RESIZABLE, GLFW_TRUE );
     auto window { glfwCreateWindow( 700, 600, "title", nullptr, nullptr ) };
     VkWin32SurfaceCreateInfoKHR surfaceCreateInfo { VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR };
     surfaceCreateInfo.hinstance = GetModuleHandle( nullptr );
     surfaceCreateInfo.hwnd      = glfwGetWin32Window( window );
     VkSurfaceKHR surface;
     std::unique_ptr<Engine::instance> engine { new Engine::instance { "test", 0 } };
-    vkCreateWin32SurfaceKHR( engine->handle, &surfaceCreateInfo, ENGINE_ALLOCATION_CALLBACK, &surface );
+    glfwCreateWindowSurface( engine->handle, window, ENGINE_ALLOCATION_CALLBACK, &surface );
     auto wnd { new Engine::surface { engine.get(), 700, 600, surface } };
+    glfwSetWindowUserPointer( window, wnd );
     auto device { new Engine::device { engine->getDevices()[ 0 ], { wnd } } };
     auto swapchain { device->getLink( wnd ) };
     auto commandPool { new Engine::commandPool { device->universalQueue, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT } };
@@ -575,25 +577,75 @@ int main()
     vCI.size      = bCI.size;
     vkCmdCopyBuffer( commandBuffer->handle, transferBuffer->handle, primitive.indeciesBuffer->handle, 1, &vCI );
     commandBuffer->submit( fence );
-    vkDestroyFence( device->handle, fence, ENGINE_ALLOCATION_CALLBACK );
 
     uint32_t currentFrame { 0 };
-    uint32_t image { 0 };
+    uint32_t image { ~0Ui32 };
     while ( !glfwWindowShouldClose( window ) )
     {
         glfwPollEvents();
         vkWaitForFences( device->handle, 1, &renderedFences[ currentFrame ], VK_TRUE, UINT64_MAX );
         vkResetFences( device->handle, 1, &renderedFences[ currentFrame ] );
         vkResetCommandBuffer( renderCommandBuffers[ currentFrame ]->handle, 0 );
-        switch ( vkAcquireNextImageKHR( device->handle, swapchain->handle, UINT64_MAX, imageSemaphores[ currentFrame ], nullptr, &image ) )
+        do
         {
-            case VK_SUCCESS:
-                break;
-            case VK_ERROR_OUT_OF_DATE_KHR:
-                continue;
-            default:
-                SPDLOG_CRITICAL( "Failed to acqueire image." );
-        }
+            switch ( vkAcquireNextImageKHR( device->handle, swapchain->handle, UINT64_MAX, imageSemaphores[ currentFrame ], nullptr, &image ) )
+            {
+                case VK_SUCCESS:
+                    break;
+                case VK_ERROR_OUT_OF_DATE_KHR:
+                    int w, h;
+                    glfwGetFramebufferSize( window, &w, &h );
+                    while ( !( w || h ) )
+                    {
+                        glfwGetFramebufferSize( window, &w, &h );
+                        glfwWaitEvents();
+                    }
+                    wnd->updateResolution( w, h );
+                    vkDeviceWaitIdle( device->handle );
+                    swapchain->reCreate();
+                    delete commandBuffer;
+                    for ( const auto &frameB : frameBuffers )
+                        delete frameB;
+                    frameBuffers.clear();
+                    delete depthImage;
+                    delete colorImage;
+                    commandBuffer                 = new Engine::commandBuffer { commandPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY };
+                    ImageCreateInfo.usage         = VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+                    ImageCreateInfo.tiling        = VK_IMAGE_TILING_OPTIMAL;
+                    ImageCreateInfo.samples       = VK_SAMPLE_COUNT_2_BIT;
+                    ImageCreateInfo.imageType     = VK_IMAGE_TYPE_2D;
+                    ImageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+                    ImageCreateInfo.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;
+                    ImageCreateInfo.format        = swapchain->format.format;
+                    ImageCreateInfo.extent        = swapchain->images[ 0 ]->properties.extent;
+                    ImageCreateInfo.mipLevels     = 1;
+                    ImageCreateInfo.arrayLayers   = 1;
+
+                    ImageViewCreateInfo.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
+                    ImageViewCreateInfo.format                          = swapchain->format.format;
+                    ImageViewCreateInfo.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+                    ImageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
+                    ImageViewCreateInfo.subresourceRange.baseMipLevel   = 0;
+                    ImageViewCreateInfo.subresourceRange.levelCount     = 1;
+                    ImageViewCreateInfo.subresourceRange.layerCount     = 1;
+                    colorImage                                          = new Engine::image { device, ImageCreateInfo, ImageViewCreateInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT };
+
+                    ImageCreateInfo.usage                           = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+                    ImageCreateInfo.format                          = device->formatPriority( { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT }, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT );
+                    ImageViewCreateInfo.format                      = ImageCreateInfo.format;
+                    ImageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+                    depthImage                                      = new Engine::image { device, ImageCreateInfo, ImageViewCreateInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT };
+                    depthImage->transition( commandBuffer, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 0, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, VK_DEPENDENCY_BY_REGION_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT, VK_IMAGE_ASPECT_DEPTH_BIT );
+                    commandBuffer->submit( fence );
+                    frameBuffers.reserve( swapchain->images.size() );
+                    for ( const auto &swpImg : swapchain->images )
+                        frameBuffers.emplace_back( new Engine::framebuffer { renderpass, { colorImage, depthImage, swpImg } } );
+                    break;
+                default:
+                    SPDLOG_CRITICAL( "Failed to acqueire image." );
+                    break;
+            }
+        } while ( image == ~0Ui32 );
         DemensionUniformObject Obj {};
         static auto time { std::chrono::high_resolution_clock::now() };
         auto cTime = std::chrono::high_resolution_clock::now();
@@ -660,6 +712,7 @@ int main()
         PresentInfo.pImageIndices      = &image;
         vkQueuePresentKHR( device->universalQueue->handle, &PresentInfo );
         currentFrame = ++currentFrame % swapchain->images.size();
+        image        = ~0Ui32;
     }
     vkDeviceWaitIdle( device->handle );
     for ( uint32_t i { 0 }; i < swapchain->images.size(); ++i )
@@ -668,7 +721,7 @@ int main()
         vkDestroySemaphore( device->handle, renderedSemaphores[ i ], ENGINE_ALLOCATION_CALLBACK );
         vkDestroyFence( device->handle, renderedFences[ i ], ENGINE_ALLOCATION_CALLBACK );
     }
-
+    vkDestroyFence( device->handle, fence, ENGINE_ALLOCATION_CALLBACK );
     vkDestroyDescriptorPool( device->handle, dPool, ENGINE_ALLOCATION_CALLBACK );
     vkDestroyDescriptorSetLayout( device->handle, dLayout, ENGINE_ALLOCATION_CALLBACK );
     vkDestroyPipelineLayout( device->handle, PipelineLayout, ENGINE_ALLOCATION_CALLBACK );
