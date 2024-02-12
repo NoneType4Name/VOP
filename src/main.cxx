@@ -585,15 +585,14 @@ int main()
     {
         glfwPollEvents();
         vkWaitForFences( device->handle, 1, &renderedFences[ currentFrame ], VK_TRUE, UINT64_MAX );
-        vkResetFences( device->handle, 1, &renderedFences[ currentFrame ] );
-        vkResetCommandBuffer( renderCommandBuffers[ currentFrame ]->handle, 0 );
         do
         {
             switch ( vkAcquireNextImageKHR( device->handle, swapchain->handle, UINT64_MAX, imageSemaphores[ currentFrame ], nullptr, &image ) )
             {
                 case VK_SUCCESS:
                     break;
-                case VK_ERROR_OUT_OF_DATE_KHR:
+                case VK_SUBOPTIMAL_KHR:
+                    image = ~0Ui32;
                     int w, h;
                     glfwGetFramebufferSize( window, &w, &h );
                     while ( !( w || h ) )
@@ -603,11 +602,17 @@ int main()
                     }
                     wnd->updateResolution( w, h );
                     vkDeviceWaitIdle( device->handle );
-                    swapchain->reCreate();
                     delete commandBuffer;
-                    for ( const auto &frameB : frameBuffers )
-                        delete frameB;
-                    frameBuffers.clear();
+                    for ( uint32_t i { 0 }; i < frameBuffers.size(); ++i )
+                    {
+                        delete frameBuffers[ i ];
+                        delete renderCommandBuffers[ i ];
+                        delete uniformBuffers[ i ];
+                        vkDestroySemaphore( device->handle, imageSemaphores[ i ], ENGINE_ALLOCATION_CALLBACK );
+                        vkDestroySemaphore( device->handle, renderedSemaphores[ i ], ENGINE_ALLOCATION_CALLBACK );
+                        vkDestroyFence( device->handle, renderedFences[ i ], ENGINE_ALLOCATION_CALLBACK );
+                    }
+                    swapchain->reCreate();
                     delete depthImage;
                     delete colorImage;
                     commandBuffer                 = new Engine::commandBuffer { commandPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY };
@@ -638,15 +643,219 @@ int main()
                     depthImage                                      = new Engine::image { device, ImageCreateInfo, ImageViewCreateInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT };
                     depthImage->transition( commandBuffer, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 0, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, VK_DEPENDENCY_BY_REGION_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT, VK_IMAGE_ASPECT_DEPTH_BIT );
                     commandBuffer->submit( fence );
-                    frameBuffers.reserve( swapchain->images.size() );
-                    for ( const auto &swpImg : swapchain->images )
-                        frameBuffers.emplace_back( new Engine::framebuffer { renderpass, { colorImage, depthImage, swpImg } } );
+                    uniformBuffers.resize( swapchain->images.size() );
+                    frameBuffers.resize( swapchain->images.size() );
+                    imageSemaphores.resize( swapchain->images.size() );
+                    renderedSemaphores.resize( swapchain->images.size() );
+                    renderedFences.resize( swapchain->images.size() );
+                    renderCommandBuffers.resize( swapchain->images.size() );
+                    bCI.size  = sizeof( DemensionUniformObject );
+                    bCI.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+                    for ( uint32_t i { 0 }; i < swapchain->images.size(); ++i )
+                    {
+                        VkDescriptorPoolSize UBDescriptorPoolSize {};
+                        UBDescriptorPoolSize.type            = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                        UBDescriptorPoolSize.descriptorCount = swapchain->images.size();
+
+                        VkDescriptorPoolSize SamplerDescriptorPoolSize {};
+                        SamplerDescriptorPoolSize.type            = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                        SamplerDescriptorPoolSize.descriptorCount = swapchain->images.size();
+
+                        VkDescriptorPoolSize DescriptorPoolSize[ 2 ] { UBDescriptorPoolSize, SamplerDescriptorPoolSize };
+
+                        VkDescriptorPoolCreateInfo DescriptorPoolCreateInfo {};
+                        DescriptorPoolCreateInfo.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+                        DescriptorPoolCreateInfo.poolSizeCount = sizeof( DescriptorPoolSize ) / sizeof( DescriptorPoolSize[ 0 ] );
+                        DescriptorPoolCreateInfo.pPoolSizes    = DescriptorPoolSize;
+                        DescriptorPoolCreateInfo.maxSets       = swapchain->images.size();
+                        CHECK_RESULT( vkCreateDescriptorPool( device->handle, &DescriptorPoolCreateInfo, ENGINE_ALLOCATION_CALLBACK, &dPool ) );
+
+                        std::vector<VkDescriptorSetLayout> DescriptorSetLayouts( swapchain->images.size(), dLayout );
+                        VkDescriptorSetAllocateInfo DescriptorSetAllocateInfo {};
+                        DescriptorSetAllocateInfo.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+                        DescriptorSetAllocateInfo.descriptorSetCount = swapchain->images.size();
+                        DescriptorSetAllocateInfo.pSetLayouts        = DescriptorSetLayouts.data();
+                        DescriptorSetAllocateInfo.descriptorPool     = dPool;
+
+                        dSet.resize( swapchain->images.size() );
+                        CHECK_RESULT( vkAllocateDescriptorSets( device->handle, &DescriptorSetAllocateInfo, dSet.data() ) );
+
+                        uniformBuffers[ i ] = new Engine::buffer( device, bCI, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT );
+                        VkDescriptorBufferInfo DescriptorBufferInfo {};
+                        DescriptorBufferInfo.buffer = uniformBuffers[ i ]->handle;
+                        DescriptorBufferInfo.offset = 0;
+                        DescriptorBufferInfo.range  = VK_WHOLE_SIZE;
+
+                        VkWriteDescriptorSet WriteUBDescriptorSet {};
+                        WriteUBDescriptorSet.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                        WriteUBDescriptorSet.dstSet          = dSet[ i ];
+                        WriteUBDescriptorSet.dstBinding      = 0;
+                        WriteUBDescriptorSet.dstArrayElement = 0;
+                        WriteUBDescriptorSet.descriptorCount = 1;
+                        WriteUBDescriptorSet.descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                        WriteUBDescriptorSet.pBufferInfo     = &DescriptorBufferInfo;
+
+                        VkDescriptorImageInfo DescriptorImageInfo {};
+                        DescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                        DescriptorImageInfo.imageView   = primitive.texture->view.handle;
+                        DescriptorImageInfo.sampler     = sampler;
+
+                        VkWriteDescriptorSet WriteSamplerDescriptorSet {};
+                        WriteSamplerDescriptorSet.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                        WriteSamplerDescriptorSet.dstSet          = dSet[ i ];
+                        WriteSamplerDescriptorSet.dstBinding      = 1;
+                        WriteSamplerDescriptorSet.dstArrayElement = 0;
+                        WriteSamplerDescriptorSet.descriptorCount = 1;
+                        WriteSamplerDescriptorSet.descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                        WriteSamplerDescriptorSet.pImageInfo      = &DescriptorImageInfo;
+
+                        VkWriteDescriptorSet WriteDescriptorSet[] { WriteUBDescriptorSet, WriteSamplerDescriptorSet };
+                        vkUpdateDescriptorSets( device->handle, sizeof( WriteDescriptorSet ) / sizeof( WriteDescriptorSet[ 0 ] ), WriteDescriptorSet, 0, nullptr );
+                        renderCommandBuffers[ i ] = new Engine::commandBuffer { commandPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY };
+                        frameBuffers[ i ]         = new Engine::framebuffer { renderpass, { colorImage, depthImage, swapchain->images[ i ] } };
+                        vkCreateSemaphore( device->handle, &sCI, ENGINE_ALLOCATION_CALLBACK, &imageSemaphores[ i ] );
+                        vkCreateSemaphore( device->handle, &sCI, ENGINE_ALLOCATION_CALLBACK, &renderedSemaphores[ i ] );
+                        vkCreateFence( device->handle, &fCI, ENGINE_ALLOCATION_CALLBACK, &renderedFences[ i ] );
+                    }
+
+                    vkDeviceWaitIdle( device->handle );
+                    break;
+
+                case VK_ERROR_OUT_OF_DATE_KHR:
+                    image = ~0Ui32;
+                    glfwGetFramebufferSize( window, &w, &h );
+                    while ( !( w || h ) )
+                    {
+                        glfwGetFramebufferSize( window, &w, &h );
+                        glfwWaitEvents();
+                    }
+                    wnd->updateResolution( w, h );
+                    vkDeviceWaitIdle( device->handle );
+                    delete commandBuffer;
+                    for ( uint32_t i { 0 }; i < frameBuffers.size(); ++i )
+                    {
+                        delete frameBuffers[ i ];
+                        delete renderCommandBuffers[ i ];
+                        delete uniformBuffers[ i ];
+                        vkDestroySemaphore( device->handle, imageSemaphores[ i ], ENGINE_ALLOCATION_CALLBACK );
+                        vkDestroySemaphore( device->handle, renderedSemaphores[ i ], ENGINE_ALLOCATION_CALLBACK );
+                        vkDestroyFence( device->handle, renderedFences[ i ], ENGINE_ALLOCATION_CALLBACK );
+                    }
+                    swapchain->reCreate();
+                    delete depthImage;
+                    delete colorImage;
+                    commandBuffer                 = new Engine::commandBuffer { commandPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY };
+                    ImageCreateInfo.usage         = VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+                    ImageCreateInfo.tiling        = VK_IMAGE_TILING_OPTIMAL;
+                    ImageCreateInfo.samples       = VK_SAMPLE_COUNT_2_BIT;
+                    ImageCreateInfo.imageType     = VK_IMAGE_TYPE_2D;
+                    ImageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+                    ImageCreateInfo.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;
+                    ImageCreateInfo.format        = swapchain->format.format;
+                    ImageCreateInfo.extent        = swapchain->images[ 0 ]->properties.extent;
+                    ImageCreateInfo.mipLevels     = 1;
+                    ImageCreateInfo.arrayLayers   = 1;
+
+                    ImageViewCreateInfo.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
+                    ImageViewCreateInfo.format                          = swapchain->format.format;
+                    ImageViewCreateInfo.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+                    ImageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
+                    ImageViewCreateInfo.subresourceRange.baseMipLevel   = 0;
+                    ImageViewCreateInfo.subresourceRange.levelCount     = 1;
+                    ImageViewCreateInfo.subresourceRange.layerCount     = 1;
+                    colorImage                                          = new Engine::image { device, ImageCreateInfo, ImageViewCreateInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT };
+
+                    ImageCreateInfo.usage                           = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+                    ImageCreateInfo.format                          = device->formatPriority( { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT }, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT );
+                    ImageViewCreateInfo.format                      = ImageCreateInfo.format;
+                    ImageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+                    depthImage                                      = new Engine::image { device, ImageCreateInfo, ImageViewCreateInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT };
+                    depthImage->transition( commandBuffer, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 0, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, VK_DEPENDENCY_BY_REGION_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT, VK_IMAGE_ASPECT_DEPTH_BIT );
+                    commandBuffer->submit( fence );
+                    uniformBuffers.resize( swapchain->images.size() );
+                    frameBuffers.resize( swapchain->images.size() );
+                    imageSemaphores.resize( swapchain->images.size() );
+                    renderedSemaphores.resize( swapchain->images.size() );
+                    renderedFences.resize( swapchain->images.size() );
+                    renderCommandBuffers.resize( swapchain->images.size() );
+                    bCI.size  = sizeof( DemensionUniformObject );
+                    bCI.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+                    for ( uint32_t i { 0 }; i < swapchain->images.size(); ++i )
+                    {
+                        VkDescriptorPoolSize UBDescriptorPoolSize {};
+                        UBDescriptorPoolSize.type            = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                        UBDescriptorPoolSize.descriptorCount = swapchain->images.size();
+
+                        VkDescriptorPoolSize SamplerDescriptorPoolSize {};
+                        SamplerDescriptorPoolSize.type            = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                        SamplerDescriptorPoolSize.descriptorCount = swapchain->images.size();
+
+                        VkDescriptorPoolSize DescriptorPoolSize[ 2 ] { UBDescriptorPoolSize, SamplerDescriptorPoolSize };
+
+                        VkDescriptorPoolCreateInfo DescriptorPoolCreateInfo {};
+                        DescriptorPoolCreateInfo.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+                        DescriptorPoolCreateInfo.poolSizeCount = sizeof( DescriptorPoolSize ) / sizeof( DescriptorPoolSize[ 0 ] );
+                        DescriptorPoolCreateInfo.pPoolSizes    = DescriptorPoolSize;
+                        DescriptorPoolCreateInfo.maxSets       = swapchain->images.size();
+                        CHECK_RESULT( vkCreateDescriptorPool( device->handle, &DescriptorPoolCreateInfo, ENGINE_ALLOCATION_CALLBACK, &dPool ) );
+
+                        std::vector<VkDescriptorSetLayout> DescriptorSetLayouts( swapchain->images.size(), dLayout );
+                        VkDescriptorSetAllocateInfo DescriptorSetAllocateInfo {};
+                        DescriptorSetAllocateInfo.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+                        DescriptorSetAllocateInfo.descriptorSetCount = swapchain->images.size();
+                        DescriptorSetAllocateInfo.pSetLayouts        = DescriptorSetLayouts.data();
+                        DescriptorSetAllocateInfo.descriptorPool     = dPool;
+
+                        dSet.resize( swapchain->images.size() );
+                        CHECK_RESULT( vkAllocateDescriptorSets( device->handle, &DescriptorSetAllocateInfo, dSet.data() ) );
+
+                        uniformBuffers[ i ] = new Engine::buffer( device, bCI, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT );
+                        VkDescriptorBufferInfo DescriptorBufferInfo {};
+                        DescriptorBufferInfo.buffer = uniformBuffers[ i ]->handle;
+                        DescriptorBufferInfo.offset = 0;
+                        DescriptorBufferInfo.range  = VK_WHOLE_SIZE;
+
+                        VkWriteDescriptorSet WriteUBDescriptorSet {};
+                        WriteUBDescriptorSet.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                        WriteUBDescriptorSet.dstSet          = dSet[ i ];
+                        WriteUBDescriptorSet.dstBinding      = 0;
+                        WriteUBDescriptorSet.dstArrayElement = 0;
+                        WriteUBDescriptorSet.descriptorCount = 1;
+                        WriteUBDescriptorSet.descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                        WriteUBDescriptorSet.pBufferInfo     = &DescriptorBufferInfo;
+
+                        VkDescriptorImageInfo DescriptorImageInfo {};
+                        DescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                        DescriptorImageInfo.imageView   = primitive.texture->view.handle;
+                        DescriptorImageInfo.sampler     = sampler;
+
+                        VkWriteDescriptorSet WriteSamplerDescriptorSet {};
+                        WriteSamplerDescriptorSet.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                        WriteSamplerDescriptorSet.dstSet          = dSet[ i ];
+                        WriteSamplerDescriptorSet.dstBinding      = 1;
+                        WriteSamplerDescriptorSet.dstArrayElement = 0;
+                        WriteSamplerDescriptorSet.descriptorCount = 1;
+                        WriteSamplerDescriptorSet.descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                        WriteSamplerDescriptorSet.pImageInfo      = &DescriptorImageInfo;
+
+                        VkWriteDescriptorSet WriteDescriptorSet[] { WriteUBDescriptorSet, WriteSamplerDescriptorSet };
+                        vkUpdateDescriptorSets( device->handle, sizeof( WriteDescriptorSet ) / sizeof( WriteDescriptorSet[ 0 ] ), WriteDescriptorSet, 0, nullptr );
+                        renderCommandBuffers[ i ] = new Engine::commandBuffer { commandPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY };
+                        frameBuffers[ i ]         = new Engine::framebuffer { renderpass, { colorImage, depthImage, swapchain->images[ i ] } };
+                        vkCreateSemaphore( device->handle, &sCI, ENGINE_ALLOCATION_CALLBACK, &imageSemaphores[ i ] );
+                        vkCreateSemaphore( device->handle, &sCI, ENGINE_ALLOCATION_CALLBACK, &renderedSemaphores[ i ] );
+                        vkCreateFence( device->handle, &fCI, ENGINE_ALLOCATION_CALLBACK, &renderedFences[ i ] );
+                    }
+
+                    vkDeviceWaitIdle( device->handle );
                     break;
                 default:
                     SPDLOG_CRITICAL( "Failed to acqueire image." );
                     break;
             }
         } while ( image == ~0Ui32 );
+        vkResetFences( device->handle, 1, &renderedFences[ currentFrame ] );
+        vkResetCommandBuffer( renderCommandBuffers[ currentFrame ]->handle, 0 );
         DemensionUniformObject Obj {};
         static auto time { std::chrono::high_resolution_clock::now() };
         auto cTime = std::chrono::high_resolution_clock::now();

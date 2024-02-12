@@ -14,8 +14,7 @@ namespace Engine
             VK_KHR_SURFACE_EXTENSION_NAME,
         };
         std::vector<const char *> DefaultDeviceExtensions {
-            VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-            VK_KHR_MAINTENANCE3_EXTENSION_NAME };
+            VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
     } // namespace tools
 

@@ -44,7 +44,7 @@ namespace Engine
         createInfo.imageColorSpace    = SurfaceFormat.colorSpace;
         createInfo.imageExtent.width  = std::clamp( properties.capabilities.currentExtent.width, properties.capabilities.minImageExtent.width, properties.capabilities.maxImageExtent.width );
         createInfo.imageExtent.height = std::clamp( properties.capabilities.currentExtent.width, properties.capabilities.minImageExtent.height, properties.capabilities.maxImageExtent.height );
-        createInfo.minImageCount      = properties.capabilities.maxImageCount;
+        createInfo.minImageCount      = properties.capabilities.minImageCount;
         createInfo.clipped            = VK_FALSE;
         createInfo.oldSwapchain       = handle;
         createInfo.preTransform       = properties.capabilities.currentTransform;
@@ -120,7 +120,7 @@ namespace Engine
         createInfo.imageColorSpace    = format.colorSpace;
         createInfo.imageExtent.width  = data->surface->data->width;
         createInfo.imageExtent.height = data->surface->data->height;
-        createInfo.minImageCount      = properties.capabilities.maxImageCount;
+        createInfo.minImageCount      = properties.capabilities.minImageCount;
         createInfo.clipped            = VK_FALSE;
         createInfo.oldSwapchain       = handle;
         createInfo.preTransform       = properties.capabilities.currentTransform;
