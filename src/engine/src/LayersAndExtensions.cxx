@@ -52,9 +52,7 @@ namespace Engine
     void instance::DATA_TYPE::setLayers( std::vector<const char *> nLayers )
     {
         layers.insert( layers.end(), nLayers.begin(), nLayers.end() );
-        // #ifdef ENGINE_DEBUG
         layers.insert( layers.end(), tools::DefaultInstanceLayers.begin(), tools::DefaultInstanceLayers.end() );
-        // #endif
     }
 
     void instance::DATA_TYPE::setExtensions( std::vector<const char *> nExtensions )
