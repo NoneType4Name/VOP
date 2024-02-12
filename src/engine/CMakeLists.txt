@@ -1,15 +1,6 @@
 include(GenerateExportHeader)
 
-option(ENGINE_MODIFY_SUPPORT "Enable support modify engine behavior." OFF)
-
-if(${WIN32})
-    set(ENGINE_PLATFORM_INCLUDE /src/windows)
-endif()
-
-file(GLOB_RECURSE ENGINE_SOURCE_FILES
-    "./src/*.cxx"
-    "./${ENGINE_PLATFORM_INCLUDE}/*.cxx"
-)
+file(GLOB_RECURSE ENGINE_SOURCE_FILES "./src/*.cxx")
 
 add_library(engine SHARED ${ENGINE_SOURCE_FILES})
 add_library(engine::engine ALIAS engine)
@@ -26,7 +17,6 @@ target_link_libraries(engine spdlog::spdlog)
 
 target_include_directories(
     engine
-    PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>"
     PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
 )
 

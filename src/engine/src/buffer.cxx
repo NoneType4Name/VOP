@@ -142,9 +142,9 @@ namespace Engine
         CHECK_RESULT( vkQueueSubmit( data->pool->data->queue->handle, 1, &SubmitInfo, nullptr ) );
     }
 
-    void commandBuffer::reset( VkCommandBufferResetFlags flags )
+    VkResult commandBuffer::reset( VkCommandBufferResetFlags flags )
     {
-        vkResetCommandBuffer( handle, flags );
+        return vkResetCommandBuffer( handle, flags );
     }
 
     commandBuffer::DATA_TYPE::DATA_TYPE( types::commandBuffer parent, types::commandPool commandPool ) :

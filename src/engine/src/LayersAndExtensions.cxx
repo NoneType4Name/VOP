@@ -42,6 +42,7 @@ namespace Engine
             for ( const auto &ext : tmpRequeredDeviceExts )
             {
                 auto s { std::format( "\t{}\n", ext ) };
+                e += s;
             }
             SPDLOG_CRITICAL( e );
         }

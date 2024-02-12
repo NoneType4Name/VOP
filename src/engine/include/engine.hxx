@@ -218,7 +218,7 @@ namespace Engine
         commandBuffer() = delete;
         commandBuffer( types::commandPool commandPool, VkCommandBufferLevel level );
         ~commandBuffer();
-        void reset( VkCommandBufferResetFlags flags );
+        VkResult reset( VkCommandBufferResetFlags flags );
         void begin();
         void end();
         void submit( VkFence fence );
