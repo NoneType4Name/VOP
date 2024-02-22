@@ -1,6 +1,6 @@
-#include <memory.hxx>
-#include <device.hxx>
-#include <common/logging.hxx>
+#include <ObjectiveVulkan/memory.hxx>
+#include <ObjectiveVulkan/device.hxx>
+#include <ObjectiveVulkan/common/logging.hxx>
 
 namespace Engine
 {

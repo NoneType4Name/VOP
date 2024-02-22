@@ -1,9 +1,8 @@
 #pragma once
 #ifndef IMAGE_HXX
 #    define IMAGE_HXX
-#    include <common/globals.hxx>
-
-#    include <memory.hxx>
+#    include <ObjectiveVulkan/common/globals.hxx>
+#    include <ObjectiveVulkan/memory.hxx>
 
 namespace Engine
 {

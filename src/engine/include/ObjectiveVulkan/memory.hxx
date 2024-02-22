@@ -1,7 +1,7 @@
 #pragma once
 #ifndef MEMORY_HXX
 #    define MEMORY_HXX
-#    include <common/globals.hxx>
+#    include <ObjectiveVulkan/common/globals.hxx>
 
 namespace Engine
 {

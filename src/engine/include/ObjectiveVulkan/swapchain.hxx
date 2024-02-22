@@ -1,7 +1,7 @@
-#include <common/globals.hxx>
+#include <ObjectiveVulkan/common/globals.hxx>
 
-#include <image.hxx>
-#include <device.hxx>
+#include <ObjectiveVulkan/image.hxx>
+#include <ObjectiveVulkan/device.hxx>
 
 namespace Engine
 {

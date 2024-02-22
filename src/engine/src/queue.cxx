@@ -1,7 +1,7 @@
-#include <queue.hxx>
-#include <device.hxx>
-#include <instance.hxx>
-#include <common/logging.hxx>
+#include <ObjectiveVulkan/queue.hxx>
+#include <ObjectiveVulkan/device.hxx>
+#include <ObjectiveVulkan/instance.hxx>
+#include <ObjectiveVulkan/common/logging.hxx>
 
 namespace Engine
 {

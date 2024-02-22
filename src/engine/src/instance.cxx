@@ -1,8 +1,8 @@
-#include <instance.hxx>
-#include <surface.hxx>
-#include <device.hxx>
-#include <common/logging.hxx>
-#define ENGINE_VERSION VK_MAKE_VERSION( 0, 0, 1 )
+#include <ObjectiveVulkan/instance.hxx>
+#include <ObjectiveVulkan/surface.hxx>
+#include <ObjectiveVulkan/device.hxx>
+#include <ObjectiveVulkan/common/logging.hxx>
+#define OBJECTIVE_VULKAN_VERSION VK_MAKE_VERSION( 0, 0, 1 )
 
 namespace Engine
 {
@@ -33,7 +33,7 @@ namespace Engine
 
     void instance::OBJECTIVE_VULKAN_DATA_TYPE::create( VkInstanceCreateInfo createInfo )
     {
-        const_cast<VkApplicationInfo *>( createInfo.pApplicationInfo )->engineVersion = ENGINE_VERSION;
+        const_cast<VkApplicationInfo *>( createInfo.pApplicationInfo )->engineVersion = OBJECTIVE_VULKAN_VERSION;
         const_cast<VkApplicationInfo *>( createInfo.pApplicationInfo )->pEngineName   = "NoneTypeName.";
         std::vector<const char *> _layers { createInfo.ppEnabledLayerNames, &createInfo.ppEnabledLayerNames[ createInfo.enabledLayerCount ] };
         std::vector<const char *> _extensions { createInfo.ppEnabledExtensionNames, &createInfo.ppEnabledExtensionNames[ createInfo.enabledExtensionCount ] };

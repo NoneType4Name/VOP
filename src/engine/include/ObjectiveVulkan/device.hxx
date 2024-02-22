@@ -1,12 +1,12 @@
 #pragma once
 #ifndef DEVICE_HXX
 #    define DEVICE_HXX
-#    include <common/globals.hxx>
-#    include <common/logging.hxx>
-#    include <surface.hxx>
-#    include <buffer.hxx>
-#    include <image.hxx>
-#    include <queue.hxx>
+#    include <ObjectiveVulkan/common/globals.hxx>
+#    include <ObjectiveVulkan/common/logging.hxx>
+#    include <ObjectiveVulkan/surface.hxx>
+#    include <ObjectiveVulkan/buffer.hxx>
+#    include <ObjectiveVulkan/image.hxx>
+#    include <ObjectiveVulkan/queue.hxx>
 
 namespace Engine
 {

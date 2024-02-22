@@ -1,8 +1,8 @@
-#include <swapchain.hxx>
-#include <device.hxx>
-#include <surface.hxx>
-#include <instance.hxx>
-#include <common/logging.hxx>
+#include <ObjectiveVulkan/swapchain.hxx>
+#include <ObjectiveVulkan/device.hxx>
+#include <ObjectiveVulkan/surface.hxx>
+#include <ObjectiveVulkan/instance.hxx>
+#include <ObjectiveVulkan/common/logging.hxx>
 
 namespace Engine
 {

@@ -12,7 +12,7 @@
 #    include <algorithm>
 #    include <stdint.h>
 #    include <unordered_map>
-#    include <ObjectiveVulkan.hxx>
+#    include <ObjectiveVulkan/ObjectiveVulkan.hxx>
 #    define OBJECTIVE_VULKAN_ALLOCATION_CALLBACK nullptr
 #    define OBJECTIVE_VULKAN_OBJECTIVE_VULKAN_DEFINE_DATA_FIELD( ... ) \
         const_cast<std::unique_ptr<OBJECTIVE_VULKAN_DATA_TYPE> &>( data ) = std::make_unique<OBJECTIVE_VULKAN_DATA_TYPE>( this, __VA_ARGS__ );

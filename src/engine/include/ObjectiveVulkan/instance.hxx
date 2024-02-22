@@ -1,7 +1,7 @@
 #pragma once
 #ifndef INSTANCE_HXX
 #    define INSTANCE_HXX
-#    include <common/globals.hxx>
+#    include <ObjectiveVulkan/common/globals.hxx>
 
 namespace Engine
 {

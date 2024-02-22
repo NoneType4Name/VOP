@@ -15,7 +15,7 @@
 #    include <vulkan/vulkan.h>
 #    include "ObjectiveVulkan_export.hxx"
 #    include <vulkan/vk_enum_string_helper.h>
-#    include <common/globals.hxx>
+#    include <ObjectiveVulkan/common/globals.hxx>
 #    include <glm/gtc/matrix_transform.hpp>
 
 namespace Engine

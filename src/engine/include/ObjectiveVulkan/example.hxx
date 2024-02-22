@@ -1,8 +1,8 @@
 #ifndef VK_USE_PLATFORM_WIN32_KHR
 #    define VK_USE_PLATFORM_WIN32_KHR
 #endif
-#include <ObjectiveVulkan.hxx>
-#include <ehi.hxx>
+#include <ObjectiveVulkan/ObjectiveVulkan.hxx>
+#include <ObjectiveVulkan/ehi.hxx>
 
 namespace Engine
 {
