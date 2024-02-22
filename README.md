@@ -4,7 +4,7 @@
 
 # Requerements
 
-1. Conan 2.x (install from python with pip: `pip install conan`
+1. Conan *2.x* (install from python with pip: `pip install conan`)
 
 2. [`Cmake`](https://cmake.org/download/) *3.5* or later
 
@@ -12,27 +12,20 @@
 
 4. [`Ninja`](https://github.com/ninja-build/ninja/releases/latest) generanor (remember for add unzipped dirrectory to PATH (or etc for linux) variable)
 
-# Prebuild
+# Install dependencies
 
-- Install all requerement libraries for project. Just do:
+- To install all required dependencies for project just do:
   1. `cd path/to/project/folder`
-  2. `conan install . -of=bin/conan_build -b=missing -s build_type=Debug -s compiler.cppstd=20 -s compiler=clang -s compiler.version=16 --conf tools.cmake.cmaketoolchain:generator=Ninja`
-  **Remark: in conan profile you need to remove compiler.runtime***.
+  2. `conan install . -of=bin/build -b=missing -s build_type=Debug -s compiler.cppstd=20 -s compiler=clang -s compiler.version=16 --conf tools.cmake.cmaketoolchain:generator=Ninja`
+  **Remark: in conan profile you need to remove compiler.runtime**.
 
-- start configure with: `cmake bin/build --preset <preset>`
- as `<preset>` you can set:
-  - Debug
-  - Release
-  - RelWithDebInfo
-  - MinSizeRel
+# Configure project
+
+- Start configure with: `cmake --preset conan-debug`
 
 # Build
 
- for build use: `cmake --build bin/build --preset <preset> --target all`
- as `<preset>` you can set:
-
-1. Build
-2. CleanBuild
+- For build use: `cmake --build bin/build --target all`
 
 # Contributors
 
