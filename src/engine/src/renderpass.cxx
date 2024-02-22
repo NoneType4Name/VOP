@@ -6,16 +6,10 @@
 
 namespace Engine
 {
-    renderPass::renderPass( bool, types::device device, VkRenderPassCreateInfo createInfo )
+    renderPass::renderPass( types::device device, VkRenderPassCreateInfo createInfo )
     {
-        DEFINE_DATA_FIELD( device );
+        OBJECTIVE_VULKAN_OBJECTIVE_VULKAN_DEFINE_DATA_FIELD( device );
         data->device->data->renderpasses.insert( this );
-    }
-
-    renderPass::renderPass( types::device device, VkRenderPassCreateInfo createInfo ) :
-        renderPass( 1, device, createInfo )
-    {
-        data->create( createInfo );
     }
 
     renderPass::~renderPass()
@@ -23,7 +17,7 @@ namespace Engine
         auto frm { data->framebuffers.begin() };
         while ( frm != data->framebuffers.end() )
             delete *frm++;
-        vkDestroyRenderPass( data->device->handle, handle, ENGINE_ALLOCATION_CALLBACK );
+        vkDestroyRenderPass( data->device->handle, handle, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK );
         data->device->data->renderpasses.erase( this );
     }
 
@@ -40,8 +34,8 @@ namespace Engine
             auto m { data->subpasses[ subpass ].colorAttachmentRefs.size() };
             if ( m < right->data->subpasses[ subpass ].colorAttachmentRefs.size() )
                 m = right->data->subpasses[ subpass ].colorAttachmentRefs.size();
-            std::vector<DATA_TYPE::_colorAttachmentRef> colorRefs { data->subpasses[ subpass ].colorAttachmentRefs.begin(), data->subpasses[ subpass ].colorAttachmentRefs.end() };
-            std::vector<DATA_TYPE::_colorAttachmentRef> colorRefs2 { right->data->subpasses[ subpass ].colorAttachmentRefs.begin(), right->data->subpasses[ subpass ].colorAttachmentRefs.end() };
+            std::vector<OBJECTIVE_VULKAN_DATA_TYPE::_colorAttachmentRef> colorRefs { data->subpasses[ subpass ].colorAttachmentRefs.begin(), data->subpasses[ subpass ].colorAttachmentRefs.end() };
+            std::vector<OBJECTIVE_VULKAN_DATA_TYPE::_colorAttachmentRef> colorRefs2 { right->data->subpasses[ subpass ].colorAttachmentRefs.begin(), right->data->subpasses[ subpass ].colorAttachmentRefs.end() };
             colorRefs.resize( m, { VK_ATTACHMENT_UNUSED, VK_ATTACHMENT_UNUSED, VK_ATTACHMENT_UNUSED } );
             colorRefs2.resize( m, { VK_ATTACHMENT_UNUSED, VK_ATTACHMENT_UNUSED, VK_ATTACHMENT_UNUSED } );
             for ( uint32_t colorRef { 0 }; colorRef < m; ++colorRef )
@@ -115,16 +109,16 @@ namespace Engine
         return true;
     }
 
-    renderPass::DATA_TYPE::DATA_TYPE( types::renderPass parent, types::device device ) :
+    renderPass::OBJECTIVE_VULKAN_DATA_TYPE::OBJECTIVE_VULKAN_DATA_TYPE( types::renderPass parent, types::device device ) :
         parent { parent }, device { device }
     {
     }
 
-    renderPass::DATA_TYPE::~DATA_TYPE()
+    renderPass::OBJECTIVE_VULKAN_DATA_TYPE::~OBJECTIVE_VULKAN_DATA_TYPE()
     {
     }
 
-    void renderPass::DATA_TYPE::create( VkRenderPassCreateInfo createInfo )
+    void renderPass::OBJECTIVE_VULKAN_DATA_TYPE::create( VkRenderPassCreateInfo createInfo )
     {
         createInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
         subpasses.resize( createInfo.subpassCount );
@@ -154,51 +148,31 @@ namespace Engine
             attachments[ i ].format  = createInfo.pAttachments[ i ].format;
             attachments[ i ].samples = createInfo.pAttachments[ i ].samples;
         }
-        CHECK_RESULT( vkCreateRenderPass( device->handle, &createInfo, ENGINE_ALLOCATION_CALLBACK, &parent->handle ) );
+        OBJECTIVE_VULKAN_CHECK_RESULT( vkCreateRenderPass( device->handle, &createInfo, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK, &parent->handle ) );
     }
 
-    framebuffer::framebuffer( bool, types::renderPass renderPass, std::vector<types::image> attachments )
+    framebuffer::framebuffer( types::renderPass renderPass, std::vector<types::image> attachments )
     {
-        DEFINE_DATA_FIELD( renderPass );
+        OBJECTIVE_VULKAN_OBJECTIVE_VULKAN_DEFINE_DATA_FIELD( renderPass );
         data->renderpass->data->framebuffers.insert( this );
-    }
-
-    framebuffer::framebuffer( types::renderPass renderPass, std::vector<types::image> attachments ) :
-        framebuffer( 1, renderPass, attachments )
-    {
-        uint32_t w { ~0u }, h { ~0u }, l { ~0u };
-        for ( const auto &atch : attachments )
-        {
-            if ( atch->properties.extent.width < w )
-                w = atch->properties.extent.width;
-            if ( atch->properties.extent.height < h )
-                h = atch->properties.extent.height;
-            if ( atch->properties.extent.depth < l )
-                l = atch->properties.extent.depth;
-        }
-        VkFramebufferCreateInfo createInfo { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
-        createInfo.width  = w;
-        createInfo.height = h;
-        createInfo.layers = l;
-        data->create( createInfo, attachments );
     }
 
     framebuffer::~framebuffer()
     {
-        vkDestroyFramebuffer( data->renderpass->data->device->handle, handle, ENGINE_ALLOCATION_CALLBACK );
+        vkDestroyFramebuffer( data->renderpass->data->device->handle, handle, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK );
         data->renderpass->data->framebuffers.erase( this );
     }
 
-    framebuffer::DATA_TYPE::DATA_TYPE( types::framebuffer parent, types::renderPass renderpass ) :
+    framebuffer::OBJECTIVE_VULKAN_DATA_TYPE::OBJECTIVE_VULKAN_DATA_TYPE( types::framebuffer parent, types::renderPass renderpass ) :
         parent { parent }, renderpass { renderpass }
     {
     }
 
-    framebuffer::DATA_TYPE::~DATA_TYPE()
+    framebuffer::OBJECTIVE_VULKAN_DATA_TYPE::~OBJECTIVE_VULKAN_DATA_TYPE()
     {
     }
 
-    void framebuffer::DATA_TYPE::create( VkFramebufferCreateInfo createInfo, std::vector<types::image> attachments )
+    void framebuffer::OBJECTIVE_VULKAN_DATA_TYPE::create( VkFramebufferCreateInfo createInfo, std::vector<types::image> attachments )
     {
         std::vector<VkImageView> attchms;
         attchms.reserve( attachments.size() );
@@ -208,6 +182,6 @@ namespace Engine
         createInfo.renderPass      = renderpass->handle;
         createInfo.attachmentCount = attchms.size();
         createInfo.pAttachments    = attchms.data();
-        CHECK_RESULT( vkCreateFramebuffer( renderpass->data->device->handle, &createInfo, ENGINE_ALLOCATION_CALLBACK, &parent->handle ) );
+        OBJECTIVE_VULKAN_CHECK_RESULT( vkCreateFramebuffer( renderpass->data->device->handle, &createInfo, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK, &parent->handle ) );
     }
 } // namespace Engine

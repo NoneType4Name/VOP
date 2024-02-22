@@ -7,6 +7,7 @@
 #    include <queue.hxx>
 #    include <surface.hxx>
 #    include <swapchain.hxx>
+#    include <renderpass.hxx>
 #    include <memory.hxx>
 #    include <image.hxx>
 #    include <buffer.hxx>

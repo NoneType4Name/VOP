@@ -1,20 +1,13 @@
 #pragma once
-#ifndef EHI_HXX
-#    define EHI_HXX
-
+#ifndef INSTANCE_HXX
+#    define INSTANCE_HXX
 #    include <common/globals.hxx>
-// #    include <device.hxx>
-// #    include <image.hxx>
-// #    include <queue.hxx>
-// #    include <engine_setup.hxx>
-
-#    define ENGINE_VERSION VK_MAKE_VERSION( 0, 0, 1 )
 
 namespace Engine
 {
-    struct instance::DATA_TYPE
+    struct instance::OBJECTIVE_VULKAN_DATA_TYPE
     {
-        DATA_TYPE( instance *parent ) :
+        OBJECTIVE_VULKAN_DATA_TYPE( instance *parent ) :
             parent { parent } {}
         VkDebugUtilsMessengerCreateInfoEXT setupDebugLayerCallback();
         void initDebugLayerCallBack( VkDebugUtilsMessengerCreateInfoEXT createInfo );
@@ -30,7 +23,7 @@ namespace Engine
         std::vector<types::deviceDescription> deviceDescriptions;
         std::set<types::device> devices;
         // std::vector<types::pass> passes;
-        ~DATA_TYPE() {}
+        ~OBJECTIVE_VULKAN_DATA_TYPE() {}
 
       private:
         friend instance;

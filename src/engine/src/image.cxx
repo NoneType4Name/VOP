@@ -9,11 +9,11 @@ namespace Engine
         view { ImageViewCreateInfo.viewType, ImageViewCreateInfo.format, ImageViewCreateInfo.subresourceRange, nullptr },
         handle { nullptr }
     {
-        DEFINE_DATA_FIELD( device );
+        OBJECTIVE_VULKAN_OBJECTIVE_VULKAN_DEFINE_DATA_FIELD( device );
         ImageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
         if ( !ImageViewCreateInfo.image )
         {
-            CHECK_RESULT( vkCreateImage( data->device->handle, &ImageCreateInfo, ENGINE_ALLOCATION_CALLBACK, &handle ) );
+            OBJECTIVE_VULKAN_CHECK_RESULT( vkCreateImage( data->device->handle, &ImageCreateInfo, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK, &handle ) );
             ImageViewCreateInfo.image = handle;
             addres                    = data->device->memory->allocate( handle, memoryPropertiesFlag );
         }
@@ -23,7 +23,7 @@ namespace Engine
         }
 
         ImageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        CHECK_RESULT( vkCreateImageView( data->device->handle, &ImageViewCreateInfo, ENGINE_ALLOCATION_CALLBACK, &view.handle ) );
+        OBJECTIVE_VULKAN_CHECK_RESULT( vkCreateImageView( data->device->handle, &ImageViewCreateInfo, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK, &view.handle ) );
         data->device->data->images.insert( this );
     }
 
@@ -32,12 +32,12 @@ namespace Engine
         view { ImageViewCreateInfo.viewType, ImageViewCreateInfo.format, ImageViewCreateInfo.subresourceRange, nullptr },
         handle { image->handle }
     {
-        DEFINE_DATA_FIELD( device, image );
+        OBJECTIVE_VULKAN_OBJECTIVE_VULKAN_DEFINE_DATA_FIELD( device, image );
         data->device->data->images.insert( this );
         if ( data->parentImage )
             data->parentImage->data->views.emplace_back( this );
         ImageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        CHECK_RESULT( vkCreateImageView( data->device->handle, &ImageViewCreateInfo, ENGINE_ALLOCATION_CALLBACK, &view.handle ) );
+        OBJECTIVE_VULKAN_CHECK_RESULT( vkCreateImageView( data->device->handle, &ImageViewCreateInfo, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK, &view.handle ) );
     }
 
     image::~image()
@@ -45,9 +45,9 @@ namespace Engine
         auto v { data->views.begin() };
         while ( v != data->views.end() )
             delete *v++;
-        vkDestroyImageView( data->device->handle, view.handle, ENGINE_ALLOCATION_CALLBACK );
+        vkDestroyImageView( data->device->handle, view.handle, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK );
         if ( handle )
-            vkDestroyImage( data->device->handle, handle, ENGINE_ALLOCATION_CALLBACK );
+            vkDestroyImage( data->device->handle, handle, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK );
         data->device->data->images.erase( this );
     }
 
@@ -78,14 +78,14 @@ namespace Engine
         auto cmdB { new commandBuffer { commandPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY } };
         VkFence fence;
         VkFenceCreateInfo fCI { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
-        vkCreateFence( commandPool->data->queue->data->device->handle, &fCI, ENGINE_ALLOCATION_CALLBACK, &fence );
+        vkCreateFence( commandPool->data->queue->data->device->handle, &fCI, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK, &fence );
         VkSubmitInfo submit {};
         submit.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
         submit.commandBufferCount = 1;
         submit.pCommandBuffers    = &cmdB->handle;
         transition( cmdB, newLayout, srcStageMask, dstStageMask, dependencyFlags, srcAccessMask, dstAccessMask, srcQueueFamilyIndex, dstQueueFamilyIndex );
-        CHECK_RESULT( vkQueueSubmit( commandPool->data->queue->handle, 1, &submit, fence ) );
-        CHECK_RESULT( vkWaitForFences( commandPool->data->queue->data->device->handle, 1, &fence, true, -1ui64 ) );
+        OBJECTIVE_VULKAN_CHECK_RESULT( vkQueueSubmit( commandPool->data->queue->handle, 1, &submit, fence ) );
+        OBJECTIVE_VULKAN_CHECK_RESULT( vkWaitForFences( commandPool->data->queue->data->device->handle, 1, &fence, true, -1ui64 ) );
         delete cmdB;
     }
 
@@ -99,9 +99,9 @@ namespace Engine
         bCI.pQueueFamilyIndices   = &commandBuffer->data->pool->data->queue->familyIndex;
         bCI.usage                 = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
         bCI.sharingMode           = VK_SHARING_MODE_EXCLUSIVE;
-        CHECK_RESULT( vkCreateBuffer( data->device->handle, &bCI, ENGINE_ALLOCATION_CALLBACK, &TransferBuffer ) );
+        OBJECTIVE_VULKAN_CHECK_RESULT( vkCreateBuffer( data->device->handle, &bCI, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK, &TransferBuffer ) );
         auto TransferBufferMemoryAddr { data->device->memory->allocate( TransferBuffer, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ) };
-        CHECK_RESULT( vkMapMemory( data->device->handle, TransferBufferMemoryAddr.memory, TransferBufferMemoryAddr.offset, mapped.size(), flags, mapped.data() ) );
+        OBJECTIVE_VULKAN_CHECK_RESULT( vkMapMemory( data->device->handle, TransferBufferMemoryAddr.memory, TransferBufferMemoryAddr.offset, mapped.size(), flags, mapped.data() ) );
         memcpy( mapped.data(), img.data(), img.size() );
         vkUnmapMemory( data->device->handle, TransferBufferMemoryAddr.memory );
         if ( !commandBuffer->data->used )
@@ -130,28 +130,28 @@ namespace Engine
         write( cmdB, img, srcExtend, srcOffset, aspectMask, mipLevel, arrayLayersCount, baseArrayLayer, flags );
         VkFence fence;
         VkFenceCreateInfo fCI { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
-        vkCreateFence( commandPool->data->queue->data->device->handle, &fCI, ENGINE_ALLOCATION_CALLBACK, &fence );
+        vkCreateFence( commandPool->data->queue->data->device->handle, &fCI, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK, &fence );
         VkSubmitInfo submit {};
         submit.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
         submit.commandBufferCount = 1;
         submit.pCommandBuffers    = &cmdB->handle;
         write( cmdB, img, srcExtend, srcOffset, aspectMask, mipLevel, arrayLayersCount, baseArrayLayer, flags );
-        CHECK_RESULT( vkQueueSubmit( commandPool->data->queue->handle, 1, &submit, fence ) );
-        CHECK_RESULT( vkWaitForFences( commandPool->data->queue->data->device->handle, 1, &fence, true, -1ui64 ) );
+        OBJECTIVE_VULKAN_CHECK_RESULT( vkQueueSubmit( commandPool->data->queue->handle, 1, &submit, fence ) );
+        OBJECTIVE_VULKAN_CHECK_RESULT( vkWaitForFences( commandPool->data->queue->data->device->handle, 1, &fence, true, -1ui64 ) );
         delete cmdB;
     }
 
-    image::DATA_TYPE::DATA_TYPE( types::image parent, types::device device, types::image image ) :
+    image::OBJECTIVE_VULKAN_DATA_TYPE::OBJECTIVE_VULKAN_DATA_TYPE( types::image parent, types::device device, types::image image ) :
         parent { parent }, device { device }, parentImage { image }
     {
     }
 
-    image::DATA_TYPE::DATA_TYPE( types::image parent, types::device device ) :
+    image::OBJECTIVE_VULKAN_DATA_TYPE::OBJECTIVE_VULKAN_DATA_TYPE( types::image parent, types::device device ) :
         parent { parent }, device { device }
     {
     }
 
-    image::DATA_TYPE::~DATA_TYPE()
+    image::OBJECTIVE_VULKAN_DATA_TYPE::~OBJECTIVE_VULKAN_DATA_TYPE()
     {
     }
 } // namespace Engine

@@ -1,22 +1,19 @@
 #pragma once
-#ifndef ENGINE_HXX
-#    define ENGINE_HXX
-#    define DEFINE_HANDLE( object ) \
-        class ENGINE_EXPORT object; \
-        namespace types             \
-        {                           \
-            typedef object *object; \
+#ifndef OBJECTIVE_VULKAN_HXX
+#    define OBJECTIVE_VULKAN_HXX
+#    define DEFINE_HANDLE( object )          \
+        class OBJECTIVEVULKAN_EXPORT object; \
+        namespace types                      \
+        {                                    \
+            typedef object *object;          \
         }
-#    define DATA_TYPE data_T
-#    define DEFINE_DATA                \
-      public:                          \
-        class ENGINE_EXPORT DATA_TYPE; \
-        const std::unique_ptr<DATA_TYPE> data;
-#    ifndef VULKAN_H_
-#        include <vulkan/vulkan.h>
-#        warning you should declare macro VK_USE_PLATFORM_XXX before include this header
-#    endif
-#    include "engine_export.hxx"
+#    define OBJECTIVE_VULKAN_DATA_TYPE data_T
+#    define OBJECTIVE_VULKAN_DEFINE_DATA                         \
+      public:                                                    \
+        class OBJECTIVEVULKAN_EXPORT OBJECTIVE_VULKAN_DATA_TYPE; \
+        const std::unique_ptr<OBJECTIVE_VULKAN_DATA_TYPE> data;
+#    include <vulkan/vulkan.h>
+#    include "ObjectiveVulkan_export.hxx"
 #    include <vulkan/vk_enum_string_helper.h>
 #    include <common/globals.hxx>
 #    include <glm/gtc/matrix_transform.hpp>
@@ -38,14 +35,15 @@ namespace Engine
     DEFINE_HANDLE( descriptorSet );
     DEFINE_HANDLE( descriptorsPool );
 
-    class ENGINE_EXPORT surface
+    class OBJECTIVEVULKAN_EXPORT surface
     {
-        DEFINE_DATA;
+        OBJECTIVE_VULKAN_DEFINE_DATA;
+
+      protected:
+        surface( instance *instance, uint32_t width, uint32_t height );
 
       public:
         surface() = delete;
-        surface( instance *instance, uint32_t width, uint32_t height, VkSurfaceKHR handle );
-        surface( bool, instance *instance, uint32_t width, uint32_t height, VkSurfaceKHR handle );
         ~surface();
         types::swapchain getLink( types::device device );
         void updateResolution( uint32_t width, uint32_t height );
@@ -53,9 +51,9 @@ namespace Engine
     };
     DEFINE_HANDLE( surface );
 
-    struct ENGINE_EXPORT deviceDescription final
+    class OBJECTIVEVULKAN_EXPORT deviceDescription final
     {
-        DEFINE_DATA;
+        OBJECTIVE_VULKAN_DEFINE_DATA;
 
       private:
         friend instance;
@@ -69,14 +67,15 @@ namespace Engine
         uint32_t grade;
     };
 
-    class ENGINE_EXPORT device
+    class OBJECTIVEVULKAN_EXPORT device
     {
-        DEFINE_DATA;
+        OBJECTIVE_VULKAN_DEFINE_DATA;
+
+      protected:
+        device( types::deviceDescription description, std::vector<types::surface> surfaces );
 
       public:
         device() = delete;
-        device( types::deviceDescription description, std::vector<types::surface> windows );
-        device( bool, types::deviceDescription description, std::vector<types::surface> windows );
         ~device();
         VkFormat formatPriority( const std::vector<VkFormat> &formats, VkImageTiling ImageTiling, VkFormatFeatureFlags FormatFeatureFlags ) const noexcept;
         uint32_t requeredMemoryTypeIndex( uint32_t type, VkMemoryPropertyFlags properties ) const;
@@ -85,7 +84,7 @@ namespace Engine
         VkShaderModule loadShader( const char *path, VkShaderModuleCreateFlags flags = 0, const void *pNext = 0 );
         class _memory final
         {
-            DEFINE_DATA;
+            OBJECTIVE_VULKAN_DEFINE_DATA;
 
           public:
             _memory() = delete;
@@ -112,14 +111,15 @@ namespace Engine
         VkDevice handle { nullptr };
     };
 
-    class ENGINE_EXPORT swapchain
+    class OBJECTIVEVULKAN_EXPORT swapchain
     {
-        DEFINE_DATA;
+        OBJECTIVE_VULKAN_DEFINE_DATA;
+
+      protected:
+        swapchain( types::device device, types::surface surface );
 
       public:
         swapchain() = delete;
-        swapchain( types::device device, types::surface surface );
-        swapchain( bool, types::device device, types::surface surface );
         ~swapchain();
         struct
         {
@@ -134,9 +134,9 @@ namespace Engine
         virtual void reCreate();
     };
 
-    class ENGINE_EXPORT image final
+    class OBJECTIVEVULKAN_EXPORT image final
     {
-        DEFINE_DATA;
+        OBJECTIVE_VULKAN_DEFINE_DATA;
 
       public:
         image() = delete;
@@ -170,9 +170,9 @@ namespace Engine
         VkImage handle { nullptr };
     };
 
-    class ENGINE_EXPORT buffer final
+    class OBJECTIVEVULKAN_EXPORT buffer final
     {
-        DEFINE_DATA;
+        OBJECTIVE_VULKAN_DEFINE_DATA;
 
       public:
         buffer() = delete;
@@ -182,15 +182,14 @@ namespace Engine
         VkBuffer handle { nullptr };
     };
 
-    class ENGINE_EXPORT queue final
+    class OBJECTIVEVULKAN_EXPORT queue final
     {
-        DEFINE_DATA;
+        OBJECTIVE_VULKAN_DEFINE_DATA;
 
       public:
         queue() = delete;
         queue( types::device device, uint32_t familyIndex, uint32_t queueIndex, float priority = 1.f );
         ~queue();
-        // types::queue operator=( types::queue queue ) noexcept;
         bool operator==( const queue &right ) const noexcept;
         VkQueue handle { nullptr };
         uint32_t familyIndex;
@@ -198,9 +197,9 @@ namespace Engine
         float priority { 1.f };
     };
 
-    class ENGINE_EXPORT commandPool final
+    class OBJECTIVEVULKAN_EXPORT commandPool final
     {
-        DEFINE_DATA;
+        OBJECTIVE_VULKAN_DEFINE_DATA;
 
       public:
         commandPool() = delete;
@@ -210,9 +209,9 @@ namespace Engine
         VkCommandPool handle { nullptr };
     };
 
-    class ENGINE_EXPORT commandBuffer final
+    class OBJECTIVEVULKAN_EXPORT commandBuffer final
     {
-        DEFINE_DATA;
+        OBJECTIVE_VULKAN_DEFINE_DATA;
 
       public:
         commandBuffer() = delete;
@@ -226,38 +225,41 @@ namespace Engine
         VkCommandBuffer handle { nullptr };
     };
 
-    class ENGINE_EXPORT renderPass
+    class OBJECTIVEVULKAN_EXPORT renderPass
     {
-        DEFINE_DATA;
+        OBJECTIVE_VULKAN_DEFINE_DATA;
+
+      protected:
+        renderPass( types::device device, VkRenderPassCreateInfo createInfo );
 
       public:
         renderPass() = delete;
-        renderPass( types::device device, VkRenderPassCreateInfo createInfo );
-        renderPass( bool, types::device device, VkRenderPassCreateInfo createInfo );
         ~renderPass();
         bool compatible( types::renderPass right );
         VkRenderPass handle { nullptr };
     };
 
-    class ENGINE_EXPORT framebuffer
+    class OBJECTIVEVULKAN_EXPORT framebuffer
     {
-        DEFINE_DATA;
+        OBJECTIVE_VULKAN_DEFINE_DATA;
+
+      protected:
+        framebuffer( types::renderPass renderPass, std::vector<types::image> attachments );
 
       public:
         framebuffer() = delete;
-        framebuffer( types::renderPass renderPass, std::vector<types::image> attachments );
-        framebuffer( bool, types::renderPass renderPass, std::vector<types::image> attachments );
         ~framebuffer();
         VkFramebuffer handle { nullptr };
     };
 
-    class ENGINE_EXPORT instance
+    class OBJECTIVEVULKAN_EXPORT instance
     {
-        DEFINE_DATA;
+        OBJECTIVE_VULKAN_DEFINE_DATA;
+
+      protected:
+        instance( const char *appName, uint32_t appVersion );
 
       public:
-        instance( const char *appName, uint32_t appVersion );
-        instance( bool, const char *appName, uint32_t appVersion );
         ~instance();
         const std::vector<types::deviceDescription> &getDevices();
         VkInstance handle { nullptr };

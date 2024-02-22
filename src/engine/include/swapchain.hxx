@@ -5,10 +5,10 @@
 
 namespace Engine
 {
-    struct swapchain::DATA_TYPE
+    struct swapchain::OBJECTIVE_VULKAN_DATA_TYPE
     {
-        DATA_TYPE( types::swapchain parent, types::device device, types::surface surface );
-        ~DATA_TYPE();
+        OBJECTIVE_VULKAN_DATA_TYPE( types::swapchain parent, types::device device, types::surface surface );
+        ~OBJECTIVE_VULKAN_DATA_TYPE();
         void create( VkSwapchainCreateInfoKHR createInfo );
 
         types::surface surface { nullptr };

@@ -18,13 +18,13 @@ namespace Engine
 
     } // namespace tools
 
-    void device::DATA_TYPE::setExtensions( std::vector<const char *> &rExtensions )
+    void device::OBJECTIVE_VULKAN_DATA_TYPE::setExtensions( std::vector<const char *> &rExtensions )
     {
         extensions.insert( extensions.end(), rExtensions.begin(), rExtensions.end() );
         extensions.insert( extensions.end(), tools::DefaultDeviceExtensions.begin(), tools::DefaultDeviceExtensions.end() );
     }
 
-    bool device::DATA_TYPE::supportExtensions()
+    bool device::OBJECTIVE_VULKAN_DATA_TYPE::supportExtensions()
     {
         uint32_t _c { 0 };
         vkEnumerateDeviceExtensionProperties( description->data->phDevice, nullptr, &_c, nullptr );
@@ -50,19 +50,19 @@ namespace Engine
         return tmpRequeredDeviceExts.empty();
     }
 
-    void instance::DATA_TYPE::setLayers( std::vector<const char *> nLayers )
+    void instance::OBJECTIVE_VULKAN_DATA_TYPE::setLayers( std::vector<const char *> nLayers )
     {
         layers.insert( layers.end(), nLayers.begin(), nLayers.end() );
         layers.insert( layers.end(), tools::DefaultInstanceLayers.begin(), tools::DefaultInstanceLayers.end() );
     }
 
-    void instance::DATA_TYPE::setExtensions( std::vector<const char *> nExtensions )
+    void instance::OBJECTIVE_VULKAN_DATA_TYPE::setExtensions( std::vector<const char *> nExtensions )
     {
         extensions.insert( extensions.end(), nExtensions.begin(), nExtensions.end() );
         extensions.insert( extensions.end(), tools::DefaultInstanceExtensions.begin(), tools::DefaultInstanceExtensions.end() );
     }
 
-    bool instance::DATA_TYPE::supportLayers()
+    bool instance::OBJECTIVE_VULKAN_DATA_TYPE::supportLayers()
     {
         uint32_t _c { 0 };
         vkEnumerateInstanceLayerProperties( &_c, nullptr );
@@ -86,7 +86,7 @@ namespace Engine
         return tmpRequeredDeviceL.empty();
     }
 
-    bool instance::DATA_TYPE::supportExtensions()
+    bool instance::OBJECTIVE_VULKAN_DATA_TYPE::supportExtensions()
     {
         uint32_t _c { 0 };
         vkEnumerateInstanceExtensionProperties( nullptr, &_c, nullptr );

@@ -5,11 +5,11 @@
 
 namespace Engine
 {
-    struct device::_memory::DATA_TYPE
+    struct device::_memory::OBJECTIVE_VULKAN_DATA_TYPE
     {
-        DATA_TYPE() = delete;
-        DATA_TYPE( types::device device );
-        ~DATA_TYPE();
+        OBJECTIVE_VULKAN_DATA_TYPE() = delete;
+        OBJECTIVE_VULKAN_DATA_TYPE( types::device device );
+        ~OBJECTIVE_VULKAN_DATA_TYPE();
         struct memoryBlock
         {
             VkDeviceSize size;

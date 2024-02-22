@@ -5,16 +5,10 @@
 
 namespace Engine
 {
-    surface::surface( bool, instance *instance, uint32_t width, uint32_t height, VkSurfaceKHR surface ) :
-        handle { surface }
+    surface::surface( instance *instance, uint32_t width, uint32_t height )
     {
-        DEFINE_DATA_FIELD( instance, width, height );
+        OBJECTIVE_VULKAN_OBJECTIVE_VULKAN_DEFINE_DATA_FIELD( instance, width, height );
         data->instance->data->surfaces[ this ] = {};
-    }
-
-    surface::surface( instance *instance, uint32_t width, uint32_t height, VkSurfaceKHR handle ) :
-        surface( 1, instance, width, height, handle )
-    {
     }
 
     surface::~surface()
@@ -23,15 +17,15 @@ namespace Engine
         while ( i != data->swapchains.end() )
             delete *i++;
         data->instance->data->surfaces.erase( this );
-        vkDestroySurfaceKHR( data->instance->handle, handle, ENGINE_ALLOCATION_CALLBACK );
+        vkDestroySurfaceKHR( data->instance->handle, handle, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK );
     }
 
-    surface::DATA_TYPE::DATA_TYPE( types::surface parent, struct instance *instance, uint32_t width, uint32_t height ) :
+    surface::OBJECTIVE_VULKAN_DATA_TYPE::OBJECTIVE_VULKAN_DATA_TYPE( types::surface parent, struct instance *instance, uint32_t width, uint32_t height ) :
         parent { parent }, instance { instance }, width { width }, height { height }
     {
     }
 
-    surface::DATA_TYPE::~DATA_TYPE()
+    surface::OBJECTIVE_VULKAN_DATA_TYPE::~OBJECTIVE_VULKAN_DATA_TYPE()
     {
     }
 

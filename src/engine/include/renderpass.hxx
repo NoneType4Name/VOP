@@ -5,10 +5,10 @@
 
 namespace Engine
 {
-    struct renderPass::DATA_TYPE
+    struct renderPass::OBJECTIVE_VULKAN_DATA_TYPE
     {
-        DATA_TYPE( types::renderPass parent, types::device device );
-        ~DATA_TYPE();
+        OBJECTIVE_VULKAN_DATA_TYPE( types::renderPass parent, types::device device );
+        ~OBJECTIVE_VULKAN_DATA_TYPE();
         void create( VkRenderPassCreateInfo createInfo );
         std::set<types::framebuffer> framebuffers;
         types::device device;
@@ -40,10 +40,10 @@ namespace Engine
         std::vector<VkSubpassDependency> dependencies;
     };
 
-    struct framebuffer::DATA_TYPE
+    struct framebuffer::OBJECTIVE_VULKAN_DATA_TYPE
     {
-        DATA_TYPE( types::framebuffer parent, types::renderPass renderPass );
-        ~DATA_TYPE();
+        OBJECTIVE_VULKAN_DATA_TYPE( types::framebuffer parent, types::renderPass renderPass );
+        ~OBJECTIVE_VULKAN_DATA_TYPE();
         void create( VkFramebufferCreateInfo createInfo, std::vector<types::image> attachments );
         types::renderPass renderpass;
         types::framebuffer parent;

@@ -10,11 +10,11 @@
 
 namespace Engine
 {
-    struct deviceDescription::DATA_TYPE final
+    struct deviceDescription::OBJECTIVE_VULKAN_DATA_TYPE final
     {
-        DATA_TYPE() = delete;
-        DATA_TYPE( types::deviceDescription parent, struct instance *instance, VkPhysicalDevice device );
-        ~DATA_TYPE();
+        OBJECTIVE_VULKAN_DATA_TYPE() = delete;
+        OBJECTIVE_VULKAN_DATA_TYPE( types::deviceDescription parent, struct instance *instance, VkPhysicalDevice device );
+        ~OBJECTIVE_VULKAN_DATA_TYPE();
         std::vector<VkQueueFamilyProperties> queueFamilyProperties;
         VkPhysicalDeviceMemoryProperties memProperties {};
         VkPhysicalDeviceProperties properties {};
@@ -24,11 +24,11 @@ namespace Engine
         types::deviceDescription parent;
     };
 
-    struct device::DATA_TYPE final
+    struct device::OBJECTIVE_VULKAN_DATA_TYPE final
     {
-        DATA_TYPE() = delete;
-        DATA_TYPE( types::device parent, types::deviceDescription description );
-        ~DATA_TYPE();
+        OBJECTIVE_VULKAN_DATA_TYPE() = delete;
+        OBJECTIVE_VULKAN_DATA_TYPE( types::device parent, types::deviceDescription description );
+        ~OBJECTIVE_VULKAN_DATA_TYPE();
         void create( VkDeviceCreateInfo createInfo );
         types::queue getQueue( uint32_t familyIndex, uint32_t index );
         std::vector<const char *> extensions;
@@ -46,16 +46,6 @@ namespace Engine
         std::vector<std::vector<std::pair<float, types::queue>>> _queues;
         void setExtensions( std::vector<const char *> &deviceExtensions );
         bool supportExtensions();
-        // uint32_t setImageMemory( VkImage image, VkMemoryPropertyFlags properties );
-        // void resetImageMemory( VkImage image, uint32_t index );
-        // std::vector<std::pair<std::unordered_map<VkImage, uint32_t>, std::pair<uint32_t, uint32_t>>> images;
-        // std::unordered_map<VkImage, uint32_t> imageMemoryIndecies;
-        // VkDeviceMemory imagesMemory { nullptr };
-        // std::vector<std::pair<std::unordered_map<VkBuffer, uint32_t>, std::pair<uint32_t, uint32_t>>> buffers;
-        // std::unordered_map<VkBuffer, uint32_t> bufferMemoryIndecies;
-        // VkDeviceMemory buffersMemory { nullptr };
-        // void allocateBufferMemory( VkBuffer buffer, VkMemoryPropertyFlags properties );
-        // void writeBufferMemory( VkBuffer buffer, VkMemoryMapFlags flags, void **data, VkDeviceSize size );
     };
 } // namespace Engine
 #endif

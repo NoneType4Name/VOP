@@ -64,14 +64,12 @@
             "name": "BuildDefault",
             "inherits":"Build",
             "displayName": "Build",
-            "configurePreset":"default",
             "configuration":"Debug"
         },
         {
             "name": "CleanBuildDefault",
             "inherits":"CleanBuild",
             "displayName": "Clean ReBuild",
-            "configurePreset":"default",
             "configuration":"Debug"
         },
         {

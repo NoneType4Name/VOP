@@ -106,7 +106,7 @@ int main()
     surfaceCreateInfo.hwnd      = glfwGetWin32Window( window );
     VkSurfaceKHR surface;
     std::unique_ptr<Engine::instance> engine { new Engine::instance { "test", 0 } };
-    glfwCreateWindowSurface( engine->handle, window, ENGINE_ALLOCATION_CALLBACK, &surface );
+    glfwCreateWindowSurface( engine->handle, window, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK, &surface );
     auto wnd { new Engine::surface { engine.get(), 700, 600, surface } };
     glfwSetWindowUserPointer( window, wnd );
     auto device { new Engine::device { engine->getDevices()[ 0 ], { wnd } } };
@@ -134,10 +134,10 @@ int main()
     SamplerCreateInfo.minLod     = .0f;
     SamplerCreateInfo.maxLod     = 1;
 
-    CHECK_RESULT( vkCreateSampler( device->handle, &SamplerCreateInfo, ENGINE_ALLOCATION_CALLBACK, &sampler ) );
+    OBJECTIVE_VULKAN_CHECK_RESULT( vkCreateSampler( device->handle, &SamplerCreateInfo, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK, &sampler ) );
     commandBuffer->begin();
 
-    const char *path { "./assets/textures/rectangle/model.png" };
+    const char *path { "./assets/textures/test/capsule0.jpg" };
     int imgW, imgH, imgCs;
     stbi_uc *content { stbi_load( path, &imgW, &imgH, &imgCs, STBI_rgb_alpha ) };
     VkDeviceSize Size = imgW * imgH * 4;
@@ -226,7 +226,7 @@ int main()
                                    VK_IMAGE_ASPECT_COLOR_BIT );
 
     VkFenceCreateInfo fCI { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO, 0, VK_FENCE_CREATE_SIGNALED_BIT };
-    vkCreateFence( device->handle, &fCI, ENGINE_ALLOCATION_CALLBACK, &fence );
+    vkCreateFence( device->handle, &fCI, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK, &fence );
     commandBuffer->submit( fence );
     delete commandBuffer;
     commandBuffer = new Engine::commandBuffer { commandPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY };
@@ -324,7 +324,7 @@ int main()
     DescriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
     DescriptorSetLayoutCreateInfo.bindingCount = Binds.size();
     DescriptorSetLayoutCreateInfo.pBindings    = Binds.data();
-    CHECK_RESULT( vkCreateDescriptorSetLayout( device->handle, &DescriptorSetLayoutCreateInfo, ENGINE_ALLOCATION_CALLBACK, &dLayout ) );
+    OBJECTIVE_VULKAN_CHECK_RESULT( vkCreateDescriptorSetLayout( device->handle, &DescriptorSetLayoutCreateInfo, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK, &dLayout ) );
 
     VkDescriptorPoolSize UBDescriptorPoolSize {};
     UBDescriptorPoolSize.type            = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -341,7 +341,7 @@ int main()
     DescriptorPoolCreateInfo.poolSizeCount = sizeof( DescriptorPoolSize ) / sizeof( DescriptorPoolSize[ 0 ] );
     DescriptorPoolCreateInfo.pPoolSizes    = DescriptorPoolSize;
     DescriptorPoolCreateInfo.maxSets       = swapchain->images.size();
-    CHECK_RESULT( vkCreateDescriptorPool( device->handle, &DescriptorPoolCreateInfo, ENGINE_ALLOCATION_CALLBACK, &dPool ) );
+    OBJECTIVE_VULKAN_CHECK_RESULT( vkCreateDescriptorPool( device->handle, &DescriptorPoolCreateInfo, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK, &dPool ) );
 
     std::vector<VkDescriptorSetLayout> DescriptorSetLayouts( swapchain->images.size(), dLayout );
     VkDescriptorSetAllocateInfo DescriptorSetAllocateInfo {};
@@ -351,7 +351,7 @@ int main()
     DescriptorSetAllocateInfo.descriptorPool     = dPool;
 
     dSet.resize( swapchain->images.size() );
-    CHECK_RESULT( vkAllocateDescriptorSets( device->handle, &DescriptorSetAllocateInfo, dSet.data() ) );
+    OBJECTIVE_VULKAN_CHECK_RESULT( vkAllocateDescriptorSets( device->handle, &DescriptorSetAllocateInfo, dSet.data() ) );
     bCI.size  = sizeof( DemensionUniformObject );
     bCI.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
     imageSemaphores.resize( swapchain->images.size() );
@@ -392,9 +392,9 @@ int main()
 
         VkWriteDescriptorSet WriteDescriptorSet[] { WriteUBDescriptorSet, WriteSamplerDescriptorSet };
         vkUpdateDescriptorSets( device->handle, sizeof( WriteDescriptorSet ) / sizeof( WriteDescriptorSet[ 0 ] ), WriteDescriptorSet, 0, nullptr );
-        vkCreateSemaphore( device->handle, &sCI, ENGINE_ALLOCATION_CALLBACK, &imageSemaphores[ i ] );
-        vkCreateSemaphore( device->handle, &sCI, ENGINE_ALLOCATION_CALLBACK, &renderedSemaphores[ i ] );
-        vkCreateFence( device->handle, &fCI, ENGINE_ALLOCATION_CALLBACK, &renderedFences[ i ] );
+        vkCreateSemaphore( device->handle, &sCI, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK, &imageSemaphores[ i ] );
+        vkCreateSemaphore( device->handle, &sCI, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK, &renderedSemaphores[ i ] );
+        vkCreateFence( device->handle, &fCI, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK, &renderedFences[ i ] );
         renderCommandBuffers[ i ] = new Engine::commandBuffer { commandPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY };
     }
 
@@ -494,7 +494,7 @@ int main()
     pipelineLayoutInfo.setLayoutCount = 1;
     pipelineLayoutInfo.pSetLayouts    = &dLayout;
 
-    CHECK_RESULT( vkCreatePipelineLayout( device->handle, &pipelineLayoutInfo, ENGINE_ALLOCATION_CALLBACK, &PipelineLayout ) );
+    OBJECTIVE_VULKAN_CHECK_RESULT( vkCreatePipelineLayout( device->handle, &pipelineLayoutInfo, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK, &PipelineLayout ) );
 
     VkGraphicsPipelineCreateInfo GraphicPipeLineCreateInfo {};
     GraphicPipeLineCreateInfo.sType               = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -511,13 +511,13 @@ int main()
     GraphicPipeLineCreateInfo.layout              = PipelineLayout;
     GraphicPipeLineCreateInfo.renderPass          = renderpass->handle;
     GraphicPipeLineCreateInfo.subpass             = 0;
-    vkCreateGraphicsPipelines( device->handle, nullptr, 1, &GraphicPipeLineCreateInfo, ENGINE_ALLOCATION_CALLBACK, &pipeline );
+    vkCreateGraphicsPipelines( device->handle, nullptr, 1, &GraphicPipeLineCreateInfo, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK, &pipeline );
 
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
     std::vector<tinyobj::material_t> materials;
     std::string warn, err;
-    if ( !tinyobj::LoadObj( &attrib, &shapes, &materials, &warn, &err, "assets/models/rectangle/model.obj" ) )
+    if ( !tinyobj::LoadObj( &attrib, &shapes, &materials, &warn, &err, "assets/models/test/capsule.obj" ) )
     {
         SPDLOG_CRITICAL( "Failed to Load model warning:\t{}\nerror:\t{}.", warn, err );
     }
@@ -610,11 +610,11 @@ int main()
                         delete frameBuffers[ i ];
                         delete renderCommandBuffers[ i ];
                         delete uniformBuffers[ i ];
-                        vkDestroySemaphore( device->handle, imageSemaphores[ i ], ENGINE_ALLOCATION_CALLBACK );
-                        vkDestroySemaphore( device->handle, renderedSemaphores[ i ], ENGINE_ALLOCATION_CALLBACK );
-                        vkDestroyFence( device->handle, renderedFences[ i ], ENGINE_ALLOCATION_CALLBACK );
+                        vkDestroySemaphore( device->handle, imageSemaphores[ i ], OBJECTIVE_VULKAN_ALLOCATION_CALLBACK );
+                        vkDestroySemaphore( device->handle, renderedSemaphores[ i ], OBJECTIVE_VULKAN_ALLOCATION_CALLBACK );
+                        vkDestroyFence( device->handle, renderedFences[ i ], OBJECTIVE_VULKAN_ALLOCATION_CALLBACK );
                     }
-                    vkDestroyDescriptorPool( device->handle, dPool, ENGINE_ALLOCATION_CALLBACK );
+                    vkDestroyDescriptorPool( device->handle, dPool, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK );
                     swapchain->reCreate();
                     delete depthImage;
                     delete colorImage;
@@ -632,7 +632,7 @@ int main()
                     DescriptorPoolCreateInfo.poolSizeCount = sizeof( DescriptorPoolSize ) / sizeof( DescriptorPoolSize[ 0 ] );
                     DescriptorPoolCreateInfo.pPoolSizes    = DescriptorPoolSize;
                     DescriptorPoolCreateInfo.maxSets       = swapchain->images.size();
-                    CHECK_RESULT( vkCreateDescriptorPool( device->handle, &DescriptorPoolCreateInfo, ENGINE_ALLOCATION_CALLBACK, &dPool ) );
+                    OBJECTIVE_VULKAN_CHECK_RESULT( vkCreateDescriptorPool( device->handle, &DescriptorPoolCreateInfo, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK, &dPool ) );
 
                     DescriptorSetLayouts.clear();
                     DescriptorSetLayouts.resize( swapchain->images.size(), dLayout );
@@ -641,7 +641,7 @@ int main()
                     DescriptorSetAllocateInfo.pSetLayouts        = DescriptorSetLayouts.data();
                     DescriptorSetAllocateInfo.descriptorPool     = dPool;
                     dSet.resize( swapchain->images.size() );
-                    CHECK_RESULT( vkAllocateDescriptorSets( device->handle, &DescriptorSetAllocateInfo, dSet.data() ) );
+                    OBJECTIVE_VULKAN_CHECK_RESULT( vkAllocateDescriptorSets( device->handle, &DescriptorSetAllocateInfo, dSet.data() ) );
 
                     delete commandBuffer;
                     commandBuffer                 = new Engine::commandBuffer { commandPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY };
@@ -715,9 +715,9 @@ int main()
                         vkUpdateDescriptorSets( device->handle, sizeof( WriteDescriptorSet ) / sizeof( WriteDescriptorSet[ 0 ] ), WriteDescriptorSet, 0, nullptr );
                         renderCommandBuffers[ i ] = new Engine::commandBuffer { commandPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY };
                         frameBuffers[ i ]         = new Engine::framebuffer { renderpass, { colorImage, depthImage, swapchain->images[ i ] } };
-                        vkCreateSemaphore( device->handle, &sCI, ENGINE_ALLOCATION_CALLBACK, &imageSemaphores[ i ] );
-                        vkCreateSemaphore( device->handle, &sCI, ENGINE_ALLOCATION_CALLBACK, &renderedSemaphores[ i ] );
-                        vkCreateFence( device->handle, &fCI, ENGINE_ALLOCATION_CALLBACK, &renderedFences[ i ] );
+                        vkCreateSemaphore( device->handle, &sCI, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK, &imageSemaphores[ i ] );
+                        vkCreateSemaphore( device->handle, &sCI, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK, &renderedSemaphores[ i ] );
+                        vkCreateFence( device->handle, &fCI, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK, &renderedFences[ i ] );
                     }
 
                     vkDeviceWaitIdle( device->handle );
@@ -733,8 +733,8 @@ int main()
         static auto time { std::chrono::high_resolution_clock::now() };
         auto cTime = std::chrono::high_resolution_clock::now();
         float delta { std::chrono::duration<float, std::chrono::seconds::period>( cTime - time ).count() };
-        Obj.model = glm::rotate( glm::mat4( 1.f ), glm::radians( 90.f ) * delta, glm::vec3( .0f, 1.0f, .0f ) );
-        Obj.view  = glm::lookAt( glm::vec3( .0f, -1.0f, 2.f ), glm::vec3( .0f, .0f, .0f ), glm::vec3( .0f, 1.0f, .0f ) ); // Y = -Y
+        Obj.model = glm::rotate( glm::mat4( 1.f ), glm::radians( 90.f ) * delta, glm::vec3( 1.0f, 1.0f, 1.0f ) );
+        Obj.view  = glm::lookAt( glm::vec3( .0f, .0f, -2.f ), glm::vec3( .0f, .0f, .0f ), glm::vec3( .0f, 1.0f, .0f ) ); // Y = -Y
         Obj.proj  = glm::perspective( glm::radians( 90.f ), swapchain->properties.capabilities.currentExtent.width / static_cast<float>( swapchain->properties.capabilities.currentExtent.height ), .01f, 2000.f );
         uniformBuffers[ currentFrame ]->write( &Obj, sizeof( Obj ) );
         renderCommandBuffers[ currentFrame ]->begin();
@@ -785,7 +785,7 @@ int main()
         submitInfo.pCommandBuffers      = &renderCommandBuffers[ currentFrame ]->handle;
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores    = &renderedSemaphores[ currentFrame ];
-        CHECK_RESULT( vkQueueSubmit( device->universalQueue->handle, 1, &submitInfo, renderedFences[ currentFrame ] ) );
+        OBJECTIVE_VULKAN_CHECK_RESULT( vkQueueSubmit( device->universalQueue->handle, 1, &submitInfo, renderedFences[ currentFrame ] ) );
         VkPresentInfoKHR PresentInfo {};
         PresentInfo.sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
         PresentInfo.waitSemaphoreCount = 1;
@@ -800,16 +800,16 @@ int main()
     vkDeviceWaitIdle( device->handle );
     for ( uint32_t i { 0 }; i < swapchain->images.size(); ++i )
     {
-        vkDestroySemaphore( device->handle, imageSemaphores[ i ], ENGINE_ALLOCATION_CALLBACK );
-        vkDestroySemaphore( device->handle, renderedSemaphores[ i ], ENGINE_ALLOCATION_CALLBACK );
-        vkDestroyFence( device->handle, renderedFences[ i ], ENGINE_ALLOCATION_CALLBACK );
+        vkDestroySemaphore( device->handle, imageSemaphores[ i ], OBJECTIVE_VULKAN_ALLOCATION_CALLBACK );
+        vkDestroySemaphore( device->handle, renderedSemaphores[ i ], OBJECTIVE_VULKAN_ALLOCATION_CALLBACK );
+        vkDestroyFence( device->handle, renderedFences[ i ], OBJECTIVE_VULKAN_ALLOCATION_CALLBACK );
     }
-    vkDestroyFence( device->handle, fence, ENGINE_ALLOCATION_CALLBACK );
-    vkDestroyDescriptorPool( device->handle, dPool, ENGINE_ALLOCATION_CALLBACK );
-    vkDestroyDescriptorSetLayout( device->handle, dLayout, ENGINE_ALLOCATION_CALLBACK );
-    vkDestroyPipelineLayout( device->handle, PipelineLayout, ENGINE_ALLOCATION_CALLBACK );
-    vkDestroyPipeline( device->handle, pipeline, ENGINE_ALLOCATION_CALLBACK );
-    vkDestroySampler( device->handle, sampler, ENGINE_ALLOCATION_CALLBACK );
+    vkDestroyFence( device->handle, fence, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK );
+    vkDestroyDescriptorPool( device->handle, dPool, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK );
+    vkDestroyDescriptorSetLayout( device->handle, dLayout, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK );
+    vkDestroyPipelineLayout( device->handle, PipelineLayout, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK );
+    vkDestroyPipeline( device->handle, pipeline, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK );
+    vkDestroySampler( device->handle, sampler, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK );
     glfwTerminate();
     return 0;
 }

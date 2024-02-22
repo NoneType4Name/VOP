@@ -7,13 +7,13 @@
 
 namespace Engine
 {
-    class image::DATA_TYPE
+    class image::OBJECTIVE_VULKAN_DATA_TYPE
     {
       public:
-        DATA_TYPE() = delete;
-        DATA_TYPE( types::image parent, types::device device );
-        DATA_TYPE( types::image parent, types::device device, types::image image );
-        ~DATA_TYPE();
+        OBJECTIVE_VULKAN_DATA_TYPE() = delete;
+        OBJECTIVE_VULKAN_DATA_TYPE( types::image parent, types::device device );
+        OBJECTIVE_VULKAN_DATA_TYPE( types::image parent, types::device device, types::image image );
+        ~OBJECTIVE_VULKAN_DATA_TYPE();
         types::device device { nullptr };
         device::_memory::allocationAddres addres;
         types::image parentImage { nullptr };

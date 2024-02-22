@@ -6,9 +6,9 @@
 
 namespace Engine
 {
-    swapchain::swapchain( bool, types::device device, types::surface surface )
+    swapchain::swapchain( types::device device, types::surface surface )
     {
-        DEFINE_DATA_FIELD( device, surface );
+        OBJECTIVE_VULKAN_OBJECTIVE_VULKAN_DEFINE_DATA_FIELD( device, surface );
         data->device->data->swapchains.emplace( this );
         data->surface->data->swapchains.emplace( this );
         uint32_t c;
@@ -21,49 +21,17 @@ namespace Engine
         vkGetPhysicalDeviceSurfacePresentModesKHR( device->data->description->data->phDevice, surface->handle, &c, properties.presentModes.data() );
     }
 
-    swapchain::swapchain( types::device device, types::surface surface ) :
-        swapchain( 1, device, surface )
-    {
-        VkSwapchainCreateInfoKHR createInfo {};
-        VkSurfaceFormatKHR SurfaceFormat { properties.formats[ 0 ] };
-        for ( const auto &format : properties.formats )
-        {
-            VkFormatProperties properties;
-            vkGetPhysicalDeviceFormatProperties( data->device->data->description->data->phDevice, format.format, &properties );
-            if ( format.format == VK_FORMAT_B8G8R8A8_SRGB && format.colorSpace == VK_COLORSPACE_SRGB_NONLINEAR_KHR ) SurfaceFormat = format;
-        }
-
-        presentMode = VK_PRESENT_MODE_FIFO_KHR;
-        for ( const auto &mode : properties.presentModes )
-        {
-            if ( mode == VK_PRESENT_MODE_MAILBOX_KHR ) presentMode = mode;
-        }
-
-        createInfo.imageUsage         = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-        createInfo.imageFormat        = SurfaceFormat.format;
-        createInfo.imageColorSpace    = SurfaceFormat.colorSpace;
-        createInfo.imageExtent.width  = std::clamp( properties.capabilities.currentExtent.width, properties.capabilities.minImageExtent.width, properties.capabilities.maxImageExtent.width );
-        createInfo.imageExtent.height = std::clamp( properties.capabilities.currentExtent.width, properties.capabilities.minImageExtent.height, properties.capabilities.maxImageExtent.height );
-        createInfo.minImageCount      = properties.capabilities.minImageCount;
-        createInfo.clipped            = VK_FALSE;
-        createInfo.oldSwapchain       = handle;
-        createInfo.preTransform       = properties.capabilities.currentTransform;
-        createInfo.presentMode        = presentMode;
-        createInfo.compositeAlpha     = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-        data->create( createInfo );
-    }
-
     swapchain::~swapchain()
     {
         auto img { images.begin() };
         while ( img != images.end() )
             delete *img++;
-        vkDestroySwapchainKHR( data->device->handle, handle, ENGINE_ALLOCATION_CALLBACK );
+        vkDestroySwapchainKHR( data->device->handle, handle, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK );
         data->device->data->swapchains.erase( this );
         data->surface->data->swapchains.erase( this );
     };
 
-    void swapchain::DATA_TYPE::create( VkSwapchainCreateInfoKHR createInfo )
+    void swapchain::OBJECTIVE_VULKAN_DATA_TYPE::create( VkSwapchainCreateInfoKHR createInfo )
     {
         createInfo.sType   = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
         createInfo.surface = surface->handle;
@@ -82,17 +50,17 @@ namespace Engine
         else
             createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
         createInfo.oldSwapchain = parent->handle;
-        CHECK_RESULT( vkCreateSwapchainKHR( device->handle, &createInfo, ENGINE_ALLOCATION_CALLBACK, &parent->handle ) );
+        OBJECTIVE_VULKAN_CHECK_RESULT( vkCreateSwapchainKHR( device->handle, &createInfo, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK, &parent->handle ) );
         if ( parent->handle )
-            vkDestroySwapchainKHR( device->handle, createInfo.oldSwapchain, ENGINE_ALLOCATION_CALLBACK );
+            vkDestroySwapchainKHR( device->handle, createInfo.oldSwapchain, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK );
         if ( createInfo.oldSwapchain )
             for ( const auto &img : parent->images )
                 delete img;
         uint32_t c;
-        CHECK_RESULT( vkGetSwapchainImagesKHR( device->handle, parent->handle, &c, nullptr ) );
+        OBJECTIVE_VULKAN_CHECK_RESULT( vkGetSwapchainImagesKHR( device->handle, parent->handle, &c, nullptr ) );
         std::vector<VkImage> imgs { c };
         parent->images.resize( c );
-        CHECK_RESULT( vkGetSwapchainImagesKHR( device->handle, parent->handle, &c, imgs.data() ) );
+        OBJECTIVE_VULKAN_CHECK_RESULT( vkGetSwapchainImagesKHR( device->handle, parent->handle, &c, imgs.data() ) );
         for ( size_t i { 0 }; i < imgs.size(); i++ )
         {
             VkImageCreateInfo imCreateInfo {};
@@ -129,14 +97,14 @@ namespace Engine
         data->create( createInfo );
     }
 
-    swapchain::DATA_TYPE::DATA_TYPE( types::swapchain parent, types::device device, types::surface surface ) :
+    swapchain::OBJECTIVE_VULKAN_DATA_TYPE::OBJECTIVE_VULKAN_DATA_TYPE( types::swapchain parent, types::device device, types::surface surface ) :
         parent { parent }
     {
         this->device  = device;
         this->surface = surface;
     }
 
-    swapchain::DATA_TYPE::~DATA_TYPE()
+    swapchain::OBJECTIVE_VULKAN_DATA_TYPE::~OBJECTIVE_VULKAN_DATA_TYPE()
     {
     }
 } // namespace Engine

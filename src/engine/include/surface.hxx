@@ -5,10 +5,10 @@
 
 namespace Engine
 {
-    struct surface::DATA_TYPE
+    struct surface::OBJECTIVE_VULKAN_DATA_TYPE
     {
-        DATA_TYPE( types::surface parent, instance *instance, uint32_t width, uint32_t height );
-        ~DATA_TYPE();
+        OBJECTIVE_VULKAN_DATA_TYPE( types::surface parent, instance *instance, uint32_t width, uint32_t height );
+        ~OBJECTIVE_VULKAN_DATA_TYPE();
         uint32_t width;
         uint32_t height;
         std::set<Engine::types::swapchain> swapchains;

@@ -50,7 +50,7 @@ namespace Engine
         }
     } // namespace
 
-    VkDebugUtilsMessengerCreateInfoEXT instance::DATA_TYPE::setupDebugLayerCallback()
+    VkDebugUtilsMessengerCreateInfoEXT instance::OBJECTIVE_VULKAN_DATA_TYPE::setupDebugLayerCallback()
     {
         VkDebugUtilsMessengerCreateInfoEXT createInfo {};
         createInfo.sType           = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
@@ -61,12 +61,12 @@ namespace Engine
         return createInfo;
     }
 
-    void instance::DATA_TYPE::initDebugLayerCallBack( VkDebugUtilsMessengerCreateInfoEXT createInfo )
+    void instance::OBJECTIVE_VULKAN_DATA_TYPE::initDebugLayerCallBack( VkDebugUtilsMessengerCreateInfoEXT createInfo )
     {
         auto createMsgCallback = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>( vkGetInstanceProcAddr( parent->handle, "vkCreateDebugUtilsMessengerEXT" ) );
         if ( createMsgCallback != nullptr )
         {
-            CHECK_RESULT( createMsgCallback( parent->handle, &createInfo, ENGINE_ALLOCATION_CALLBACK, &debugMessenger ) );
+            OBJECTIVE_VULKAN_CHECK_RESULT( createMsgCallback( parent->handle, &createInfo, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK, &debugMessenger ) );
         }
         else
         {
@@ -74,12 +74,12 @@ namespace Engine
         }
     }
 
-    void instance::DATA_TYPE::destroyDebugLayerCallback()
+    void instance::OBJECTIVE_VULKAN_DATA_TYPE::destroyDebugLayerCallback()
     {
         if ( debugMessenger != VK_NULL_HANDLE )
         {
             PFN_vkDestroyDebugUtilsMessengerEXT destroyMsgCallback = ( PFN_vkDestroyDebugUtilsMessengerEXT ) vkGetInstanceProcAddr( parent->handle, "vkDestroyDebugUtilsMessengerEXT" );
-            destroyMsgCallback( parent->handle, debugMessenger, ENGINE_ALLOCATION_CALLBACK );
+            destroyMsgCallback( parent->handle, debugMessenger, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK );
         }
     }
 } // namespace Engine
