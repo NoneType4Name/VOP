@@ -7,6 +7,14 @@ project("quest"
         VERSION 0.0.0.1
         )
 
-set(EXECUTABLE_NAME "window")
+find_package(Vulkan REQUIRED)
+find_package(glfw3 REQUIRED)
+find_package(spdlog REQUIRED)
+find_package(glm)
+find_package(tinyobjloader)
+find_package(stb)
 
+set(EXECUTABLE_NAME "app")
+add_subdirectory(src/assets/models)
 add_executable(${EXECUTABLE_NAME} "src/main.cxx")
+add_dependencies(${EXECUTABLE_NAME} shaders)
