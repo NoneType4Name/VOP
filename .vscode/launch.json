@@ -7,7 +7,7 @@
             "name": "Debug",
             "program": "${command:cmake.launchTargetPath}",
             "args": [],
-            "cwd": "${workspaceFolder}/bin/app/",
+            "cwd": "${workspaceFolder}/bin/bin",
             "console": "integratedTerminal"
         }
     ]

@@ -1,15 +1,29 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
+
 #define GLFW_EXPOSE_NATIVE_WIN32
+
 #define VK_USE_PLATFORM_WIN32_KHR
-#include <vulkan/vulkan.h>
+
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+
+#include <ObjectiveVulkan/ObjectiveVulkan.hxx>
+#include <ObjectiveVulkan/ehi.hxx>
+#include <ObjectiveVulkan/example.hxx>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/hash.hpp>
+
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
+
 #include <tiny_obj_loader.h>
+
 #include <stb_image.h>
+
 #include <chrono>
-#include <engine.hxx>
-#include <ehi.hxx>
 
 struct Vertex
 {
@@ -101,15 +115,11 @@ int main()
     glfwWindowHint( GLFW_CLIENT_API, GLFW_NO_API );
     glfwWindowHint( GLFW_RESIZABLE, GLFW_TRUE );
     auto window { glfwCreateWindow( 700, 600, "title", nullptr, nullptr ) };
-    VkWin32SurfaceCreateInfoKHR surfaceCreateInfo { VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR };
-    surfaceCreateInfo.hinstance = GetModuleHandle( nullptr );
-    surfaceCreateInfo.hwnd      = glfwGetWin32Window( window );
-    VkSurfaceKHR surface;
-    std::unique_ptr<Engine::instance> engine { new Engine::instance { "test", 0 } };
-    glfwCreateWindowSurface( engine->handle, window, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK, &surface );
-    auto wnd { new Engine::surface { engine.get(), 700, 600, surface } };
+
+    std::unique_ptr<Engine::instance> engine { new Engine::examples::instance { "test", 0 } };
+    auto wnd { new Engine::examples::surface { engine.get(), 700, 600, glfwGetWin32Window( window ) } };
     glfwSetWindowUserPointer( window, wnd );
-    auto device { new Engine::device { engine->getDevices()[ 0 ], { wnd } } };
+    auto device { new Engine::examples::device { engine->getDevices()[ 0 ], { wnd } } };
     auto swapchain { device->getLink( wnd ) };
     auto commandPool { new Engine::commandPool { device->universalQueue, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT } };
     auto commandBuffer { new Engine::commandBuffer { commandPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY } };
@@ -300,10 +310,10 @@ int main()
     renderPassInfo.pSubpasses      = &subpass;
     renderPassInfo.dependencyCount = 1;
     renderPassInfo.pDependencies   = &dependency;
-    auto renderpass { new Engine::renderPass { device, renderPassInfo } };
+    auto renderpass { new Engine::examples::renderPass { device, renderPassInfo } };
     frameBuffers.reserve( swapchain->images.size() );
     for ( const auto &swpImg : swapchain->images )
-        frameBuffers.emplace_back( new Engine::framebuffer { renderpass, { colorImage, depthImage, swpImg } } );
+        frameBuffers.emplace_back( new Engine::examples::framebuffer { renderpass, { colorImage, depthImage, swpImg } } );
 
     // descriptor set
 
@@ -714,7 +724,7 @@ int main()
                         VkWriteDescriptorSet WriteDescriptorSet[] { WriteUBDescriptorSet, WriteSamplerDescriptorSet };
                         vkUpdateDescriptorSets( device->handle, sizeof( WriteDescriptorSet ) / sizeof( WriteDescriptorSet[ 0 ] ), WriteDescriptorSet, 0, nullptr );
                         renderCommandBuffers[ i ] = new Engine::commandBuffer { commandPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY };
-                        frameBuffers[ i ]         = new Engine::framebuffer { renderpass, { colorImage, depthImage, swapchain->images[ i ] } };
+                        frameBuffers[ i ]         = new Engine::examples::framebuffer { renderpass, { colorImage, depthImage, swapchain->images[ i ] } };
                         vkCreateSemaphore( device->handle, &sCI, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK, &imageSemaphores[ i ] );
                         vkCreateSemaphore( device->handle, &sCI, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK, &renderedSemaphores[ i ] );
                         vkCreateFence( device->handle, &fCI, OBJECTIVE_VULKAN_ALLOCATION_CALLBACK, &renderedFences[ i ] );
