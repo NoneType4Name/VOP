@@ -1,8 +1,8 @@
 [requires]
-glfw/[>=3.3.8]
-glm/[>=cci.20230113]
-spdlog/[>=1.11.0]
-stb/[>=cci.20220909]
+glfw/3.3.8
+glm/cci.20230113
+spdlog/1.11.0
+stb/cci.20220909
 tinyobjloader/2.0.0-rc10
 
 [generators]

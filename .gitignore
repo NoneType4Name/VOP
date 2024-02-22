@@ -1,6 +1,9 @@
-build/
+# binary path
+bin/
+
+# binary file
 CMakeUserPresets.json
-.clang-format
-*spv
-.vscode/settings.json
+*.spv
+
+# dev ext
 .cache
