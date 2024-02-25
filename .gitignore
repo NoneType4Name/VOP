@@ -3,7 +3,7 @@ bin/
 
 # binary file
 CMakeUserPresets.json
-*.spv
+*_export.hxx
 
 # dev ext
 .cache

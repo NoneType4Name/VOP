@@ -1,35 +1,29 @@
 cmake_minimum_required(VERSION 3.5)
+project("VulkanObjectiveProject" LANGUAGES CXX VERSION 1.0)
+
+include(GenerateExportHeader)
+
+string(COMPARE EQUAL ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_SOURCE_DIR} VOP_STANDALONE)
+
+option(VOP_BUILD_EXAMPLE "Build VOP example" ${VOP_STANDALONE})
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_C_COMPILER clang)
 set(CMAKE_CXX_COMPILER clang++)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin/bin)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin/lib)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin/lib)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}; ${CMAKE_BINARY_DIR}")
-set(CMAKE_BUILD_TYPE Debug)
-set(BUILD_SHARED_LIBS OFF)
 
-project("QuesGame"
-        LANGUAGES CXX
-        VERSION 1.0.0
+add_subdirectory(src)
+
+if(VOP_BUILD_EXAMPLE)
+    add_subdirectory(example)
+endif()
+file(GLOB_RECURSE OBJECTIVE_VULKAN_HEADER_FILES "include/*.hxx")
+set_target_properties(ObjectiveVulkan PROPERTIES PUBLIC_HEADER "${OBJECTIVE_VULKAN_HEADER_FILES}")
+install(TARGETS ObjectiveVulkan
+        RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+        LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_PREFIX}/include/ObjectiveVulkan
 )
-
-set(EXECUTABLE_NAME "app")
-add_subdirectory(src/assets/shaders)
-add_subdirectory(dependencies/ObjectiveVulkan)
-file(COPY ${CMAKE_SOURCE_DIR}/src/assets/models DESTINATION ${CMAKE_SOURCE_DIR}/bin/bin/assets/)
-file(COPY ${CMAKE_SOURCE_DIR}/src/assets/textures DESTINATION ${CMAKE_SOURCE_DIR}/bin/bin/assets/)
-
-find_package(glfw3)
-find_package(glm)
-find_package(spdlog)
-find_package(stb)
-find_package(tinyobjloader)
-
-add_executable(${EXECUTABLE_NAME} "src/main.cxx")
-add_dependencies(${EXECUTABLE_NAME} shaders)
-
-target_link_libraries(${EXECUTABLE_NAME} stb::stb)
-target_link_libraries(${EXECUTABLE_NAME} ObjectiveVulkan::ObjectiveVulkan)
-target_link_libraries(${EXECUTABLE_NAME} tinyobjloader::tinyobjloader)
-target_link_libraries(${EXECUTABLE_NAME} glfw)

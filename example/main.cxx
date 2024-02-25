@@ -8,9 +8,7 @@
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
-#include <ObjectiveVulkan/ObjectiveVulkan.hxx>
-#include <ObjectiveVulkan/ehi.hxx>
-#include <ObjectiveVulkan/example.hxx>
+#include "defenitions.hxx"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
